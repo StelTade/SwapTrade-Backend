@@ -1,7 +1,7 @@
 import { Exclude } from 'class-transformer';
+import { Portfolio } from 'src/portfolio/entities/portfolio.entity';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
-/** this is the structure of the users table */
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
@@ -19,4 +19,7 @@ export class User {
   @Exclude()
   @Column('varchar', { length: 225, nullable: true })
   password?: string;
+
+  @OneToMany(() => Portfolio, (portfolio) => portfolio.user)
+  portfolios: Portfolio[];
 }
