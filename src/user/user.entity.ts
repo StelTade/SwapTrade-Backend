@@ -19,4 +19,11 @@ export class User {
   @Exclude()
   @Column('varchar', { length: 225, nullable: true })
   password?: string;
+
+    @Column({ default: false })
+  isVerified: boolean;
+
+  @Column({ nullable: true })
+  verificationToken: string | null ;
 }
+

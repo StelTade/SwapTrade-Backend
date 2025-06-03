@@ -1,27 +1,34 @@
 import { forwardRef, Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { JwtModule } from '@nestjs/jwt';
+import { ConfigModule } from '@nestjs/config';
+
 import { AuthController } from './auth.controller';
-import { AuthService } from './providers/auth.service';
+import { AuthService } from './auth.service'; // Use your local auth.service (not from providers folder)
 import { BcryptProvider } from './providers/bcrypt';
 import { HashingProvider } from './providers/hashing';
 import { SignInProvider } from './providers/sign-in.provider';
-import { ConfigModule } from '@nestjs/config';
-import { JwtModule } from '@nestjs/jwt';
-import jwtConfig from 'src/auth/authConfig/jwt.config';
 import { GenerateTokensProvider } from './providers/generate-tokens.provider';
 import { RefreshTokensProvider } from './providers/refresh-tokens.provider';
 
+import { User } from 'src/user/user.entity';
+import { MailModule } from '../mail/mail.module';
+import jwtConfig from './authConfig/jwt.config';
+
 @Module({
   imports: [
-    // forwardRef(() => UsersModule),
+    TypeOrmModule.forFeature([User]),
+    MailModule,
     ConfigModule.forFeature(jwtConfig),
     JwtModule.registerAsync(jwtConfig.asProvider()),
+    // forwardRef(() => UsersModule), // Uncomment if needed later
   ],
   controllers: [AuthController],
   providers: [
     AuthService,
     {
-      provide: HashingProvider, // Use the abstract class as a token
-      useClass: BcryptProvider, // Bind it to the concrete implementation
+      provide: HashingProvider,
+      useClass: BcryptProvider,
     },
     SignInProvider,
     GenerateTokensProvider,
