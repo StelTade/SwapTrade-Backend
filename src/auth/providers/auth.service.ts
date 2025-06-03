@@ -7,6 +7,8 @@ import { UserServices } from 'src/user/provider/user-services.service';
 
 @Injectable()
 export class AuthService {
+    verifyEmail: any;
+    register: any;
     
     constructor(
         /* 
