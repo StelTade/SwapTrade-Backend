@@ -35,7 +35,7 @@ export class RefreshTokensProvider {
       }
     );
 
-    const user = await this.userService.findOneById(sub);
+    const user = await this.userService.findOne(sub);
 
     if (!user) {
       throw new UnauthorizedException('Invalid refresh token');

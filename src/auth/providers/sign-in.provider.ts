@@ -21,7 +21,7 @@ import { HashingProvider } from './hashing';
     ) {}
   
     public async SignIn(signInDto: SignInDto) {
-        let user = await this.userService.getOneByEmail(signInDto.email);
+        let user = await this.userService.findUserByEmail(signInDto.email);
         if (!user) {
           throw new UnauthorizedException('email or password is incorrect');
         }

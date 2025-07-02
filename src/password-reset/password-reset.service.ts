@@ -74,7 +74,7 @@ export class PasswordResetService {
     // Send email
     await this.emailService.sendPasswordResetEmail(
       user.email,
-      user.firstName,
+      user.firstname,
       token,
     );
 
@@ -97,7 +97,7 @@ export class PasswordResetService {
     await this.passwordResetTokenRepository.save(resetToken);
 
     // Get user for confirmation email
-    const user = await this.usersService.findUserById(resetToken.userId);
+    const user = await this.usersService.findOne(resetToken.userId);
 
     // Send confirmation email
     await this.emailService.sendPasswordResetConfirmationEmail(

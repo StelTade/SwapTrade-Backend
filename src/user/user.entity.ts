@@ -20,13 +20,23 @@ export class User {
   @Column('varchar', { length: 225, nullable: true })
   password?: string;
 
+
+  @Column('varchar', { length: 20, default: 'user' })
+  role: string;
+
+  @Column({ default: false })
+  isBanned: boolean;
+
+  @Column({ default: true })
+  isActive: boolean;
+
   @OneToMany(() => Portfolio, (portfolio) => portfolio.user)
   portfolios: Portfolio[];
 
-    @Column({ default: false })
+  @Column({ default: false })
   isVerified: boolean;
 
   @Column({ nullable: true })
-  verificationToken: string | null ;
+  verificationToken: string | null;
 }
 

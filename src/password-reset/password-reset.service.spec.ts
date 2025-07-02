@@ -67,7 +67,14 @@ describe('PasswordResetService', () => {
       const mockUser = {
         id: 1,
         email: 'test@example.com',
-        firstName: 'John',
+        firstname: 'John',
+        lastname: 'Doe',
+        role: 'user',
+        portfolios: [],
+        isVerified: true,
+        verificationToken: null,
+        isBanned: false,
+        isActive: true,
       };
 
       jest.spyOn(usersService, 'findUserByEmail').mockResolvedValue(mockUser);

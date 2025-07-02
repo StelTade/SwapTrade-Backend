@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './user/user.entity';
-// import { UserServices } from './user/provider/user-services.service';
+import { UserService } from './user/provider/user-services.service';
 import { PortfolioModule } from './portfolio/portfolio.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { CryptocurrencyModule } from './cryptocurrency/cryptocurrency.module';
@@ -21,6 +22,7 @@ import { NotificationsModule } from './notifications/notifications.module';
       isGlobal: true,
       envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
     }),
+    ThrottlerModule.forRoot(),
     DatabaseModule,
     AuthModule,
     CryptocurrencyModule,
