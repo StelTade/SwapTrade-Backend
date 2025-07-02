@@ -20,6 +20,16 @@ export class User {
   @Column('varchar', { length: 225, nullable: true })
   password?: string;
 
+
+  @Column('varchar', { length: 20, default: 'user' })
+  role: string;
+
+  @Column({ default: false })
+  isBanned: boolean;
+
+  @Column({ default: true })
+  isActive: boolean;
+
   @OneToMany(() => Portfolio, (portfolio) => portfolio.user)
   portfolios: Portfolio[];
 
@@ -28,14 +38,5 @@ export class User {
 
   @Column({ nullable: true })
   verificationToken: string | null;
-
-  @Column({ default: true })
-  isActive: boolean;
-
-  @Column({ default: false })
-  isBanned: boolean;
-
-  @Column({ default: 'user' })
-  role: string; // 'user' | 'admin'
 }
 

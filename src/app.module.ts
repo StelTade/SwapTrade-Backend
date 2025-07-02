@@ -3,7 +3,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './user/user.entity';
-import { UserServices } from './user/provider/user-services.service';
+import { UserService } from './user/provider/user-services.service';
 import { PortfolioModule } from './portfolio/portfolio.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { CryptocurrencyModule } from './cryptocurrency/cryptocurrency.module';
@@ -21,10 +21,7 @@ import { AppService } from './app.service';
       isGlobal: true,
       envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
     }),
-    ThrottlerModule.forRoot({
-      ttl: 60,
-      limit: 20, // 20 requests per minute per IP globally
-    }),
+    ThrottlerModule.forRoot(),
     DatabaseModule,
     AuthModule,
     CryptocurrencyModule,

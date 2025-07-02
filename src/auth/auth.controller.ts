@@ -24,7 +24,14 @@ export class AuthController {
   @Auth(authTypes.None)
   @HttpCode(HttpStatus.OK)
   @UseInterceptors(ClassSerializerInterceptor)
-  public async SignIn(@Body() signInDto: SignInDto) {
+  public async signIn(@Body() signInDto: SignInDto) {
+    return await this.authService.SignIn(signInDto);
+  }
+
+  @Post('/login')
+  @Auth(authTypes.None)
+  @HttpCode(HttpStatus.OK)
+  public async login(@Body() signInDto: SignInDto) {
     return await this.authService.SignIn(signInDto);
   }
 

@@ -6,7 +6,7 @@ import { ConfigType } from '@nestjs/config';
 // import { User } from 'src/users/user.entity';
 import { ActiveUserData } from '../interface/activeInterface';
 import { User } from 'src/user/user.entity';
-import { UserServices } from 'src/user/provider/user-services.service';
+import { UserService } from 'src/user/provider/user-services.service';
 
 @Injectable()
 export class GenerateTokensProvider {
@@ -14,8 +14,8 @@ export class GenerateTokensProvider {
     /*
      * injecting userService repo
      */
-    @Inject(forwardRef(() => UserServices))
-    private readonly userService: UserServices,
+    @Inject(forwardRef(() => UserService))
+    private readonly userService: UserService,
 
     /*
      *injecting jwtService
