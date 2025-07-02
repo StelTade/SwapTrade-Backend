@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './user/user.entity';
-import { UserServices } from './user/provider/user-services.service';
+// import { UserServices } from './user/provider/user-services.service';
 import { PortfolioModule } from './portfolio/portfolio.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { CryptocurrencyModule } from './cryptocurrency/cryptocurrency.module';
@@ -13,6 +13,7 @@ import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -26,9 +27,9 @@ import { AppService } from './app.service';
     PortfolioModule,
     TransactionsModule,
     UserModule,
-    AuthModule,
     PasswordResetModule,
     EmailModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

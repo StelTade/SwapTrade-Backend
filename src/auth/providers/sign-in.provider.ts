@@ -6,16 +6,16 @@ import {
     UnauthorizedException,
   } from '@nestjs/common';
   import { SignInDto } from '../dtos/userDto';
-  import * as bcrypt from 'bcrypt'; // Assuming bcrypt
+  import * as bcrypt from 'bcrypt'; 
   import { GenerateTokensProvider } from './generate-tokens.provider';
-  import { UserServices } from 'src/user/provider/user-services.service';
+  import { UserService } from 'src/user/provider/user-services.service';
 import { HashingProvider } from './hashing';
   
   @Injectable()
   export class SignInProvider {
     constructor(
-      @Inject(forwardRef(() => UserServices))
-      private readonly userService: UserServices,
+      @Inject(forwardRef(() => UserService))
+      private readonly userService: UserService,
         private readonly hashingProvider: HashingProvider,
       private readonly generateTokenProvider: GenerateTokensProvider
     ) {}
