@@ -66,4 +66,26 @@ export class UserService {
     this.logger.log(`Updating password for user id: ${userId}`);
     
   }
+  async banUser(id: number): Promise<User> {
+    this.logger.log(`Banning user with id: ${id}`);
+    const user = await this.findOne(id);
+    user.isBanned = true;
+    user.isActive = false;
+    return this.usersRepository.save(user);
+  }
+
+  async activateUser(id: number): Promise<User> {
+    this.logger.log(`Activating user with id: ${id}`);
+    const user = await this.findOne(id);
+    user.isActive = true;
+    user.isBanned = false;
+    return this.usersRepository.save(user);
+  }
+
+  async deactivateUser(id: number): Promise<User> {
+    this.logger.log(`Deactivating user with id: ${id}`);
+    const user = await this.findOne(id);
+    user.isActive = false;
+    return this.usersRepository.save(user);
+  }
 }

@@ -23,10 +23,19 @@ export class User {
   @OneToMany(() => Portfolio, (portfolio) => portfolio.user)
   portfolios: Portfolio[];
 
-    @Column({ default: false })
+  @Column({ default: false })
   isVerified: boolean;
 
   @Column({ nullable: true })
-  verificationToken: string | null ;
+  verificationToken: string | null;
+
+  @Column({ default: true })
+  isActive: boolean;
+
+  @Column({ default: false })
+  isBanned: boolean;
+
+  @Column({ default: 'user' })
+  role: string; // 'user' | 'admin'
 }
 
