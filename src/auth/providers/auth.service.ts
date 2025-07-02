@@ -3,7 +3,7 @@ import { SignInDto } from '../dtos/userDto';
 import { SignInProvider } from './sign-in.provider';
 import { RefreshTokensProvider } from './refresh-tokens.provider';
 import { RefreshTokenDto } from '../dtos/refreshTokenDto';
-import { UserServices } from 'src/user/provider/user-services.service';
+import { UserService } from 'src/user/provider/user-services.service';
 
 @Injectable()
 export class AuthService {
@@ -14,8 +14,8 @@ export class AuthService {
         /* 
          * injecting user service
          */
-        @Inject(forwardRef(() => UserServices))
-        private readonly userService: UserServices,
+        @Inject(forwardRef(() => UserService))
+        private readonly userService: UserService,
 
         /* 
          * inject signInProvider

@@ -14,7 +14,7 @@ import { EmailService } from '../email/email.service';
 import * as crypto from 'crypto';
 import * as bcrypt from 'bcrypt';
 import * as moment from 'moment';
-import { UserServices } from 'src/user/provider/user-services.service';
+import { UserService } from 'src/user/provider/user-services.service';
 
 @Injectable()
 export class PasswordResetService {
@@ -24,7 +24,7 @@ export class PasswordResetService {
     @InjectRepository(PasswordResetToken)
     private passwordResetTokenRepository: Repository<PasswordResetToken>,
     private readonly emailService: EmailService,
-    private readonly usersService: UserServices,
+    private readonly usersService: UserService,
     private readonly configService: ConfigService,
   ) {}
 
@@ -74,7 +74,7 @@ export class PasswordResetService {
     // Send email
     await this.emailService.sendPasswordResetEmail(
       user.email,
-      user.firstName,
+      user.firstname,
       token,
     );
 
@@ -97,7 +97,7 @@ export class PasswordResetService {
     await this.passwordResetTokenRepository.save(resetToken);
 
     // Get user for confirmation email
-    const user = await this.usersService.findUserById(resetToken.userId);
+    const user = await this.usersService.findOne(resetToken.userId);
 
     // Send confirmation email
     await this.emailService.sendPasswordResetConfirmationEmail(

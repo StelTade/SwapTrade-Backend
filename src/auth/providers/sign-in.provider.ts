@@ -8,20 +8,20 @@ import {
   import { SignInDto } from '../dtos/userDto';
   import * as bcrypt from 'bcrypt'; // Assuming bcrypt
   import { GenerateTokensProvider } from './generate-tokens.provider';
-  import { UserServices } from 'src/user/provider/user-services.service';
+  import { UserService } from 'src/user/provider/user-services.service';
 import { HashingProvider } from './hashing';
   
   @Injectable()
   export class SignInProvider {
     constructor(
-      @Inject(forwardRef(() => UserServices))
-      private readonly userService: UserServices,
+      @Inject(forwardRef(() => UserService))
+      private readonly userService: UserService,
         private readonly hashingProvider: HashingProvider,
       private readonly generateTokenProvider: GenerateTokensProvider
     ) {}
   
     public async SignIn(signInDto: SignInDto) {
-        let user = await this.userService.getOneByEmail(signInDto.email);
+        let user = await this.userService.findUserByEmail(signInDto.email);
         if (!user) {
           throw new UnauthorizedException('email or password is incorrect');
         }

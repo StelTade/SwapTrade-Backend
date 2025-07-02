@@ -5,12 +5,12 @@ import { ConfigService } from '@nestjs/config';
 import { PasswordResetService } from './password-reset.service';
 import { PasswordResetToken } from './entities/password-reset-token.entity';
 import { EmailService } from '../email/email.service';
-import { UserServices } from 'src/user/provider/user-services.service';
+import { UserService } from 'src/user/provider/user-services.service';
 describe('PasswordResetService', () => {
   let service: PasswordResetService;
   let repository: Repository<PasswordResetToken>;
   let emailService: EmailService;
-  let usersService: UserServices;
+  let usersService: UserService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -28,7 +28,7 @@ describe('PasswordResetService', () => {
           },
         },
         {
-          provide: UserServices,
+          provide: UserService,
           useValue: {
             findByEmail: jest.fn(),
             findOne: jest.fn(),
@@ -55,7 +55,7 @@ describe('PasswordResetService', () => {
       getRepositoryToken(PasswordResetToken),
     );
     emailService = module.get<EmailService>(EmailService);
-    usersService = module.get<UserServices>(UserServices);
+    usersService = module.get<UserService>(UserService);
   });
 
   it('should be defined', () => {
@@ -67,7 +67,14 @@ describe('PasswordResetService', () => {
       const mockUser = {
         id: 1,
         email: 'test@example.com',
-        firstName: 'John',
+        firstname: 'John',
+        lastname: 'Doe',
+        role: 'user',
+        portfolios: [],
+        isVerified: true,
+        verificationToken: null,
+        isBanned: false,
+        isActive: true,
       };
 
       jest.spyOn(usersService, 'findUserByEmail').mockResolvedValue(mockUser);

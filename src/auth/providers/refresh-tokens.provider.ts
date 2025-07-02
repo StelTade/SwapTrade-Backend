@@ -9,13 +9,13 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigType } from '@nestjs/config';
 import jwtConfig from '../authConfig/jwt.config';
 import { GenerateTokensProvider } from './generate-tokens.provider';
-import { UserServices } from 'src/user/provider/user-services.service';
+import { UserService } from 'src/user/provider/user-services.service';
 
 @Injectable()
 export class RefreshTokensProvider {
   constructor(
-    @Inject(forwardRef(() => UserServices))
-    private readonly userService: UserServices,
+    @Inject(forwardRef(() => UserService))
+    private readonly userService: UserService,
 
     private readonly jwtService: JwtService,
 
@@ -35,7 +35,7 @@ export class RefreshTokensProvider {
       }
     );
 
-    const user = await this.userService.findOneById(sub);
+    const user = await this.userService.findOne(sub);
 
     if (!user) {
       throw new UnauthorizedException('Invalid refresh token');

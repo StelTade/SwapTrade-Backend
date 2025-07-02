@@ -62,9 +62,9 @@ export class UserService {
     return this.usersRepository.findOne({ where: { email } });
   }
 
-  updatePassword(userId: number): void {
+  async updatePassword(userId: number, newPassword: string): Promise<void> {
     this.logger.log(`Updating password for user id: ${userId}`);
-    
+    await this.usersRepository.update(userId, { password: newPassword });
   }
   async banUser(id: number): Promise<User> {
     this.logger.log(`Banning user with id: ${id}`);
