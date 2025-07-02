@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './user/user.entity';
@@ -19,6 +20,10 @@ import { AppService } from './app.service';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
+    }),
+    ThrottlerModule.forRoot({
+      ttl: 60,
+      limit: 20, // 20 requests per minute per IP globally
     }),
     DatabaseModule,
     AuthModule,
