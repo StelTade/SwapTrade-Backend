@@ -14,6 +14,7 @@ import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -28,9 +29,9 @@ import { AppService } from './app.service';
     PortfolioModule,
     TransactionsModule,
     UserModule,
-    AuthModule,
     PasswordResetModule,
     EmailModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -6,7 +6,7 @@ import {
     UnauthorizedException,
   } from '@nestjs/common';
   import { SignInDto } from '../dtos/userDto';
-  import * as bcrypt from 'bcrypt'; // Assuming bcrypt
+  import * as bcrypt from 'bcrypt'; 
   import { GenerateTokensProvider } from './generate-tokens.provider';
   import { UserService } from 'src/user/provider/user-services.service';
 import { HashingProvider } from './hashing';
