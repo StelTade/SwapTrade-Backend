@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { NotificationsService } from '../notifications/notifications.service';
-import { NotificationType } from 'src/notifications/enums/notification-type.enum';
+import { NotificationType } from '../notifications/enums/notification-type.enum';
 
 
 @Injectable()

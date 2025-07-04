@@ -15,6 +15,7 @@ import { UserModule } from './user/user.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { NotificationsModule } from './notifications/notifications.module';
+import { OffersModule } from './offers/offers.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     PasswordResetModule,
     EmailModule,
     NotificationsModule,
+    OffersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
