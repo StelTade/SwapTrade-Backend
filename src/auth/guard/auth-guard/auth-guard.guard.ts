@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AccessTokenGuard } from '../access-token/access-token.guard';
-import { authTypes } from 'src/auth/enums/authTypes.enum';
+import { authTypes } from '../../enums/authTypes.enum';
 import { AUTH_TYPE_KEY } from 'src/auth/constants/auth.constant';
 
 @Injectable()

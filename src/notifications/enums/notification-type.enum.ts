@@ -3,4 +3,4 @@ export enum NotificationType {
   OfferAccepted = 'offerAccepted',
   OfferDeclined = 'offerDeclined',
   StatusChanged = 'statusChanged',
-} 
+}

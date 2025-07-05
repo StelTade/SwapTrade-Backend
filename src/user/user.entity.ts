@@ -1,5 +1,5 @@
 import { Exclude } from 'class-transformer';
-import { Portfolio } from 'src/portfolio/entities/portfolio.entity';
+import { Portfolio } from '../portfolio/entities/portfolio.entity';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
