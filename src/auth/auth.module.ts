@@ -14,6 +14,7 @@ import { RefreshTokensProvider } from './providers/refresh-tokens.provider';
 import { User } from 'src/user/user.entity';
 import { MailModule } from '../mail/mail.module';
 import jwtConfig from './authConfig/jwt.config';
+import { UserModule } from '../user/user.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import jwtConfig from './authConfig/jwt.config';
     MailModule,
     ConfigModule.forFeature(jwtConfig),
     JwtModule.registerAsync(jwtConfig.asProvider()),
+    UserModule,
     // forwardRef(() => UsersModule), // Uncomment if needed later
   ],
   controllers: [AuthController],

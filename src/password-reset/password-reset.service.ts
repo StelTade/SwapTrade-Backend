@@ -14,7 +14,7 @@ import { EmailService } from '../email/email.service';
 import * as crypto from 'crypto';
 import * as bcrypt from 'bcrypt';
 import * as moment from 'moment';
-import { UserService } from 'src/user/provider/user-services.service';
+import { UserService } from '../user/provider/user-services.service';
 
 @Injectable()
 export class PasswordResetService {
