@@ -23,6 +23,7 @@
     "migrate:offer": "ts-node -r tsconfig-paths/register src/database/run-migration.ts"
   },
   "dependencies": {
+    "@css-inline/css-inline-linux-x64-gnu": "^0.17.0",
     "@nestjs-modules/mailer": "^2.0.2",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.2",

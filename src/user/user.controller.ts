@@ -9,13 +9,24 @@ import {
   Delete,
   ParseIntPipe,
 } from '@nestjs/common';
+import { Query } from '@nestjs/common';
+import { UserHistoryFilterDto } from './dto/user-history-filter.dto';
 import { UserService } from '../user/provider/user-services.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
+
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  @Get(':id/history')
+  async getUserHistory(
+    @Param('id', ParseIntPipe) id: number,
+    @Query() filter: UserHistoryFilterDto,
+  ) {
+    return this.userService.getUserHistory(id, filter);
+  }
 
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
