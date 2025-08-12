@@ -16,6 +16,18 @@ async function bootstrap() {
     credentials: true,
   });
 
-  await app.listen(process.env.PORT ?? 3000);
+    // Global Validation Pipe
+    const { ValidationPipe } = await import('@nestjs/common');
+    app.useGlobalPipes(new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }));
+
+    // Global Exception Filter
+    const { AllExceptionsFilter } = await import('./utils/all-exceptions.filter');
+    app.useGlobalFilters(new AllExceptionsFilter());
+
+    await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
