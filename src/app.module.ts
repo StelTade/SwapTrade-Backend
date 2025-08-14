@@ -14,6 +14,7 @@ import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { TestValidationController } from './test-validation.controller';
 import { NotificationsModule } from './notifications/notifications.module';
 import { OffersModule } from './offers/offers.module';
 
@@ -35,7 +36,7 @@ import { OffersModule } from './offers/offers.module';
     NotificationsModule,
     OffersModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, TestValidationController],
   providers: [AppService],
 })
 export class AppModule {}

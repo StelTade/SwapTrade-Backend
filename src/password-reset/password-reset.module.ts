@@ -5,8 +5,8 @@ import { PasswordResetController } from './password-reset.controller';
 import { PasswordResetService } from './password-reset.service';
 import { PasswordResetToken } from './entities/password-reset-token.entity';
 import { EmailModule } from '../email/email.module';
-import { throttlerConfig } from 'src/config/throttler.config';
-import { UserModule } from 'src/user/user.module';
+import { throttlerConfig } from '../config/throttler.config';
+import { UserModule } from '../user/user.module';
 
 @Module({
   imports: [

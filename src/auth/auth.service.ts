@@ -2,7 +2,7 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RegisterDto } from './dtos/register.dto';
-import { User } from 'src/user/user.entity';
+import { User } from '../user/user.entity';
 import * as bcrypt from 'bcryptjs';
 import { generateVerificationToken, verifyJwtToken } from '../utils/jwt.util';
 import { MailService } from '../mail/mail.service';
