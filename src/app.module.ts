@@ -1,42 +1,10 @@
 import { Module } from '@nestjs/common';
-import { ThrottlerModule } from '@nestjs/throttler';
-import { ConfigModule } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from './user/user.entity';
-import { UserService } from './user/provider/user-services.service';
-import { PortfolioModule } from './portfolio/portfolio.module';
-import { TransactionsModule } from './transactions/transactions.module';
-import { CryptocurrencyModule } from './cryptocurrency/cryptocurrency.module';
-import { PasswordResetModule } from './password-reset/password-reset.module';
-import { EmailModule } from './email/email.module';
-import { DatabaseModule } from './database/database.module';
-import { AuthModule } from './auth/auth.module';
-import { UserModule } from './user/user.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { TestValidationController } from './test-validation.controller';
-import { NotificationsModule } from './notifications/notifications.module';
-import { OffersModule } from './offers/offers.module';
 
 @Module({
-  imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: '.env',
-    }),
-    ThrottlerModule.forRoot(),
-    DatabaseModule,
-    AuthModule,
-    CryptocurrencyModule,
-    PortfolioModule,
-    TransactionsModule,
-    UserModule,
-    PasswordResetModule,
-    EmailModule,
-    NotificationsModule,
-    OffersModule,
-  ],
-  controllers: [AppController, TestValidationController],
+  imports: [],
+  controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}
