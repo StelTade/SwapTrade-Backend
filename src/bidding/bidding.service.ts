@@ -2,8 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class BiddingService {
-  login(body: any) {
-    // Placeholder logic
-    return { message: 'Logged in', body };
+  CreateBid(createBidDto: any) {
+    throw new Error('Method not implemented.');
   }
 }
