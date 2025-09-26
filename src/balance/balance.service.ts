@@ -10,8 +10,10 @@ export class BalanceService {
     private readonly balanceRepository: Repository<Balance>,
   ) {}
 
-  async getUserBalances(userId: string): Promise<Array<{ asset: string; balance: number }>> {
+  async getUserBalances(
+    userId: string,
+  ): Promise<Array<{ asset: string; balance: number }>> {
     const balances = await this.balanceRepository.find({ where: { userId } });
-    return balances.map(b => ({ asset: b.asset, balance: b.balance }));
+    return balances.map((b) => ({ asset: b.asset, balance: b.balance }));
   }
 }

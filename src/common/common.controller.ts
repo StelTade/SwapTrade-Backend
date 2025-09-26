@@ -8,5 +8,4 @@ export class CommonController {
   getStatus() {
     return { status: 'ok' };
   }
-
 }
