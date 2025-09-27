@@ -11,8 +11,29 @@ import { BiddingModule } from './bidding/bidding.module';
 import { CommonModule } from './common/common.module';
 import { DatabaseModule } from './database/database.module';
 
+import { BalanceModule } from './balance/balance.module';
+
+import { TypeOrmModule } from '@nestjs/typeorm';
+
 @Module({
-  imports: [AuthModule, PortfolioModule, TradingModule, UserModule, RewardsModule, NotificationModule, BiddingModule, CommonModule, DatabaseModule],
+  imports: [
+    TypeOrmModule.forRoot({
+      type: 'sqlite',
+      database: 'swaptrade.db',
+      entities: [__dirname + '/**/*.entity{.ts,.js}'],
+      synchronize: true,
+    }),
+    AuthModule,
+    PortfolioModule,
+    TradingModule,
+    UserModule,
+    RewardsModule,
+    NotificationModule,
+    BiddingModule,
+    CommonModule,
+    DatabaseModule,
+    BalanceModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

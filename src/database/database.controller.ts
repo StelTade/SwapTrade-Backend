@@ -11,6 +11,6 @@ export class DatabaseController {
 
   @Post('seed')
   async seedDatabase() {
-    return this.databaseService.seed();
+    return await this.databaseService.seed();
   }
 }

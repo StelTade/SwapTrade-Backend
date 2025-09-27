@@ -5,5 +5,4 @@ export class DatabaseService {
   seed() {
     throw new Error('Method not implemented.');
   }
-
 }
