@@ -2,6 +2,7 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
+
   OneToMany,
   CreateDateColumn,
   UpdateDateColumn,
@@ -26,6 +27,24 @@ export class VirtualAsset {
 
   @OneToMany(() => UserBalance, (balance) => balance.asset)
   balances: UserBalance[];
+
+  CreateDateColumn,
+  UpdateDateColumn,
+  Index,
+} from 'typeorm';
+
+@Entity('virtual_assets')
+export class VirtualAsset {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Index({ unique: true })
+  @Column({ unique: true })
+  symbol: string;
+
+  @Column()
+  name: string;
+
 
   @CreateDateColumn()
   createdAt: Date;
