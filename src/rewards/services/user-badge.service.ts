@@ -22,4 +22,8 @@ export class UserBadgeService {
     const badge = this.userBadgeRepository.create({ userId, badgeName });
     return await this.userBadgeRepository.save(badge);
   }
+
+  async findByUserId(userId: number): Promise<UserBadge[]> {
+    return this.userBadgeRepository.find({ where: { userId } });
+  }
 }

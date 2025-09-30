@@ -1,12 +1,15 @@
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { RewardsController } from './rewards.controller';
 import { RewardsService } from './rewards.service';
-import { UserBadgeModule } from './user-badge.module';
+import { BadgeController } from './controllers/badge.controller';
+import { UserBadgeService } from './services/user-badge.service';
+import { UserBadge } from './entities/user-badge.entity';
 
 @Module({
-  imports: [UserBadgeModule],
-  controllers: [RewardsController],
-  providers: [RewardsService],
-  exports: [UserBadgeModule],
+  imports: [TypeOrmModule.forFeature([UserBadge])],
+  controllers: [RewardsController, BadgeController],
+  providers: [RewardsService, UserBadgeService],
+  exports: [UserBadgeService],
 })
 export class RewardsModule {}
