@@ -79,7 +79,7 @@ describe('TradingService', () => {
   });
 
   it('should return error for missing parameters', async () => {
-    const result = await service.swap(null, '', null, null, '');
+  const result = await service.swap(0, '', 0, 0, '');
     expect(result.success).toBe(false);
     expect(result.error).toBe('Missing required swap parameters.');
   });
