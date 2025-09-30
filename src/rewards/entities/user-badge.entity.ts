@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
 
-@Entity()
+@Entity('user_badges')
 export class UserBadge {
   @PrimaryGeneratedColumn()
   id: number;
@@ -9,10 +9,8 @@ export class UserBadge {
   userId: number;
 
   @Column()
-  badge: string;
+  badgeName: string;
 
   @CreateDateColumn()
   awardedAt: Date;
 }
-
-

@@ -10,9 +10,20 @@ export class UserBadgeService {
     private readonly userBadgeRepository: Repository<UserBadge>,
   ) {}
 
+  async hasBadge(userId: number, badgeName: string): Promise<boolean> {
+    const badge = await this.userBadgeRepository.findOne({ where: { userId, badgeName } });
+    return !!badge;
+  }
+
+  async awardBadge(userId: number, badgeName: string): Promise<UserBadge | null> {
+    if (await this.hasBadge(userId, badgeName)) {
+      return null;
+    }
+    const badge = this.userBadgeRepository.create({ userId, badgeName });
+    return await this.userBadgeRepository.save(badge);
+  }
+
   async findByUserId(userId: number): Promise<UserBadge[]> {
     return this.userBadgeRepository.find({ where: { userId } });
   }
 }
-
-

@@ -10,5 +10,6 @@ import { UserBadge } from './entities/user-badge.entity';
   imports: [TypeOrmModule.forFeature([UserBadge])],
   controllers: [RewardsController, BadgeController],
   providers: [RewardsService, UserBadgeService],
+  exports: [UserBadgeService],
 })
 export class RewardsModule {}
