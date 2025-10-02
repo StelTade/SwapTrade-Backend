@@ -79,4 +79,65 @@ export class SwapService {
       };
     });
   }
+
+  async swap(userId: string, fromSymbol: string, toSymbol: string, amount: number): Promise<{
+    userId: string;
+    from: { asset: string; balance: number };
+    to: { asset: string; balance: number };
+  }> {
+    if (fromSymbol === toSymbol) {
+      throw new BadRequestException('From and to assets must be different');
+    }
+
+    if (amount <= 0) {
+      throw new BadRequestException('Amount must be greater than 0');
+    }
+
+    // Ensure both tokens are supported
+    const [fromAsset, toAsset] = await Promise.all([
+      this.assetRepo.findOne({ where: { symbol: fromSymbol } }),
+      this.assetRepo.findOne({ where: { symbol: toSymbol } }),
+    ]);
+
+    if (!fromAsset) throw new NotFoundException(`Unsupported token: ${fromSymbol}`);
+    if (!toAsset) throw new NotFoundException(`Unsupported token: ${toSymbol}`);
+
+    // Execute the swap within a transaction
+    return this.dataSource.transaction(async (manager) => {
+      const balanceRepo = manager.withRepository(this.balanceRepo);
+
+      // Load balances
+      const fromBalance = await balanceRepo.findOne({ where: { userId, asset: fromSymbol } });
+      const toBalance = await balanceRepo.findOne({ where: { userId, asset: toSymbol } });
+
+      if (!fromBalance || fromBalance.balance < amount) {
+        throw new BadRequestException('Insufficient funds');
+      }
+
+      // 1:1 rate placeholder
+      const receiveAmount = amount;
+
+      // Update balances
+      fromBalance.balance -= amount;
+
+      let updatedToBalance: Balance;
+      if (toBalance) {
+        toBalance.balance += receiveAmount;
+        updatedToBalance = toBalance;
+      } else {
+        // Create a new balance entry if toBalance does not exist
+        const newBalance = balanceRepo.create({ userId, asset: toSymbol, balance: receiveAmount });
+        updatedToBalance = await balanceRepo.save(newBalance);
+      }
+
+      // Save the updated fromBalance
+      await balanceRepo.save(fromBalance);
+
+      return {
+        userId,
+        from: { asset: fromSymbol, balance: fromBalance.balance },
+        to: { asset: toSymbol, balance: updatedToBalance.balance },
+      };
+    });
+  }
 }

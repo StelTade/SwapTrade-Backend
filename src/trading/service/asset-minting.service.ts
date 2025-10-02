@@ -22,6 +22,6 @@ export class AssetMintingService {
     }
 
     // 2. Update or create user balance
-    return this.userBalanceService.addBalance(userId, asset.id, amount);
+    return this.userBalanceService.addBalance(userId, asset.id.toString(),  amount);
   }
 }

@@ -9,6 +9,9 @@ export class VirtualAsset {
   @Column({ type: 'varchar', length: 50, unique: true })
   symbol: string; // e.g. BTC, ETH
 
+  @Column({ type: 'number' })
+  balances: number;
+
   @Column({ type: 'varchar', length: 100 })
   name: string; // e.g. Bitcoin, Ethereum
 
