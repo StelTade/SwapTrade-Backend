@@ -12,6 +12,7 @@ import { CommonModule } from './common/common.module';
 import { DatabaseModule } from './database/database.module';
 
 import { BalanceModule } from './balance/balance.module';
+import { SwapModule } from './swap/swap.module';
 
 import { TypeOrmModule } from '@nestjs/typeorm';
 
@@ -20,7 +21,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     TypeOrmModule.forRoot({
       type: 'sqlite',
       database: 'swaptrade.db',
-      entities: [__dirname + '/**/*.entity{.ts,.js}'],
+      autoLoadEntities: true,
       synchronize: true,
     }),
     AuthModule,
@@ -33,6 +34,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     CommonModule,
     DatabaseModule,
     BalanceModule,
+    SwapModule,
   ],
   controllers: [AppController],
   providers: [AppService],

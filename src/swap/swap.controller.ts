@@ -2,11 +2,17 @@
  * Swap Controller
  *
  * Handles HTTP requests related to swap operations.
- * TODO: Implement swap endpoints.
  */
-import { Controller } from '@nestjs/common';
+import { Body, Controller, Post, ValidationPipe } from '@nestjs/common';
+import { SwapService } from './swap.service';
+import { CreateSwapDto } from './dto/create-swap.dto';
 
 @Controller('swap')
 export class SwapController {
-  // TODO: Add controller methods for swap operations
+  constructor(private readonly swapService: SwapService) {}
+
+  @Post()
+  async swap(@Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true })) body: CreateSwapDto) {
+    return this.swapService.executeSwap(body);
+  }
 }
