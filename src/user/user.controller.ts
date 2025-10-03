@@ -1,7 +1,15 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { UserService } from './user.service';
+import { PortfolioStatsDto } from './dto/portfolio-stats.dto';
 
-@Controller('User')
+@Controller('user')
 export class UserController {
-  constructor(private readonly UserService: UserService) {}
+  constructor(private readonly userService: UserService) { }
+
+  @Get(':userId/portfolio')
+  async getPortfolioStats(
+    @Param('userId') userId: string,
+  ): Promise<PortfolioStatsDto> {
+    return this.userService.getPortfolioStats(userId);
+  }
 }

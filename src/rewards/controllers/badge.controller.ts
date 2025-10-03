@@ -3,7 +3,7 @@ import { UserBadgeService } from '../services/user-badge.service';
 
 @Controller('badges')
 export class BadgeController {
-  constructor(private readonly userBadgeService: UserBadgeService) {}
+  constructor(private readonly userBadgeService: UserBadgeService) { }
 
   @Get(':userId')
   async getUserBadges(@Param('userId', ParseIntPipe) userId: number) {
