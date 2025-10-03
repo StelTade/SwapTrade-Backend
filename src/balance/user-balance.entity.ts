@@ -22,12 +22,25 @@ export class UserBalance {
   @Column({ type: 'uuid' })
   assetId: string;
 
-  @ManyToOne(() => VirtualAsset, (asset) => asset.balances, { eager: true })
+  @ManyToOne(() => VirtualAsset, { eager: true })
   @JoinColumn({ name: 'assetId' })
   asset: VirtualAsset;
 
   @Column({ type: 'decimal', precision: 18, scale: 8, default: 0 })
   amount: number;
+
+  // Portfolio tracking fields - NEW
+  @Column({ type: 'int', default: 0 })
+  totalTrades: number;
+
+  @Column({ type: 'decimal', precision: 18, scale: 8, default: 0 })
+  cumulativePnL: number;
+
+  @Column({ type: 'decimal', precision: 18, scale: 8, default: 0 })
+  totalTradeVolume: number;
+
+  @Column({ type: 'timestamp', nullable: true })
+  lastTradeDate: Date;
 
   @CreateDateColumn()
   createdAt: Date;

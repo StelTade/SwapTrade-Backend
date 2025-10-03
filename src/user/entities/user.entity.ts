@@ -21,6 +21,18 @@ export class User {
   @Column({ type: 'enum', enum: UserRole })
   role: UserRole;
 
+  @Column({ type: 'int', default: 0 })
+  totalTrades: number;
+
+  @Column({ type: 'decimal', precision: 18, scale: 8, default: 0 })
+  cumulativePnL: number;
+
+  @Column({ type: 'decimal', precision: 18, scale: 8, default: 0 })
+  totalTradeVolume: number;
+
+  @UpdateDateColumn()
+  lastTradeDate: Date;
+
   @CreateDateColumn()
   createdAt: Date;
 

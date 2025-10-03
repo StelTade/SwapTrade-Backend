@@ -10,7 +10,7 @@ export class AssetMintingService {
     @InjectRepository(VirtualAsset)
     private readonly assetRepo: Repository<VirtualAsset>,
     private readonly userBalanceService: UserBalanceService,
-  ) {}
+  ) { }
 
   async mintAsset(userId: string, assetSymbol: string, amount: number) {
     // 1. Validate asset exists
@@ -22,6 +22,6 @@ export class AssetMintingService {
     }
 
     // 2. Update or create user balance
-    return this.userBalanceService.addBalance(userId, asset.id, amount);
+    return this.userBalanceService.addBalance(userId, asset.id.toString(), amount);
   }
 }
