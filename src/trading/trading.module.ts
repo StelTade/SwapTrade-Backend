@@ -4,12 +4,15 @@ import { TradingController } from './trading.controller';
 import { TradingService } from './trading.service';
 import { UserBadgeModule } from '../rewards/user-badge.module';
 import { Trade } from './entities/trade.entity';
+import { NotificationModule } from '../notification/notification.module';
 
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Trade]),
-    UserBadgeModule],
+    UserBadgeModule,
+    NotificationModule,
+  ],
   controllers: [TradingController],
   providers: [TradingService],
 })

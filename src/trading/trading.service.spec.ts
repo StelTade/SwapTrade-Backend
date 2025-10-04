@@ -5,11 +5,15 @@ import { Trade } from './entities/trade.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TradeType } from '../common/enums/trade-type.enum';
+import { NotificationService } from '../notification/notification.service';
+import { UserService } from '../user/user.service';
+import { NotificationEventType } from '../common/enums/notification-event-type.enum';
 
 describe('TradingService', () => {
   let service: TradingService;
   let tradeRepo: Repository<Trade>;
   let badgeService: UserBadgeService;
+  let notificationService: NotificationService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -29,12 +33,26 @@ describe('TradingService', () => {
             awardBadge: jest.fn(),
           },
         },
+        {
+          provide: UserService,
+          useValue: {
+            updatePortfolioAfterTrade: jest.fn(),
+            updateBalance: jest.fn(),
+          },
+        },
+        {
+          provide: NotificationService,
+          useValue: {
+            sendEvent: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
     service = module.get<TradingService>(TradingService);
     tradeRepo = module.get<Repository<Trade>>(getRepositoryToken(Trade));
     badgeService = module.get<UserBadgeService>(UserBadgeService);
+    notificationService = module.get<NotificationService>(NotificationService);
   });
 
   it('should create a trade and award badge on first trade', async () => {
@@ -57,6 +75,16 @@ describe('TradingService', () => {
     expect(result.badgeAwarded).toBe(true);
     expect(tradeRepo.create).toHaveBeenCalledWith({ userId, asset, amount, price, type: TradeType.BUY });
     expect(badgeService.awardBadge).toHaveBeenCalledWith(userId, 'First Trade');
+    expect(notificationService.sendEvent).toHaveBeenCalledWith(
+      userId,
+      NotificationEventType.ORDER_FILLED,
+      `Order ${type} ${amount} ${asset} at ${price} filled`,
+    );
+    expect(notificationService.sendEvent).toHaveBeenCalledWith(
+      userId,
+      NotificationEventType.ACHIEVEMENT_UNLOCKED,
+      'Achievement unlocked: First Trade',
+    );
   });
 
   it('should not award badge on subsequent trades', async () => {
@@ -76,6 +104,11 @@ describe('TradingService', () => {
     expect(result.success).toBe(true);
     expect(result.badgeAwarded).toBe(false);
     expect(badgeService.awardBadge).not.toHaveBeenCalled();
+    expect(notificationService.sendEvent).toHaveBeenCalledWith(
+      userId,
+      NotificationEventType.ORDER_FILLED,
+      `Order ${type} ${amount} ${asset} at ${price} filled`,
+    );
   });
 
   it('should return error for missing parameters', async () => {

@@ -5,12 +5,15 @@ import { UserBadgeService } from '../rewards/services/user-badge.service';
 import { UserService } from '../user/user.service';
 import { Trade } from './entities/trade.entity';
 import { TradeType } from '../common/enums/trade-type.enum';
+import { NotificationService } from '../notification/notification.service';
+import { NotificationEventType } from '../common/enums/notification-event-type.enum';
 
 @Injectable()
 export class TradingService {
 	constructor(
 		private readonly userBadgeService: UserBadgeService,
 		private readonly userService: UserService,
+		private readonly notificationService: NotificationService,
 		@InjectRepository(Trade)
 		private readonly tradeRepository: Repository<Trade>,
 	) { }
@@ -46,6 +49,13 @@ export class TradingService {
 			});
 			await this.tradeRepository.save(trade);
 
+			// Emit order filled notification
+			await this.notificationService.sendEvent(
+				userId,
+				NotificationEventType.ORDER_FILLED,
+				`Order ${type} ${amount} ${asset} at ${price} filled`,
+			);
+
 			// Calculate trade value
 			const tradeValue = amount * price;
 
@@ -79,6 +89,13 @@ export class TradingService {
 				const badgeName = 'First Trade';
 				const badge = await this.userBadgeService.awardBadge(userId, badgeName);
 				badgeAwarded = !!badge;
+				if (badgeAwarded) {
+					await this.notificationService.sendEvent(
+						userId,
+						NotificationEventType.ACHIEVEMENT_UNLOCKED,
+						`Achievement unlocked: ${badgeName}`,
+					);
+				}
 			}
 
 			return { success: true, trade, badgeAwarded };
