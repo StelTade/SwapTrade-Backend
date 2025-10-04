@@ -15,6 +15,7 @@ import { BalanceModule } from './balance/balance.module';
 import { SwapModule } from './swap/swap.module';
 
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { TutorialModule } from './tutorial/tutorial.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     DatabaseModule,
     BalanceModule,
     SwapModule,
+    TutorialModule,
   ],
   controllers: [AppController],
   providers: [AppService],
