@@ -9,10 +9,6 @@ export class RewardsController {
   @Post('evaluate/:userId')
   async evaluate(@Param('userId', ParseIntPipe) userId: number) {
     const awarded = await this.userBadgeService.evaluateAndAwardForUser(userId);
-
-    // Defensive: ensure awarded is an array before using .length
-    const awardedArray = Array.isArray(awarded) ? awarded : [];
-    const message = awardedArray.length ? 'New badges awarded' : 'No new badges';
-    return { message, awarded: awardedArray };
+    return { message: awarded.length ? 'New badges awarded' : 'No new badges', awarded };
   }
 }
