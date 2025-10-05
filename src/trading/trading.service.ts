@@ -5,6 +5,9 @@ import { UserBadgeService } from '../rewards/services/user-badge.service';
 import { UserService } from '../user/user.service';
 import { Trade } from './entities/trade.entity';
 import { TradeType } from '../common/enums/trade-type.enum';
+import { AMMService } from './service/amm.service';
+import { OrderBookService } from './service/order-book.service';
+import { OrderType } from '../common/enums/order-type.enum';
 
 @Injectable()
 export class TradingService {
@@ -13,6 +16,8 @@ export class TradingService {
 		private readonly userService: UserService,
 		@InjectRepository(Trade)
 		private readonly tradeRepository: Repository<Trade>,
+		private readonly ammService: AMMService,
+		private readonly orderBookService: OrderBookService,
 	) { }
 
 	async swap(
@@ -37,17 +42,30 @@ export class TradingService {
 		try {
 			// Convert type string to TradeType enum
 			const tradeTypeEnum = type === 'BUY' ? TradeType.BUY : TradeType.SELL;
+
+			// Execute trade through AMM for realistic pricing
+			const ammResult = await this.ammService.executeSwap(
+				asset,
+				amount,
+				tradeTypeEnum === TradeType.BUY,
+			);
+
+			if (!ammResult.success) {
+				return { success: false, error: ammResult.error || 'Trade execution failed.' };
+			}
+
+			// Create trade record
 			trade = this.tradeRepository.create({
 				userId,
 				asset,
 				amount,
-				price,
+				price: ammResult.executionPrice,
 				type: tradeTypeEnum,
 			});
 			await this.tradeRepository.save(trade);
 
-			// Calculate trade value
-			const tradeValue = amount * price;
+			// Calculate trade value using actual execution price
+			const tradeValue = ammResult.executionPrice * amount;
 
 			// Calculate PnL (simplified - in real scenario, compare with previous trades)
 			// For BUY: negative PnL (cost), for SELL: positive PnL (gain)
@@ -63,7 +81,7 @@ export class TradingService {
 			);
 
 			// Update user balance
-			const balanceChange = tradeTypeEnum === TradeType.BUY ? amount : -amount;
+			const balanceChange = tradeTypeEnum === TradeType.BUY ? ammResult.outputAmount : -amount;
 			await this.userService.updateBalance(
 				userId.toString(),
 				asset,
@@ -85,5 +103,43 @@ export class TradingService {
 		} catch (error) {
 			return { success: false, error: error.message };
 		}
+	}
+
+	async placeOrder(
+		userId: number,
+		asset: string,
+		type: OrderType,
+		amount: number,
+		price: number,
+	): Promise<{
+		success: boolean;
+		order?: any;
+		error?: string;
+	}> {
+		try {
+			const order = await this.orderBookService.placeOrder(
+				userId,
+				asset,
+				type,
+				amount,
+				price,
+			);
+
+			return { success: true, order };
+		} catch (error) {
+			return { success: false, error: error.message };
+		}
+	}
+
+	async getOrderBook(asset: string): Promise<any> {
+		return this.orderBookService.getOrderBook(asset);
+	}
+
+	async cancelOrder(orderId: number, userId: number): Promise<boolean> {
+		return this.orderBookService.cancelOrder(orderId, userId);
+	}
+
+	async executeOrder(orderId: number): Promise<any> {
+		return this.orderBookService.executeOrder(orderId);
 	}
 }
