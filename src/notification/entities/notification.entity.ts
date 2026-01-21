@@ -20,7 +20,7 @@ export class Notification {
   @Column()
   message: string;
 
-  @Column({ type: 'enum', enum: NotificationStatus })
+  @Column({ type: 'varchar', default: 'UNREAD' })
   status: NotificationStatus;
 
   @CreateDateColumn()

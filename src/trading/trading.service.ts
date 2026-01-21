@@ -7,6 +7,9 @@ import { Trade } from './entities/trade.entity';
 import { TradeType } from '../common/enums/trade-type.enum';
 import { NotificationService } from '../notification/notification.service';
 import { NotificationEventType } from '../common/enums/notification-event-type.enum';
+import { OrderBook } from './entities/order-book.entity';
+import { OrderType } from '../common/enums/order-type.enum';
+import { OrderStatus } from '../common/enums/order-status.enum';
 
 @Injectable()
 export class TradingService {
@@ -16,6 +19,8 @@ export class TradingService {
 		private readonly notificationService: NotificationService,
 		@InjectRepository(Trade)
 		private readonly tradeRepository: Repository<Trade>,
+		@InjectRepository(OrderBook)
+		private readonly orderBookRepository: Repository<OrderBook>,
 	) { }
 
 	async swap(
@@ -80,7 +85,7 @@ export class TradingService {
 				balanceChange,
 			);
 
-			// Check if this is the user's first trade
+			// Check if this is the user's first trade (with eager loading)
 			const previousTrades = await this.tradeRepository.count({
 				where: { userId },
 			});
@@ -99,6 +104,80 @@ export class TradingService {
 			}
 
 			return { success: true, trade, badgeAwarded };
+		} catch (error) {
+			return { success: false, error: error.message };
+		}
+	}
+
+	async placeOrder(
+		userId: number,
+		asset: string,
+		type: OrderType,
+		amount: number,
+		price: number,
+	): Promise<any> {
+		try {
+			const order = this.orderBookRepository.create({
+				userId,
+				asset,
+				type,
+				amount,
+				price,
+				status: OrderStatus.PENDING,
+				filledAmount: 0,
+				remainingAmount: amount,
+			});
+
+			return await this.orderBookRepository.save(order);
+		} catch (error) {
+			return { success: false, error: error.message };
+		}
+	}
+
+	async getOrderBook(asset: string): Promise<OrderBook[]> {
+		return this.orderBookRepository.find({
+			where: { asset, status: OrderStatus.PENDING },
+			order: { price: 'ASC' },
+		});
+	}
+
+	async cancelOrder(orderId: number, userId: number): Promise<any> {
+		try {
+			const order = await this.orderBookRepository.findOne({
+				where: { id: orderId, userId },
+			});
+
+			if (!order) {
+				return { success: false, error: 'Order not found' };
+			}
+
+			order.status = OrderStatus.CANCELLED;
+			await this.orderBookRepository.save(order);
+
+			return { success: true, order };
+		} catch (error) {
+			return { success: false, error: error.message };
+		}
+	}
+
+	async executeOrder(orderId: number): Promise<any> {
+		try {
+			const order = await this.orderBookRepository.findOne({
+				where: { id: orderId },
+			});
+
+			if (!order) {
+				return { success: false, error: 'Order not found' };
+			}
+
+			order.status = OrderStatus.FILLED;
+			order.filledAmount = order.amount;
+			order.remainingAmount = 0;
+			order.executedAt = new Date();
+
+			await this.orderBookRepository.save(order);
+
+			return { success: true, order };
 		} catch (error) {
 			return { success: false, error: error.message };
 		}

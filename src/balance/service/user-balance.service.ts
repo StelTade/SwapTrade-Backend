@@ -13,6 +13,7 @@ export class UserBalanceService {
   async addBalance(userId: string, assetId: string, amount: number) {
     let balance = await this.balanceRepo.findOne({
       where: { userId, assetId },
+      relations: ['user', 'asset'], // Eager load user and virtual asset
     });
 
     if (balance) {
