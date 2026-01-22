@@ -7,7 +7,7 @@ import { Trade } from './entities/trade.entity';
 import { OrderBook } from './entities/order-book.entity';
 import { NotificationModule } from '../notification/notification.module';
 import { UserModule } from '../user/user.module';
-
+import { MatchingEngineService } from './machine-engine.service';
 
 @Module({
   imports: [
@@ -17,6 +17,7 @@ import { UserModule } from '../user/user.module';
     UserModule,
   ],
   controllers: [TradingController],
-  providers: [TradingService],
+  providers: [TradingService, MatchingEngineService],
+  exports: [TradingService, MatchingEngineService],
 })
 export class TradingModule {}
