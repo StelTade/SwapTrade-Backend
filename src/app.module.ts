@@ -1,4 +1,8 @@
+// src/app.module.ts
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -10,16 +14,21 @@ import { NotificationModule } from './notification/notification.module';
 import { BiddingModule } from './bidding/bidding.module';
 import { CommonModule } from './common/common.module';
 import { DatabaseModule } from './database/database.module';
-
 import { BalanceModule } from './balance/balance.module';
 import { SwapModule } from './swap/swap.module';
-
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { TutorialModule } from './tutorial/tutorial.module';
 import { PerformanceModule } from './performance/performance.module';
+import { QueueModule } from './queue/queue.module';
 
 @Module({
   imports: [
+    // Configuration
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
+
+    // Database
     TypeOrmModule.forRoot({
       type: 'sqlite',
       database: 'swaptrade.db',
@@ -29,6 +38,14 @@ import { PerformanceModule } from './performance/performance.module';
       migrationsTableName: 'migrations',
       logging: true,
     }),
+
+    // Scheduling for cron jobs
+    ScheduleModule.forRoot(),
+
+    // Background Job Queue (NEW)
+    QueueModule,
+
+    // Existing modules
     AuthModule,
     PortfolioModule,
     TradingModule,

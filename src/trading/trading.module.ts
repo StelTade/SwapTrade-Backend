@@ -1,18 +1,23 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+
 import { TradingController } from './trading.controller';
 import { TradingService } from './trading.service';
-import { RewardsModule } from '../rewards/rewards.module';
+import { MatchingEngineService } from './machine-engine.service';
+
 import { Trade } from './entities/trade.entity';
 import { OrderBook } from './entities/order-book.entity';
+
+import { RewardsModule } from '../rewards/rewards.module';
 import { NotificationModule } from '../notification/notification.module';
 import { UserModule } from '../user/user.module';
-import { MatchingEngineService } from './machine-engine.service';
+import { QueueModule } from 'src/queue/queue.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Trade, OrderBook]),
     RewardsModule,
+    QueueModule,
     NotificationModule,
     UserModule,
   ],
