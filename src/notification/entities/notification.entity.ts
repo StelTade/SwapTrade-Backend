@@ -36,6 +36,7 @@ export class Notification {
   read: boolean;
 
   @Column({ type: 'timestamp', nullable: true })
+
   readAt: Date;
 
   @Column('simple-json', { nullable: true })
@@ -52,6 +53,9 @@ export class Notification {
 
   @Column({ type: 'timestamp', nullable: true })
   sentAt: Date;
+
+  expiresAt: Date;
+
 
   @CreateDateColumn()
   createdAt: Date;

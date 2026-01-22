@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query, Req } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
 import { NotificationEventType } from '../common/enums/notification-event-type.enum';
+import { GetNotificationsDto, MarkAsReadDto } from './dto/notification.dto';
 
 @Controller('notification')
 export class NotificationController {
@@ -43,4 +44,39 @@ export class NotificationController {
   async markRead(@Param('id', ParseIntPipe) id: number) {
     return this.notificationService.markRead(id);
   }
+
+  @Get()
+  async getNotifications(
+    @Req() req: any, // Replace with authenticated user
+    @Query() query: GetNotificationsDto
+  ) {
+    const userId = req.user?.id || 'current-user-id'; // Replace with actual auth
+    return await this.notificationService.getNotifications(userId, query);
+  }
+
+  @Get('unread-count')
+  async getUnreadCount(@Req() req: any) {
+    const userId = req.user?.id || 'current-user-id';
+    const count = await this.notificationService.getUnreadCount(userId);
+    return { count };
+  }
+
+  @Post('mark-read')
+  async markAsRead(
+    @Req() req: any,
+    @Body() dto: MarkAsReadDto
+  ) {
+    const userId = req.user?.id || 'current-user-id';
+    await this.notificationService.markAsRead(userId, dto.notificationIds);
+    return { success: true };
+  }
+
+  @Post('mark-all-read')
+  async markAllAsRead(@Req() req: any) {
+    const userId = req.user?.id || 'current-user-id';
+    await this.notificationService.markAllAsRead(userId);
+    return { success: true };
+  }
+
+
 }

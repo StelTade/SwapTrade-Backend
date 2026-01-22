@@ -5,6 +5,9 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { QueueService } from './queue/queue.service';
 
+// Import rate limiting middleware (will be available after npm install)
+// import { rateLimitMiddleware } from './ratelimit/ratelimit.middleware';
+
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
@@ -24,6 +27,19 @@ async function bootstrap() {
     credentials: true,
   });
 
+  
+  // Enable CORS
+  app.enableCors();
+  
+  // TODO: Uncomment and configure rate limiting middleware after installing dependencies
+  /*
+  app.use((req, res, next) => {
+    // This is where rate limiting middleware will be applied
+    // rateLimitMiddleware.use(req, res, next);
+    next(); // Temporary bypass until dependencies are installed
+  });
+  */
+  
   // Swagger configuration
   const config = new DocumentBuilder()
     .setTitle('SwapTrade API')
@@ -116,6 +132,19 @@ async function bootstrap() {
   logger.log(`Swagger documentation: http://localhost:${port}/api/docs`);
   logger.log('Graceful shutdown handlers registered');
   logger.log(`Shutdown timeout: ${30000}ms`);
+  const port = process.env.PORT ?? 3000;
+  await app.listen(port);
+  
+  console.log(`Application is running on: http://localhost:${port}`);
+  console.log(`Swagger documentation available at: http://localhost:${port}/api/docs`);
+  
+  // TODO: Add monitoring for rate limit violations
+  /*
+  setInterval(() => {
+    const stats = rateLimitMiddleware.getStats();
+    console.log('Rate Limit Stats:', stats);
+  }, 30000); // Log every 30 seconds
+  */
 }
 
 bootstrap().catch((error) => {
