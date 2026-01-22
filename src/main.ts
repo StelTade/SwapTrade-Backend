@@ -1,12 +1,32 @@
+// src/main.ts
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ValidationPipe, Logger } from '@nestjs/common';
+import { QueueService } from './queue/queue.service';
 
 // Import rate limiting middleware (will be available after npm install)
 // import { rateLimitMiddleware } from './ratelimit/ratelimit.middleware';
 
 async function bootstrap() {
+  const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
+
+  // Global validation pipe
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      forbidNonWhitelisted: true,
+    }),
+  );
+
+  // Enable CORS
+  app.enableCors({
+    origin: process.env.CORS_ORIGIN || '*',
+    credentials: true,
+  });
+
   
   // Enable CORS
   app.enableCors();
@@ -34,11 +54,84 @@ async function bootstrap() {
     .addTag('notification', 'Notification endpoints')
     .addTag('bidding', 'Bidding endpoints')
     .addTag('balance', 'Balance management endpoints')
+    .addTag('queue', 'Background job queue management')
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
+
+  // Enable graceful shutdown
+  app.enableShutdownHooks();
+
+  // Setup graceful shutdown handlers
+  const queueService = app.get(QueueService);
+  let isShuttingDown = false;
+
+  const gracefulShutdown = async (signal: string) => {
+    if (isShuttingDown) {
+      logger.warn('Shutdown already in progress...');
+      return;
+    }
+
+    isShuttingDown = true;
+    logger.log(`Received ${signal}, starting graceful shutdown...`);
+
+    const shutdownTimeout = 30000; // 30 seconds
+    const startTime = Date.now();
+
+    try {
+      logger.log('Stopping server from accepting new connections...');
+
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => {
+          reject(new Error('Shutdown timeout exceeded'));
+        }, shutdownTimeout);
+      });
+
+      const shutdownPromise = (async () => {
+        logger.log('Waiting for in-flight requests to complete...');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        logger.log('Closing queue connections and waiting for active jobs...');
+        await queueService.closeAllQueues();
+
+        logger.log('Closing database connections...');
+        await app.close();
+
+        const elapsed = Date.now() - startTime;
+        logger.log(`Graceful shutdown completed in ${elapsed}ms`);
+      })();
+
+      await Promise.race([shutdownPromise, timeoutPromise]);
+      process.exit(0);
+    } catch (error) {
+      logger.error('Error during graceful shutdown:', error);
+      logger.error('Forcing shutdown...');
+      process.exit(1);
+    }
+  };
+
+  // Register signal handlers
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+  process.on('uncaughtException', (error) => {
+    logger.error('Uncaught Exception:', error);
+    gracefulShutdown('uncaughtException');
+  });
+
+  process.on('unhandledRejection', (reason, promise) => {
+    logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    gracefulShutdown('unhandledRejection');
+  });
+
+  const port = process.env.PORT ?? 3000;
+  await app.listen(port);
   
+  logger.log(`Application is running on: http://localhost:${port}`);
+  logger.log(`Swagger documentation: http://localhost:${port}/api/docs`);
+  logger.log('Graceful shutdown handlers registered');
+  logger.log(`Shutdown timeout: ${30000}ms`);
   const port = process.env.PORT ?? 3000;
   await app.listen(port);
   
@@ -53,4 +146,8 @@ async function bootstrap() {
   }, 30000); // Log every 30 seconds
   */
 }
-void bootstrap();
+
+bootstrap().catch((error) => {
+  console.error('Failed to start application:', error);
+  process.exit(1);
+});
