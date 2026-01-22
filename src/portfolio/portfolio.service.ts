@@ -1,15 +1,57 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Between, LessThanOrEqual, Repository } from 'typeorm';
 import { TradeEntity } from './entities/trade.entity';
 import { PortfolioAnalytics } from 'src/common/interfaces/portfolio.interface';
+import { Balance } from 'src/balance/balance.entity';
+import { Trade } from 'src/trading/entities/trade.entity';
+import {
+  AssetAllocation,
+  PortfolioSummaryDto,
+} from './dto/portfolio-summary.dto';
+import { PortfolioRiskDto } from './dto/portfolio-risk.dto';
+import {
+  AssetPerformance,
+  PortfolioPerformanceDto,
+} from './dto/portfolio-performance.dto';
+import { TradeType } from 'src/common/enums/trade-type.enum';
 
+interface MarketPrice {
+  price: number;
+  timestamp: Date;
+}
+
+interface CostBasisData {
+  totalCost: number;
+  totalQuantity: number;
+  averagePrice: number;
+}
 
 @Injectable()
 export class PortfolioService {
+  private readonly logger = new Logger(PortfolioService.name);
+  private readonly priceCache = new Map<string, MarketPrice>();
+  private readonly CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+  // Asset volatility estimates (annualized %)
+  private readonly ASSET_VOLATILITY: Record<string, number> = {
+    BTC: 80,
+    ETH: 90,
+    USDT: 5,
+    USDC: 5,
+    BNB: 75,
+    SOL: 95,
+    XRP: 85,
+    ADA: 88,
+  };
+
   constructor(
     @InjectRepository(TradeEntity)
     private readonly tradeRepo: Repository<TradeEntity>,
+    @InjectRepository(Balance)
+    private balanceRepository: Repository<Balance>,
+    @InjectRepository(Trade)
+    private tradeRepository: Repository<Trade>,
   ) {}
 
   /**
@@ -46,13 +88,15 @@ export class PortfolioService {
     }
 
     // ✅ Asset Distribution (percentage of each asset)
-    const totalValue = Object.values(assetValues)
-      .reduce((sum, a) => sum + Math.max(a.sold, a.bought), 0);
+    const totalValue = Object.values(assetValues).reduce(
+      (sum, a) => sum + Math.max(a.sold, a.bought),
+      0,
+    );
 
     const assetDistribution: Record<string, number> = {};
     for (const [asset, value] of Object.entries(assetValues)) {
       assetDistribution[asset] =
-        ((Math.max(value.sold, value.bought) / totalValue) * 100);
+        (Math.max(value.sold, value.bought) / totalValue) * 100;
     }
 
     // ✅ Risk Score (standard deviation of asset allocation)
@@ -61,9 +105,337 @@ export class PortfolioService {
       allocations.reduce((a, b) => a + b, 0) / allocations.length || 0;
     const variance =
       allocations.reduce((acc, x) => acc + Math.pow(x - mean, 2), 0) /
-      allocations.length || 0;
+        allocations.length || 0;
     const riskScore = Math.sqrt(variance);
 
     return { pnl, assetDistribution, riskScore };
+  }
+  async getPortfolioSummary(userId: number): Promise<PortfolioSummaryDto> {
+    const startTime = Date.now();
+
+    const balances = await this.balanceRepository.find({
+      where: { userId },
+      relations: ['asset'],
+    });
+
+    if (balances.length === 0) {
+      return {
+        totalValue: 0,
+        assets: [],
+        count: 0,
+        timestamp: new Date().toISOString(),
+        pricesFetchedAt: new Date().toISOString(),
+      };
+    }
+
+    const pricesFetchedAt = new Date();
+    const assets: AssetAllocation[] = [];
+    let totalValue = 0;
+
+    // Calculate values for each asset
+    for (const balance of balances) {
+      if (balance.available <= 0) continue;
+
+      const currentPrice = await this.getMarketPrice(balance.asset);
+      const value = balance.available * currentPrice;
+      const costBasis = await this.getCostBasis(userId, balance.asset);
+
+      totalValue += value;
+
+      assets.push({
+        symbol: balance.asset,
+        name: balance.asset,
+        value,
+        quantity: balance.available,
+        averagePrice: costBasis.averagePrice,
+        allocationPercentage: 0, // Will calculate after we have total
+      });
+    }
+
+    // Calculate allocation percentages
+    assets.forEach((asset) => {
+      asset.allocationPercentage =
+        totalValue > 0
+          ? Number(((asset.value / totalValue) * 100).toFixed(2))
+          : 0;
+    });
+
+    // Sort by value descending
+    assets.sort((a, b) => b.value - a.value);
+
+    const duration = Date.now() - startTime;
+    this.logger.log(`Portfolio summary calculated in ${duration}ms`);
+
+    return {
+      totalValue: Number(totalValue.toFixed(2)),
+      assets,
+      count: assets.length,
+      timestamp: new Date().toISOString(),
+      pricesFetchedAt: pricesFetchedAt.toISOString(),
+    };
+  }
+
+  async getPortfolioRisk(userId: number): Promise<PortfolioRiskDto> {
+    const startTime = Date.now();
+
+    const summary = await this.getPortfolioSummary(userId);
+
+    if (summary.count === 0) {
+      return {
+        concentrationRisk: 0,
+        diversificationScore: 0,
+        volatilityEstimate: 0,
+        timestamp: new Date().toISOString(),
+        metadata: {
+          largestHolding: '',
+          largestHoldingPercentage: 0,
+          herfindahlIndex: 0,
+          effectiveAssets: 0,
+        },
+      };
+    }
+
+    // Concentration risk: percentage in largest holding
+    const largestHolding = summary.assets[0];
+    const concentrationRisk =
+      summary.count === 1 ? 100 : largestHolding.allocationPercentage;
+
+    // Herfindahl-Hirschman Index (HHI)
+    // Sum of squared allocation percentages
+    const herfindahlIndex = summary.assets.reduce(
+      (sum, asset) => sum + Math.pow(asset.allocationPercentage / 100, 2),
+      0,
+    );
+
+    // Effective number of assets (1/HHI)
+    const effectiveAssets = herfindahlIndex > 0 ? 1 / herfindahlIndex : 0;
+
+    // Diversification score (0-100, higher is better)
+    // Normalize HHI: perfect diversification (n assets equally weighted) = 1/n
+    // Single asset = 1, many assets = approaching 0
+    // Score = (1 - HHI) * 100, adjusted for portfolio size
+    const maxDiversification = summary.count > 1 ? 1 - 1 / summary.count : 0;
+    const actualDiversification = 1 - herfindahlIndex;
+    const diversificationScore =
+      maxDiversification > 0
+        ? Number(
+            ((actualDiversification / maxDiversification) * 100).toFixed(1),
+          )
+        : 0;
+
+    // Volatility estimate: weighted average of asset volatilities
+    let portfolioVolatility = 0;
+    for (const asset of summary.assets) {
+      const assetVol = this.ASSET_VOLATILITY[asset.symbol] || 50; // Default 50% if unknown
+      portfolioVolatility += (asset.allocationPercentage / 100) * assetVol;
+    }
+
+    // Normalize volatility to 0-100 scale (assuming max 100% volatility)
+    const volatilityEstimate = Number(
+      Math.min(100, portfolioVolatility).toFixed(1),
+    );
+
+    const duration = Date.now() - startTime;
+    this.logger.log(`Portfolio risk calculated in ${duration}ms`);
+
+    return {
+      concentrationRisk: Number(concentrationRisk.toFixed(1)),
+      diversificationScore,
+      volatilityEstimate,
+      timestamp: new Date().toISOString(),
+      metadata: {
+        largestHolding: largestHolding.symbol,
+        largestHoldingPercentage: Number(concentrationRisk.toFixed(2)),
+        herfindahlIndex: Number(herfindahlIndex.toFixed(4)),
+        effectiveAssets: Number(effectiveAssets.toFixed(2)),
+      },
+    };
+  }
+
+  async getPortfolioPerformance(
+    userId: number,
+    startDate?: string,
+    endDate?: string,
+  ): Promise<PortfolioPerformanceDto> {
+    const startTime = Date.now();
+
+    const balances = await this.balanceRepository.find({
+      where: { userId },
+      relations: ['asset'],
+    });
+
+    if (balances.length === 0) {
+      return {
+        totalGain: 0,
+        totalLoss: 0,
+        roi: 0,
+        totalCostBasis: 0,
+        totalCurrentValue: 0,
+        netGain: 0,
+        assetPerformance: [],
+        timestamp: new Date().toISOString(),
+        startDate,
+        endDate,
+      };
+    }
+
+    const assetPerformance: AssetPerformance[] = [];
+    let totalCostBasis = 0;
+    let totalCurrentValue = 0;
+
+    for (const balance of balances) {
+      if (balance.available <= 0) continue;
+
+      const currentPrice = await this.getMarketPrice(balance.asset);
+      const currentValue = balance.available * currentPrice;
+
+      const costBasis = await this.getCostBasis(
+        userId,
+        balance.asset,
+        startDate,
+        endDate,
+      );
+
+      const totalCost = costBasis.totalCost;
+      const gainLoss = currentValue - totalCost;
+
+      totalCostBasis += totalCost;
+      totalCurrentValue += currentValue;
+
+      assetPerformance.push({
+        symbol: balance.asset,
+        totalGain: gainLoss > 0 ? Number(gainLoss.toFixed(2)) : 0,
+        totalLoss: gainLoss < 0 ? Number(Math.abs(gainLoss).toFixed(2)) : 0,
+        roi:
+          totalCost > 0 ? Number(((gainLoss / totalCost) * 100).toFixed(2)) : 0,
+        costBasis: Number(totalCost.toFixed(2)),
+        currentValue: Number(currentValue.toFixed(2)),
+      });
+    }
+
+    const netGain = totalCurrentValue - totalCostBasis;
+    const totalGain = assetPerformance.reduce((sum, a) => sum + a.totalGain, 0);
+    const totalLoss = assetPerformance.reduce((sum, a) => sum + a.totalLoss, 0);
+    const roi =
+      totalCostBasis > 0
+        ? Number(((netGain / totalCostBasis) * 100).toFixed(2))
+        : 0;
+
+    const duration = Date.now() - startTime;
+    this.logger.log(`Portfolio performance calculated in ${duration}ms`);
+
+    return {
+      totalGain: Number(totalGain.toFixed(2)),
+      totalLoss: Number(totalLoss.toFixed(2)),
+      roi,
+      totalCostBasis: Number(totalCostBasis.toFixed(2)),
+      totalCurrentValue: Number(totalCurrentValue.toFixed(2)),
+      netGain: Number(netGain.toFixed(2)),
+      assetPerformance: assetPerformance.sort(
+        (a, b) => b.currentValue - a.currentValue,
+      ),
+      timestamp: new Date().toISOString(),
+      startDate,
+      endDate,
+    };
+  }
+
+  private async getMarketPrice(symbol: string): Promise<number> {
+    const cached = this.priceCache.get(symbol);
+    const now = new Date();
+
+    if (
+      cached &&
+      now.getTime() - cached.timestamp.getTime() < this.CACHE_TTL_MS
+    ) {
+      return cached.price;
+    }
+
+    // Simulate fetching from market API
+    // In production, this would call an external price API
+    const price = this.simulateMarketPrice(symbol);
+
+    this.priceCache.set(symbol, {
+      price,
+      timestamp: now,
+    });
+
+    return price;
+  }
+
+  private simulateMarketPrice(symbol: string): number {
+    // Mock prices for demonstration
+    const prices: Record<string, number> = {
+      BTC: 45000,
+      ETH: 3000,
+      USDT: 1,
+      USDC: 1,
+      BNB: 350,
+      SOL: 100,
+      XRP: 0.6,
+      ADA: 0.5,
+    };
+
+    return prices[symbol] || 100;
+  }
+
+  private async getCostBasis(
+    userId: number,
+    symbol: string,
+    startDate?: string,
+    endDate?: string,
+  ): Promise<CostBasisData> {
+    const whereCondition: any = {
+      userId,
+      symbol,
+      status: 'completed',
+    };
+
+    if (startDate || endDate) {
+      const dateFilter: any = {};
+      if (startDate) dateFilter.gte = new Date(startDate);
+      if (endDate) dateFilter.lte = new Date(endDate);
+
+      if (startDate && endDate) {
+        whereCondition.createdAt = Between(
+          new Date(startDate),
+          new Date(endDate),
+        );
+      } else if (startDate) {
+        whereCondition.createdAt = LessThanOrEqual(new Date());
+      }
+    }
+
+    const trades = await this.tradeRepository.find({
+      where: whereCondition,
+      order: { timestamp: 'ASC' },
+    });
+
+    let totalCost = 0;
+    let totalQuantity = 0;
+
+    for (const trade of trades) {
+      if (trade.type === TradeType.BUY) {
+        totalCost += trade.quantity * trade.price;
+        totalQuantity += trade.quantity;
+      } else if (trade.type === TradeType.SELL) {
+        // FIFO: reduce cost basis proportionally
+        const soldProportion =
+          totalQuantity > 0 ? trade.quantity / totalQuantity : 0;
+        totalCost -= totalCost * soldProportion;
+        totalQuantity -= trade.quantity;
+      }
+    }
+
+    return {
+      totalCost: Math.max(0, totalCost),
+      totalQuantity: Math.max(0, totalQuantity),
+      averagePrice: totalQuantity > 0 ? totalCost / totalQuantity : 0,
+    };
+  }
+
+  // Helper method to clear price cache (useful for testing)
+  clearPriceCache(): void {
+    this.priceCache.clear();
   }
 }
