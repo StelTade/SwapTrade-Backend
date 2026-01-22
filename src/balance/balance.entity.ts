@@ -17,7 +17,7 @@ export class Balance {
 
   @Index()
   @Column()
-  userId: number;
+  userId: string;
 
   @Index()
   @Column()

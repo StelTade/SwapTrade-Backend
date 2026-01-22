@@ -3,11 +3,16 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { BalanceController } from './balance.controller';
 import { BalanceService } from './balance.service';
 import { Balance } from './balance.entity';
-// ...existing code...
+import { BalanceAudit } from './balance-audit.entity';
+import { BalanceHistoryGuard } from '../common/guards/balance-history.guard';
+import { AuditService } from '../common/logging/audit_service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Balance])],
+  imports: [
+    TypeOrmModule.forFeature([Balance, BalanceAudit])
+  ],
   controllers: [BalanceController],
-  providers: [BalanceService],
+  providers: [BalanceService, BalanceHistoryGuard, AuditService],
+  exports: [BalanceService],
 })
 export class BalanceModule {}
