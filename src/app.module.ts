@@ -16,6 +16,7 @@ import { SwapModule } from './swap/swap.module';
 
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TutorialModule } from './tutorial/tutorial.module';
+import { PerformanceModule } from './performance/performance.module';
 
 @Module({
   imports: [
@@ -23,7 +24,10 @@ import { TutorialModule } from './tutorial/tutorial.module';
       type: 'sqlite',
       database: 'swaptrade.db',
       autoLoadEntities: true,
-      synchronize: true,
+      synchronize: false, // Use migrations instead
+      migrations: ['src/database/migrations/*.ts'],
+      migrationsTableName: 'migrations',
+      logging: true,
     }),
     AuthModule,
     PortfolioModule,
@@ -37,6 +41,7 @@ import { TutorialModule } from './tutorial/tutorial.module';
     BalanceModule,
     SwapModule,
     TutorialModule,
+    PerformanceModule,
   ],
   controllers: [AppController],
   providers: [AppService],

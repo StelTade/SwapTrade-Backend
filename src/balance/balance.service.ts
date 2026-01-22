@@ -13,7 +13,9 @@ export class BalanceService {
   async getUserBalances(
     userId: string,
   ): Promise<Array<{ asset: string; balance: number }>> {
-    const balances = await this.balanceRepository.find({ where: { userId } });
+    const balances = await this.balanceRepository.find({ 
+      where: { userId },
+    });
     return balances.map((b) => ({ asset: b.asset, balance: b.balance }));
   }
 }

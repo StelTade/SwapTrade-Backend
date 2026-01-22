@@ -3,17 +3,28 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
+  Index,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { TradeType } from '../../common/enums/trade-type.enum';
+import { User } from '../../user/entities/user.entity';
 
 @Entity()
+@Index(['userId'])
+@Index(['asset'])
+@Index(['createdAt'])
+@Index(['userId', 'createdAt'])
+@Index(['asset', 'createdAt'])
 export class Trade {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Index()
   @Column()
   userId: number;
 
+  @Index()
   @Column()
   asset: string;
 
@@ -23,7 +34,7 @@ export class Trade {
   @Column('decimal')
   price: number;
 
-  @Column({ type: 'enum', enum: TradeType })
+  @Column({ type: 'varchar', default: 'BUY' })
   type: TradeType;
 
   @CreateDateColumn()

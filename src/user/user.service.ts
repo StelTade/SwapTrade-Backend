@@ -14,6 +14,7 @@ export class UserService {
     async getPortfolioStats(userId: string): Promise<PortfolioStatsDto> {
         const userBalances = await this.userBalanceRepository.find({
             where: { userId },
+            relations: ['asset'], // Eager load virtual asset
         });
 
         if (!userBalances || userBalances.length === 0) {
@@ -65,6 +66,7 @@ export class UserService {
     ): Promise<void> {
         let userBalance = await this.userBalanceRepository.findOne({
             where: { userId, assetId },
+            relations: ['asset'], // Eager load virtual asset
         });
 
         if (!userBalance) {
@@ -90,6 +92,7 @@ export class UserService {
     async getUserBalance(userId: string, assetId: string): Promise<UserBalance | null> {
         return this.userBalanceRepository.findOne({
             where: { userId, assetId },
+            relations: ['asset'], // Eager load virtual asset
         });
     }
 
@@ -100,6 +103,7 @@ export class UserService {
     ): Promise<void> {
         let userBalance = await this.userBalanceRepository.findOne({
             where: { userId, assetId },
+            relations: ['asset'], // Eager load virtual asset
         });
 
         if (!userBalance) {
