@@ -23,6 +23,12 @@ export class Notification {
   @Column({ type: 'varchar', default: 'UNREAD' })
   status: NotificationStatus;
 
+  @Column({ default: false })
+  read: boolean;
+
+  @Column({ type: 'timestamp', nullable: true })
+  expiresAt: Date;
+
   @CreateDateColumn()
   createdAt: Date;
 }
