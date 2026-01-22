@@ -69,6 +69,9 @@ export class Trade {
   @Column({ type: 'uuid', nullable: true })
   askId: string;
 
+  @Column()
+  quantity: number;
+
   @CreateDateColumn()
   timestamp: Date;
 

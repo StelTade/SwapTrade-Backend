@@ -1,4 +1,11 @@
-import { Entity, Column, PrimaryGeneratedColumn, Index, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  Index,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 
 @Entity('balances')
 @Index(['userId'])
@@ -10,7 +17,7 @@ export class Balance {
 
   @Index()
   @Column()
-  userId: string;
+  userId: number;
 
   @Index()
   @Column()
@@ -18,4 +25,7 @@ export class Balance {
 
   @Column('float')
   balance: number;
+
+  @Column(`float`)
+  available: number;
 }
