@@ -1,12 +1,14 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, BadRequestException, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, LessThan, MoreThan } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { Balance } from './balance.entity';
 import { BalanceAudit } from './balance-audit.entity';
 import { BalanceHistoryQueryDto, BalanceHistoryResponseDto, BalanceHistoryEntryDto } from './dto/balance-history.dto';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { CacheService } from '../common/services/cache.service';
+import { UserBalance } from './user-balance.entity';
+import { UpdateBalanceDto } from './dto/update-balance.dto';
 
 @Injectable()
 export class BalanceService {
@@ -15,6 +17,9 @@ export class BalanceService {
     private readonly balanceRepository: Repository<Balance>,
     @InjectRepository(BalanceAudit)
     private readonly balanceAuditRepository: Repository<BalanceAudit>,
+ @InjectRepository(UserBalance)
+    private readonly userBalanceRepository: Repository<UserBalance>,
+    private readonly dataSource: DataSource,
     private readonly cacheService: CacheService,
   ) {}
 
@@ -50,62 +55,7 @@ export class BalanceService {
     return result;
   }
 
-  async getBalanceHistory(
-    userId: string,
-    query: BalanceHistoryQueryDto,
-  ): Promise<BalanceHistoryResponseDto> {
-    const { startDate, endDate, asset, limit = 50, offset = 0 } = query;
-
-    // Build query conditions
-    const whereConditions: any = { userId };
-
-    if (asset) {
-      whereConditions.asset = asset;
-    }
-
-    if (startDate && endDate) {
-      whereConditions.timestamp = Between(new Date(startDate), new Date(endDate));
-    } else if (startDate) {
-      whereConditions.timestamp = MoreThan(new Date(startDate));
-    } else if (endDate) {
-      whereConditions.timestamp = LessThan(new Date(endDate));
-    }
-
-    // Get total count for pagination
-    const total = await this.balanceAuditRepository.count({
-      where: whereConditions,
-    });
-
-    // Get paginated results
-    const auditEntries = await this.balanceAuditRepository.find({
-      where: whereConditions,
-      order: { timestamp: 'DESC' },
-      take: limit,
-      skip: offset,
-    });
-
-    // Transform to response format
-    const data: BalanceHistoryEntryDto[] = auditEntries.map((entry) => ({
-      asset: entry.asset,
-      amountChanged: entry.amountChanged,
-      reason: entry.reason,
-      timestamp: entry.timestamp.toISOString(),
-      resultingBalance: entry.resultingBalance,
-      transactionId: entry.transactionId,
-      relatedOrderId: entry.relatedOrderId,
-    }));
-
-    const hasMore = offset + limit < total;
-
-    return {
-      data,
-      total,
-      limit,
-      offset,
-      hasMore,
-    };
-  }
-
+  /** Add a balance audit entry */
   async addBalanceAuditEntry(
     userId: string,
     asset: string,
@@ -133,5 +83,57 @@ export class BalanceService {
     await this.cacheService.invalidateBalanceRelatedCaches(userId);
     
     return savedEntry;
+  }
+
+  /**
+   * Atomically update user's balance
+   */
+  async updateUserBalance(dto: UpdateBalanceDto): Promise<number> {
+    const { userId, assetId, amount, reason, transactionId, relatedOrderId } = dto;
+
+    if (!userId || !assetId) throw new BadRequestException('Invalid userId or assetId');
+    if (amount === undefined || isNaN(amount)) throw new BadRequestException('Invalid amount');
+    if (!reason) throw new BadRequestException('Reason is required');
+
+    return await this.dataSource.transaction(async (manager) => {
+      // Lock row for concurrency safety
+      let userBalance: UserBalance | null = await manager.findOne(UserBalance, {
+        where: { userId: userId.toString(), assetId: assetId.toString() },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      const previousBalance = Number(userBalance?.amount ?? 0);
+      const newBalance = previousBalance + amount;
+
+      if (newBalance < 0) throw new BadRequestException('Insufficient balance');
+
+      // Update or create balance
+      if (userBalance) {
+        userBalance.amount = newBalance;
+      } else {
+        userBalance = manager.create(UserBalance, {
+          userId: userId.toString(),
+          assetId: assetId.toString(),
+        });
+      }
+
+      await manager.save(userBalance);
+
+      // Create audit entry
+      const audit = manager.create(BalanceAudit, {
+        userId: userId.toString(), // BalanceAudit.userId is string
+        asset: assetId.toString(),
+        previousBalance,
+        resultingBalance: newBalance,
+        amountChanged: amount,
+        reason,
+        transactionId,
+        relatedOrderId,
+      });
+
+      await manager.save(audit);
+
+      return newBalance;
+    });
   }
 }
