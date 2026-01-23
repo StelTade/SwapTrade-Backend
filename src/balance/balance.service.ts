@@ -1,9 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, LessThan, MoreThan } from 'typeorm';
 import { Balance } from './balance.entity';
 import { BalanceAudit } from './balance-audit.entity';
 import { BalanceHistoryQueryDto, BalanceHistoryResponseDto, BalanceHistoryEntryDto } from './dto/balance-history.dto';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
+import { CacheService } from '../common/services/cache.service';
 
 @Injectable()
 export class BalanceService {
@@ -12,15 +15,39 @@ export class BalanceService {
     private readonly balanceRepository: Repository<Balance>,
     @InjectRepository(BalanceAudit)
     private readonly balanceAuditRepository: Repository<BalanceAudit>,
+    private readonly cacheService: CacheService,
   ) {}
+
+  private readonly USER_BALANCE_CACHE_TTL = 30; // 30 seconds
 
   async getUserBalances(
     userId: string,
   ): Promise<Array<{ asset: string; balance: number }>> {
+    try {
+      // Try to get from cache first
+      const cached = await this.cacheService.getUserBalanceCache(userId);
+      if (cached) {
+        return cached;
+      }
+    } catch (error) {
+      // If cache is unavailable, log and fall back to database
+      console.warn('Cache unavailable, falling back to database:', error.message);
+    }
+
     const balances = await this.balanceRepository.find({ 
       where: { userId },
     });
-    return balances.map((b) => ({ asset: b.asset, balance: b.balance }));
+    const result = balances.map((b) => ({ asset: b.asset, balance: b.balance }));
+    
+    try {
+      // Cache the result if cache is available
+      await this.cacheService.setUserBalanceCache(userId, result);
+    } catch (error) {
+      // If cache fails, log but don't fail the operation
+      console.warn('Failed to cache result:', error.message);
+    }
+    
+    return result;
   }
 
   async getBalanceHistory(
@@ -100,6 +127,11 @@ export class BalanceService {
       previousBalance,
     });
 
-    return this.balanceAuditRepository.save(auditEntry);
+    const savedEntry = await this.balanceAuditRepository.save(auditEntry);
+    
+    // Invalidate user balance cache since balance has changed
+    await this.cacheService.invalidateBalanceRelatedCaches(userId);
+    
+    return savedEntry;
   }
 }

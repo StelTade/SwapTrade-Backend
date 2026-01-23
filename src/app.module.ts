@@ -1,5 +1,6 @@
 // src/app.module.ts
 import { Module } from '@nestjs/common';
+import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -19,6 +20,7 @@ import { SwapModule } from './swap/swap.module';
 import { TutorialModule } from './tutorial/tutorial.module';
 import { PerformanceModule } from './performance/performance.module';
 import { QueueModule } from './queue/queue.module';
+import { CustomCacheModule } from './common/cache/cache.module';
 
 @Module({
   imports: [
@@ -41,6 +43,9 @@ import { QueueModule } from './queue/queue.module';
 
     // Scheduling for cron jobs
     ScheduleModule.forRoot(),
+
+    // Cache Module
+    CustomCacheModule,
 
     // Background Job Queue (NEW)
     QueueModule,
