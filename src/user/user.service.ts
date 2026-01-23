@@ -3,12 +3,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserBalance } from '../balance/user-balance.entity';
 import { PortfolioStatsDto } from './dto/portfolio-stats.dto';
+import { BalanceService } from '../balance/balance.service';
 
 @Injectable()
 export class UserService {
     constructor(
         @InjectRepository(UserBalance)
         private readonly userBalanceRepository: Repository<UserBalance>,
+        private readonly balanceService: BalanceService,
     ) { }
 
     async getPortfolioStats(userId: string): Promise<PortfolioStatsDto> {
@@ -106,6 +108,8 @@ export class UserService {
             relations: ['asset'], // Eager load virtual asset
         });
 
+        const previousBalance = userBalance ? Number(userBalance.amount) : 0;
+
         if (!userBalance) {
             userBalance = this.userBalanceRepository.create({
                 userId,
@@ -117,7 +121,21 @@ export class UserService {
             });
         }
 
-        userBalance.amount = Number(userBalance.amount) + amount;
+        userBalance.amount = previousBalance + amount;
+        const newBalance = Number(userBalance.amount);
+
         await this.userBalanceRepository.save(userBalance);
+
+        // Log balance change to audit trail
+        await this.balanceService.addBalanceAuditEntry(
+            userId,
+            assetId,
+            amount,
+            newBalance,
+            amount > 0 ? 'BALANCE_DEPOSIT' : 'BALANCE_WITHDRAWAL',
+            undefined, // transactionId
+            undefined, // relatedOrderId
+            previousBalance,
+        );
     }
 }
