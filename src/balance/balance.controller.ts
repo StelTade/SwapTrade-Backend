@@ -1,15 +1,7 @@
-import { 
-  Controller, 
-  Get, 
-  Param, 
-  Query, 
-  UseGuards,
-  HttpCode,
-  HttpStatus,
-  ParseIntPipe,
-} from '@nestjs/common';
+import { Controller, Get, Param, Query, Post, Body, UseGuards, HttpCode, HttpStatus, ParseIntPipe } from '@nestjs/common';
 import { BalanceService } from './balance.service';
 import { BalanceHistoryQueryDto } from './dto/balance-history.dto';
+import { UpdateBalanceDto } from './dto/update-balance.dto';
 import { BalanceHistoryGuard } from '../common/guards/balance-history.guard';
 
 @Controller('balances')
@@ -29,5 +21,13 @@ export class BalanceController {
     @Query() query: BalanceHistoryQueryDto,
   ) {
     return this.balanceService.getBalanceHistory(userId.toString(), query);
+  }
+
+  // NEW: Update user balance
+  @Post('update')
+  @HttpCode(HttpStatus.OK)
+  async updateBalance(@Body() dto: UpdateBalanceDto) {
+    const newBalance = await this.balanceService.updateUserBalance(dto);
+    return { userId: dto.userId, assetId: dto.assetId, newBalance };
   }
 }
