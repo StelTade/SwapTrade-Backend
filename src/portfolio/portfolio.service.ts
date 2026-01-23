@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, LessThanOrEqual, Repository } from 'typeorm';
 import { TradeEntity } from './entities/trade.entity';
@@ -15,6 +15,9 @@ import {
   PortfolioPerformanceDto,
 } from './dto/portfolio-performance.dto';
 import { TradeType } from 'src/common/enums/trade-type.enum';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
+import { CacheService } from 'src/common/services/cache.service';
 
 interface MarketPrice {
   price: number;
@@ -52,7 +55,10 @@ export class PortfolioService {
     private balanceRepository: Repository<Balance>,
     @InjectRepository(Trade)
     private tradeRepository: Repository<Trade>,
+    private readonly cacheService: CacheService,
   ) {}
+
+  private readonly PORTFOLIO_CACHE_TTL = 60; // 1 minute
 
   /**
    * Get analytics for a user's portfolio.
@@ -110,7 +116,18 @@ export class PortfolioService {
 
     return { pnl, assetDistribution, riskScore };
   }
-  async getPortfolioSummary(userId: number): Promise<PortfolioSummaryDto> {
+  async getPortfolioSummary(userId: string): Promise<PortfolioSummaryDto> {
+    try {
+      // Try to get from cache first
+      const cached = await this.cacheService.getPortfolioCache(userId);
+      if (cached) {
+        return cached;
+      }
+    } catch (error) {
+      // If cache is unavailable, log and fall back to database
+      console.warn('Cache unavailable, falling back to database:', error.message);
+    }
+
     const startTime = Date.now();
 
     const balances = await this.balanceRepository.find({
@@ -119,13 +136,23 @@ export class PortfolioService {
     });
 
     if (balances.length === 0) {
-      return {
+      const result = {
         totalValue: 0,
         assets: [],
         count: 0,
         timestamp: new Date().toISOString(),
         pricesFetchedAt: new Date().toISOString(),
       };
+      
+      try {
+        // Cache the empty result
+        await this.cacheService.setPortfolioCache(userId, result);
+      } catch (error) {
+        // If cache fails, log but don't fail the operation
+        console.warn('Failed to cache result:', error.message);
+      }
+      
+      return result;
     }
 
     const pricesFetchedAt = new Date();
@@ -166,19 +193,29 @@ export class PortfolioService {
     const duration = Date.now() - startTime;
     this.logger.log(`Portfolio summary calculated in ${duration}ms`);
 
-    return {
+    const result = {
       totalValue: Number(totalValue.toFixed(2)),
       assets,
       count: assets.length,
       timestamp: new Date().toISOString(),
       pricesFetchedAt: pricesFetchedAt.toISOString(),
     };
+    
+    try {
+      // Cache the result
+      await this.cacheService.setPortfolioCache(userId, result);
+    } catch (error) {
+      // If cache fails, log but don't fail the operation
+      console.warn('Failed to cache result:', error.message);
+    }
+    
+    return result;
   }
 
-  async getPortfolioRisk(userId: number): Promise<PortfolioRiskDto> {
+  async getPortfolioRisk(userId: string): Promise<PortfolioRiskDto> {
     const startTime = Date.now();
 
-    const summary = await this.getPortfolioSummary(userId);
+    const summary = await this.getPortfolioSummary(userId.toString());
 
     if (summary.count === 0) {
       return {
@@ -253,7 +290,7 @@ export class PortfolioService {
   }
 
   async getPortfolioPerformance(
-    userId: number,
+    userId: string,
     startDate?: string,
     endDate?: string,
   ): Promise<PortfolioPerformanceDto> {
@@ -341,24 +378,33 @@ export class PortfolioService {
   }
 
   private async getMarketPrice(symbol: string): Promise<number> {
-    const cached = this.priceCache.get(symbol);
-    const now = new Date();
-
-    if (
-      cached &&
-      now.getTime() - cached.timestamp.getTime() < this.CACHE_TTL_MS
-    ) {
-      return cached.price;
+    try {
+      // Try to get from cache first
+      const cached = await this.cacheService.getMarketPriceCache(symbol);
+      if (cached) {
+        return cached.price;
+      }
+    } catch (error) {
+      // If cache is unavailable, log and fall back to database
+      console.warn('Cache unavailable for market price, falling back to simulated price:', error.message);
     }
 
     // Simulate fetching from market API
     // In production, this would call an external price API
     const price = this.simulateMarketPrice(symbol);
-
-    this.priceCache.set(symbol, {
+    
+    const marketPriceData = {
       price,
-      timestamp: now,
-    });
+      timestamp: new Date().toISOString(),
+    };
+    
+    try {
+      // Cache the result with 5-minute TTL
+      await this.cacheService.setMarketPriceCache(symbol, marketPriceData);
+    } catch (error) {
+      // If cache fails, log but don't fail the operation
+      console.warn('Failed to cache market price:', error.message);
+    }
 
     return price;
   }
@@ -380,7 +426,7 @@ export class PortfolioService {
   }
 
   private async getCostBasis(
-    userId: number,
+    userId: string,
     symbol: string,
     startDate?: string,
     endDate?: string,

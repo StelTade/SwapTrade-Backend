@@ -1,18 +1,14 @@
 // src/notification/notification.service.ts
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { QueueService } from '../queue/queue.service';
-import { Notification } from './entities/notification.entity';
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, LessThan } from 'typeorm';
 import { OnEvent } from '@nestjs/event-emitter';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { QueueService } from '../queue/queue.service';
 import { Notification } from './entities/notification.entity';
 import { NotificationPreference } from './entities/notification-preference.entity';
 import { NotificationStatus } from '../common/enums/notification-status.enum';
 import { NotificationEventType } from '../common/enums/notification-event-type.enum';
-import { Cron, CronExpression } from '@nestjs/schedule';
 import { BalanceUpdatedEvent, EVENTS, PortfolioMilestoneEvent, TradeExecutedEvent } from './dto/notification-event.dto';
 import { NotificationType } from './entities/notification-event.entity';
 import { NotificationFrequency } from './entities/user-notification-preferences.entity';
@@ -27,8 +23,63 @@ export class NotificationService {
   constructor(
     @InjectRepository(Notification)
     private notificationRepo: Repository<Notification>,
+    @InjectRepository(NotificationPreference)
+    private preferencesRepo: Repository<NotificationPreference>,
     private readonly queueService: QueueService,
   ) {}
+
+  /**
+   * Generic method to send a notification event
+   */
+  async sendEvent(
+    userId: number,
+    eventType: NotificationEventType,
+    message: string,
+  ): Promise<void> {
+    try {
+      // Map eventType to appropriate notification type
+      let notificationType: 'trade_completed' | 'trade_disputed' | 'message_received' | 'system_alert';
+      switch (eventType) {
+        case NotificationEventType.ORDER_FILLED:
+          notificationType = 'trade_completed';
+          break;
+        case NotificationEventType.ACHIEVEMENT_UNLOCKED:
+          notificationType = 'system_alert';
+          break;
+        case NotificationEventType.PRICE_ALERT:
+          notificationType = 'system_alert';
+          break;
+        default:
+          notificationType = 'system_alert';
+      }
+
+      await this.queueService.addNotificationJob({
+        userId: String(userId),
+        type: notificationType,
+        title: this.getNotificationTitle(eventType),
+        message,
+        priority: 'normal',
+      });
+
+      this.logger.log(`Notification of type ${eventType} queued for user ${userId}`);
+    } catch (error) {
+      this.logger.error(`Failed to queue notification of type ${eventType} for user ${userId}:`, error);
+      throw error;
+    }
+  }
+
+  private getNotificationTitle(eventType: NotificationEventType): string {
+    switch (eventType) {
+      case NotificationEventType.ORDER_FILLED:
+        return 'Order Filled';
+      case NotificationEventType.ACHIEVEMENT_UNLOCKED:
+        return 'Achievement Unlocked';
+      case NotificationEventType.PRICE_ALERT:
+        return 'Price Alert';
+      default:
+        return 'Notification';
+    }
+  }
 
   /**
    * Send trade completed notification (queued)
@@ -56,9 +107,8 @@ export class NotificationService {
     } catch (error) {
       this.logger.error('Failed to queue trade notification:', error);
       throw error;
-    @InjectRepository(NotificationPreference)
-    private preferencesRepo: Repository<NotificationPreference>,
-  ) {}
+    }
+  }
 
   async getPreferences(userId: number): Promise<NotificationPreference | null> {
     return this.preferencesRepo.findOne({ where: { userId } });
@@ -304,6 +354,8 @@ export class NotificationService {
       .execute();
   }
 
+
+
   /**
    * Delete all notifications for a user
    */
@@ -391,7 +443,6 @@ export class NotificationService {
     this.logger.log(`Deleted ${result.affected} old notifications`);
     return result.affected || 0;
   }
-}
 
   // Event Listeners
   @OnEvent(EVENTS.TRADE_EXECUTED, { async: true })

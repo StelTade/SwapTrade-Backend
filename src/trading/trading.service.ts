@@ -11,6 +11,7 @@ import { OrderBook } from './entities/order-book.entity';
 import { OrderType } from '../common/enums/order-type.enum';
 import { OrderStatus } from '../common/enums/order-status.enum';
 import { MatchingEngineService } from './machine-engine.service';
+import { CacheService } from '../common/services/cache.service';
 
 @Injectable()
 export class TradingService {
@@ -25,6 +26,7 @@ export class TradingService {
     @InjectRepository(OrderBook)
     private readonly orderBookRepository: Repository<OrderBook>,
     private readonly matchingEngine: MatchingEngineService,
+    private readonly cacheService: CacheService,
   ) {}
 
   async swap(
@@ -68,8 +70,7 @@ export class TradingService {
       // Calculate trade value
       const tradeValue = amount * price;
 
-      // Calculate PnL (simplified - in real scenario, compare with previous trades)
-      // For BUY: negative PnL (cost), for SELL: positive PnL (gain)
+     
       const pnl = tradeTypeEnum === TradeType.BUY ? -tradeValue : tradeValue;
 
       // Update portfolio after successful trade
@@ -106,6 +107,9 @@ export class TradingService {
           );
         }
       }
+
+      // Invalidate cache after trade execution
+      await this.cacheService.invalidateTradeRelatedCaches(userId.toString(), asset);
 
       return { success: true, trade, badgeAwarded };
     } catch (error) {
@@ -205,7 +209,30 @@ export class TradingService {
         `Starting matching cycle: ${bids.length} bids, ${asks.length} asks`,
       );
 
-      const result = await this.matchingEngine.matchTrades(bids, asks);
+      // Transform OrderBook entities to Order interface expected by matching engine
+      const transformedBids = bids.map(order => ({
+        id: order.id.toString(),
+        userId: order.userId.toString(),
+        asset: order.asset,
+        amount: order.amount,
+        price: order.price,
+        remainingAmount: order.remainingAmount,
+        timestamp: order.createdAt,
+        type: order.type === OrderType.BUY ? 'BID' : 'ASK' as 'BID' | 'ASK',
+      }));
+
+      const transformedAsks = asks.map(order => ({
+        id: order.id.toString(),
+        userId: order.userId.toString(),
+        asset: order.asset,
+        amount: order.amount,
+        price: order.price,
+        remainingAmount: order.remainingAmount,
+        timestamp: order.createdAt,
+        type: order.type === OrderType.BUY ? 'BID' : 'ASK' as 'BID' | 'ASK',
+      }));
+
+      const result = await this.matchingEngine.matchTrades(transformedBids, transformedAsks);
 
       this.logger.log(
         `Matching cycle complete: ${result.tradesExecuted} trades executed, ` +
