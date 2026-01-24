@@ -626,23 +626,6 @@ export class NotificationService {
     };
   }
 
-  async markAsRead(userId: string, notificationIds: string[]): Promise<void> {
-    await this.notificationRepo.update(
-      {
-        id: In(notificationIds.map(id => parseInt(id, 10))),
-        userId: parseInt(userId, 10), // Ensure user can only mark their own notifications
-      },
-      { read: true },
-    );
-  }
-
-  async markAllAsRead(userId: string): Promise<void> {
-    await this.notificationRepo.update(
-      { userId: parseInt(userId), read: false },
-      { read: true },
-    );
-  }
-
   async getUserPreferences(userId: string): Promise<NotificationPreference> {
     let preferences = await this.preferencesRepo.findOne({ where: { userId: parseInt(userId) } });
 
@@ -666,12 +649,6 @@ export class NotificationService {
     let preferences = await this.getUserPreferences(userId);
     Object.assign(preferences, updates);
     return await this.preferencesRepo.save(preferences);
-  }
-
-  async getUnreadCount(userId: string): Promise<number> {
-    return await this.notificationRepo.count({
-      where: { userId: parseInt(userId), read: false },
-    });
   }
 
   // Cleanup expired notifications

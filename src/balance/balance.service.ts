@@ -102,7 +102,7 @@ export class BalanceService {
 
     let balance = await repo.findOne({ where: { userId } });
     if (!balance) {
-      balance = repo.create({ userId, total: 0, reserved: 0 });
+      balance = repo.create({ userId, amount: 0 });
       await repo.save(balance);
     }
     return balance;
@@ -113,10 +113,43 @@ export class BalanceService {
     manager?: EntityManager,
   ): Promise<number> {
     const balance = await this.getBalance(userId, manager);
-    return Number(balance.total) - Number(balance.reserved);
+    return Number(balance.amount ?? 0);
   }
 
   /** Add a balance audit entry */
+  async getBalanceHistory(
+    userId: string,
+    query: BalanceHistoryQueryDto,
+  ): Promise<BalanceHistoryResponseDto> {
+    const limit = Math.min(query.limit || 20, 100);
+    const offset = query.offset || 0;
+
+    const [entries, total] = await this.balanceAuditRepository.findAndCount({
+      where: { userId },
+      order: { timestamp: 'DESC' },
+      skip: offset,
+      take: limit,
+    });
+
+    const data: BalanceHistoryEntryDto[] = entries.map((e) => ({
+      asset: e.asset,
+      amountChanged: e.amountChanged,
+      resultingBalance: e.resultingBalance,
+      reason: e.reason,
+      timestamp: e.timestamp?.toISOString() || new Date().toISOString(),
+      transactionId: e.transactionId,
+      relatedOrderId: e.relatedOrderId,
+    }));
+
+    return {
+      data,
+      total,
+      limit,
+      offset,
+      hasMore: offset + limit < total,
+    };
+  }
+
   async addBalanceAuditEntry(
     userId: string,
     asset: string,
@@ -214,20 +247,32 @@ export class BalanceService {
       lock: { mode: 'pessimistic_write' },
     });
 
-    if (!balance || balance.total - balance.reserved < amount) {
+    if (!balance || Number(balance.amount ?? 0) < amount) {
       throw new BadRequestException('Insufficient balance');
     }
 
-    balance.reserved += amount;
+    balance.amount = Number(balance.amount ?? 0) - amount;
     await repo.save(balance);
+  }
 
-    await manager.save(
-      BalanceTransactionEntity,
-      manager.create(BalanceTransactionEntity, {
-        userId,
-        amount: -amount,
-        reason,
-      }),
-    );
+  async releaseFunds(
+    userId: string,
+    amount: number,
+    reason: string,
+    manager: EntityManager,
+  ) {
+    const repo = manager.getRepository(UserBalance);
+
+    const balance = await repo.findOne({
+      where: { userId },
+      lock: { mode: 'pessimistic_write' },
+    });
+
+    if (!balance) {
+      throw new BadRequestException('User balance not found');
+    }
+
+    balance.amount = Number(balance.amount ?? 0) + amount;
+    await repo.save(balance);
   }
 }

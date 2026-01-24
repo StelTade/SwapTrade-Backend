@@ -1,8 +1,9 @@
 import {
   BadRequestException,
+  HttpException,
+  HttpStatus,
   Injectable,
   Logger,
-  TooManyRequestsException,
   UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
@@ -19,8 +20,9 @@ export class AuthService {
     const allowed = checkRateLimit(dto.email);
     if (!allowed) {
       this.logger.warn(AuthError.RATE_LIMIT_EXCEEDED);
-      throw new TooManyRequestsException(
+      throw new HttpException(
         'Too many login attempts. Please try again later.',
+        HttpStatus.TOO_MANY_REQUESTS,
       );
     }
 
@@ -54,7 +56,7 @@ export class AuthService {
   }
 
   // ===== MOCKED / EXISTING METHODS =====
-  private async findUserByEmail(email: string) {
+  private async findUserByEmail(email: string): Promise<{ id: number; email: string; passwordHash: string } | null> {
     return null; // replace with repo call
   }
 

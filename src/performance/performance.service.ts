@@ -101,7 +101,7 @@ export class PerformanceService {
       () => this.tradeRepository.find({
         where: { userId: 1 },
         relations: ['user'],
-        order: { createdAt: 'DESC' },
+        order: { timestamp: 'DESC' as any },
         take: 10,
       })
     );
@@ -110,9 +110,9 @@ export class PerformanceService {
     results.getUserBids = await this.benchmarkQuery(
       'getUserBids',
       () => this.bidRepository.find({
-        where: { userId: 1, status: 'ACTIVE' },
+        where: { userId: 1, status: 'MATCHED' as any },
         relations: ['user'],
-        order: { createdAt: 'DESC' },
+        order: { createdAt: 'DESC' as any },
       })
     );
 
@@ -161,7 +161,7 @@ export class PerformanceService {
         this.tradeRepository.find({
           where: { userId: i % 100 },
           relations: ['user'],
-          order: { createdAt: 'DESC' },
+          order: { timestamp: 'DESC' as any },
           take: 5,
         })
       );

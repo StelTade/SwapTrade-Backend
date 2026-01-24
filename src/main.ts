@@ -132,19 +132,6 @@ async function bootstrap() {
   logger.log(`Swagger documentation: http://localhost:${port}/api/docs`);
   logger.log('Graceful shutdown handlers registered');
   logger.log(`Shutdown timeout: ${30000}ms`);
-  const port = process.env.PORT ?? 3000;
-  await app.listen(port);
-  
-  console.log(`Application is running on: http://localhost:${port}`);
-  console.log(`Swagger documentation available at: http://localhost:${port}/api/docs`);
-  
-  // TODO: Add monitoring for rate limit violations
-  /*
-  setInterval(() => {
-    const stats = rateLimitMiddleware.getStats();
-    console.log('Rate Limit Stats:', stats);
-  }, 30000); // Log every 30 seconds
-  */
 }
 
 bootstrap().catch((error) => {

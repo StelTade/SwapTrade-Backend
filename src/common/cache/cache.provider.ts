@@ -1,5 +1,5 @@
 import { ConfigService } from '@nestjs/config';
-import * as redisStore from 'cache-manager-redis-store';
+import * as redisStoreFactory from 'cache-manager-redis-store';
 
 export async function redisStore(configService: ConfigService) {
   const host = configService.get<string>('cache.redis.host', 'localhost');
@@ -9,7 +9,7 @@ export async function redisStore(configService: ConfigService) {
   const db = configService.get<number>('cache.redis.db', 0);
 
   return {
-    store: redisStore,
+    store: redisStoreFactory,
     host,
     port,
     username,

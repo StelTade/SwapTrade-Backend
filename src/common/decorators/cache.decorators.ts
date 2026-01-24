@@ -1,4 +1,5 @@
-import { CACHE_MANAGER, Inject, SetMetadata } from '@nestjs/common';
+import { Inject, SetMetadata } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 
 export const CacheTTL = (ttl: number) => SetMetadata('cache_ttl', ttl);

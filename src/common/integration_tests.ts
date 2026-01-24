@@ -1,10 +1,10 @@
 // test/logging-integration.spec.ts
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
-import { AppModule } from '../src/app.module';
-import { LoggerService } from '../src/common/logging/logger.service';
-import { MetricsService } from '../src/common/logging/metrics.service';
+import request from 'supertest';
+import { AppModule } from '../app.module';
+import { LoggerService } from './logging/logger_service';
+import { MetricsService } from './logging/metrics_service';
 import * as fs from 'fs';
 import * as path from 'path';
 

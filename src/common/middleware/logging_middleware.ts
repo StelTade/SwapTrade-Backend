@@ -2,7 +2,7 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { LoggerService } from '../logging/logger.service';
+import { LoggerService } from '../logging/logger_service';
 
 @Injectable()
 export class LoggingMiddleware implements NestMiddleware {
@@ -49,14 +49,22 @@ export class LoggingMiddleware implements NestMiddleware {
         const logLevel = res.statusCode >= 500 ? 'error' : 
                         res.statusCode >= 400 ? 'warn' : 'log';
 
-        this.logger[logLevel]('Request completed', {
+        const logContext: any = {
           correlationId,
           method: req.method,
           url: req.originalUrl,
           statusCode: res.statusCode,
           duration,
           userId,
-        });
+        };
+
+        if (logLevel === 'error') {
+          this.logger.error('Request completed', undefined, logContext);
+        } else if (logLevel === 'warn') {
+          this.logger.warn('Request completed', logContext);
+        } else {
+          this.logger.log('Request completed', logContext);
+        }
 
         // Log performance metric
         this.logger.metric('http.request.duration', duration, {

@@ -1,16 +1,17 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { DataSource } from 'typeorm';
 import { CreateBidDto } from './dto/create-bid.dto';
 import { CacheService } from '../common/services/cache.service';
 import { BidErrors } from './errors/bid-errors';
 import { BalanceService } from 'src/balance/balance.service';
+import { Bid } from './entities/bid.entity';
 
 @Injectable()
 export class BiddingService {
   constructor(
+    private readonly dataSource: DataSource,
     private readonly cacheService: CacheService,
-
     private readonly balanceService: BalanceService,
-
   ) {}
 
  async createBid(
@@ -38,11 +39,10 @@ export class BiddingService {
     );
 
     try {
-      const bid = manager.create(BidEntity, {
-        userId,
-        assetId: dto.assetId,
+      const bid = manager.create(Bid, {
+        userId: parseInt(userId),
+        asset: dto.assetId,
         amount: dto.amount,
-        price: dto.price,
         status: 'PENDING',
       });
 
@@ -66,18 +66,11 @@ export class BiddingService {
       throw new BadRequestException(BidErrors.INVALID_AMOUNT);
     }
 
-    const asset = await this.assetService.findById(dto.assetId);
-    if (!asset) {
-      throw new NotFoundException(BidErrors.ASSET_NOT_FOUND);
-    }
-
-    const marketPrice = asset.currentPrice;
-    const min = marketPrice * 0.9;
-    const max = marketPrice * 1.1;
-
-    if (dto.price < min || dto.price > max) {
-      throw new BadRequestException(BidErrors.PRICE_OUT_OF_BOUNDS);
-    }
+    // TODO: Add assetService dependency when available
+    // const asset = await this.assetService.findById(dto.assetId);
+    // if (!asset) {
+    //   throw new NotFoundException(BidErrors.ASSET_NOT_FOUND);
+    // }
 
     const balance = await this.balanceService.getAvailableBalance(userId);
     const totalCost = dto.amount * dto.price;
@@ -86,6 +79,6 @@ export class BiddingService {
       throw new BadRequestException(BidErrors.INSUFFICIENT_BALANCE);
     }
 
-    return { asset, totalCost };
+    return { totalCost };
   }
 }

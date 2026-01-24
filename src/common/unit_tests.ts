@@ -1,7 +1,6 @@
 // test/logger.service.spec.ts
 import { Test, TestingModule } from '@nestjs/testing';
-import { LoggerService } from '../src/common/logging/logger.service';
-import * as winston from 'winston';
+import { LoggerService } from './logging/logger_service';
 
 describe('LoggerService', () => {
   let service: LoggerService;
@@ -149,8 +148,8 @@ describe('LoggerService', () => {
 
 // test/audit.service.spec.ts
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuditService } from '../src/common/logging/audit.service';
-import { LoggerService } from '../src/common/logging/logger.service';
+import { AuditService } from './logging/audit_service';
+import { LoggerService } from './logging/logger_service';
 
 describe('AuditService', () => {
   let service: AuditService;

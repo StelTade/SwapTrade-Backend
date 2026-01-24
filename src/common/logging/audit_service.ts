@@ -1,6 +1,6 @@
 // src/common/logging/audit.service.ts
 import { Injectable } from '@nestjs/common';
-import { LoggerService, AuditLogData } from './logger.service';
+import { LoggerService, AuditLogData } from './logger_service';
 
 export enum AuditAction {
   TRADE_EXECUTED = 'TRADE_EXECUTED',

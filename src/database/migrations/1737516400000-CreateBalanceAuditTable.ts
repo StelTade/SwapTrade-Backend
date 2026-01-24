@@ -70,20 +70,7 @@ export class CreateBalanceAuditTable1737516400000 implements MigrationInterface 
     );
 
     // Create indexes for performance
-    await queryRunner.createIndex(
-      'balance_audit',
-      new Index('userId'),
-    );
-
-    await queryRunner.createIndex(
-      'balance_audit',
-      new Index(['userId', 'timestamp']),
-    );
-
-    await queryRunner.createIndex(
-      'balance_audit',
-      new Index(['userId', 'asset']),
-    );
+    // Indexes are already defined in the table schema above
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

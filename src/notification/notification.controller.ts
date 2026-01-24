@@ -10,7 +10,7 @@ export class NotificationController {
 
   @Get(':userId')
   async list(@Param('userId', ParseIntPipe) userId: number) {
-    return this.notificationService.listUserNotifications(userId);
+    return this.notificationService.findAllByUser(userId);
   }
 
   @Get(':userId/preferences')
@@ -42,7 +42,7 @@ export class NotificationController {
 
   @Patch(':id/read')
   async markRead(@Param('id', ParseIntPipe) id: number) {
-    return this.notificationService.markRead(id);
+    return this.notificationService.markAsRead(id);
   }
 
   @Get()
@@ -67,7 +67,10 @@ export class NotificationController {
     @Body() dto: MarkAsReadDto
   ) {
     const userId = req.user?.id || 'current-user-id';
-    await this.notificationService.markAsRead(userId, dto.notificationIds);
+    // Mark each notification as read
+    for (const notificationId of dto.notificationIds) {
+      await this.notificationService.markAsRead(parseInt(notificationId));
+    }
     return { success: true };
   }
 

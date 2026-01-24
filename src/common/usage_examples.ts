@@ -1,9 +1,9 @@
 // Example 1: Trade Service with Audit Logging
 // src/trades/trades.service.ts
 import { Injectable } from '@nestjs/common';
-import { LoggerService } from '../common/logging/logger.service';
-import { AuditService } from '../common/logging/audit.service';
-import { MetricsService } from '../common/logging/metrics.service';
+import { LoggerService } from './logging/logger_service';
+import { AuditService } from './logging/audit_service';
+import { MetricsService } from './logging/metrics_service';
 
 @Injectable()
 export class TradesService {
@@ -130,8 +130,8 @@ export class BalancesService {
 // Example 3: Auth Service with Login Audit
 // src/auth/auth.service.ts
 import { Injectable } from '@nestjs/common';
-import { AuditService } from '../common/logging/audit.service';
-import { LoggerService } from '../common/logging/logger.service';
+import { AuditService } from './logging/audit_service';
+import { LoggerService } from './logging/logger_service';
 
 @Injectable()
 export class AuthService {
@@ -187,7 +187,7 @@ export class AuthService {
 // Example 4: Database Query with Performance Logging
 // src/common/database/query.interceptor.ts
 import { Injectable } from '@nestjs/common';
-import { MetricsService } from '../logging/metrics.service';
+import { MetricsService } from './logging/metrics_service';
 
 @Injectable()
 export class QueryPerformanceTracker {
@@ -212,7 +212,7 @@ export class QueryPerformanceTracker {
 
 // Example 5: Using Context in Custom Decorators
 // src/common/decorators/log-execution.decorator.ts
-import { LoggerService } from '../logging/logger.service';
+import { LoggerService } from './logging/logger_service';
 
 export function LogExecution() {
   return function (

@@ -86,14 +86,17 @@ export class LoggerService implements NestLoggerService {
 
   private formatLog(info: winston.Logform.TransformableInfo): string {
     const context = this.getContext();
-    const logObject = {
+    const logObject: any = {
       timestamp: info.timestamp,
       level: info.level,
       message: info.message,
       correlationId: context.get('correlationId'),
       ...this.maskSensitiveData(info.context || {}),
-      ...(info.stack && { stack: info.stack }),
     };
+
+    if (info.stack) {
+      logObject.stack = info.stack;
+    }
 
     return JSON.stringify(logObject);
   }

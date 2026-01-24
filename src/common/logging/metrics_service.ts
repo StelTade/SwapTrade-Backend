@@ -1,8 +1,8 @@
 // src/common/logging/metrics.service.ts
 import { Injectable } from '@nestjs/common';
-import { LoggerService } from './logger.service';
+import { LoggerService } from './logger_service';
 
-interface MetricSnapshot {
+export interface MetricSnapshot {
   count: number;
   sum: number;
   min: number;
@@ -10,7 +10,7 @@ interface MetricSnapshot {
   avg: number;
 }
 
-interface ErrorRateSnapshot {
+export interface ErrorRateSnapshot {
   total: number;
   errors: number;
   rate: number;

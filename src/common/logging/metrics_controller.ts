@@ -1,6 +1,6 @@
 // src/common/logging/metrics.controller.ts
-import { Controller, Get } from '@nestjs/common';
-import { MetricsService } from './metrics.service';
+import { Controller, Get, Param } from '@nestjs/common';
+import { MetricsService } from './metrics_service';
 
 @Controller('metrics')
 export class MetricsController {
