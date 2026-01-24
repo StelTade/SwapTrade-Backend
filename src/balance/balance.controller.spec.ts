@@ -3,6 +3,7 @@ import { BalanceController } from './balance.controller';
 import { BalanceService } from './balance.service';
 import { BalanceHistoryGuard } from '../common/guards/balance-history.guard';
 import { BalanceHistoryQueryDto } from './dto/balance-history.dto';
+import { PaginationQueryDto } from '../common/interfaces/pagination.dto';
 
 describe('BalanceController', () => {
   let controller: BalanceController;
@@ -49,7 +50,7 @@ describe('BalanceController', () => {
   });
 
   describe('getUserBalances', () => {
-    it('should return user balances', async () => {
+    it('should return user balances without pagination', async () => {
       const mockBalances = [
         { asset: 'BTC', balance: 1.5 },
         { asset: 'ETH', balance: 10.0 },
@@ -58,8 +59,96 @@ describe('BalanceController', () => {
 
       const result = await controller.getUserBalances('1');
 
-      expect(balanceService.getUserBalances).toHaveBeenCalledWith('1');
+      expect(balanceService.getUserBalances).toHaveBeenCalledWith('1', undefined);
       expect(result).toEqual(mockBalances);
+    });
+
+    it('should return paginated user balances with default pagination', async () => {
+      const mockPaginatedResponse = {
+        data: [
+          { asset: 'BTC', balance: 1.5 },
+          { asset: 'ETH', balance: 10.0 },
+        ],
+        total: 2,
+        limit: 20,
+        offset: 0,
+      };
+      const pagination: PaginationQueryDto = {};
+      balanceService.getUserBalances.mockResolvedValue(mockPaginatedResponse);
+
+      const result = await controller.getUserBalances('1', pagination);
+
+      expect(balanceService.getUserBalances).toHaveBeenCalledWith('1', pagination);
+      expect(result).toEqual(mockPaginatedResponse);
+    });
+
+    it('should return paginated user balances with custom limit', async () => {
+      const mockPaginatedResponse = {
+        data: Array.from({ length: 50 }, (_, i) => ({
+          asset: `ASSET_${i}`,
+          balance: i * 0.1,
+        })),
+        total: 150,
+        limit: 50,
+        offset: 0,
+      };
+      const pagination: PaginationQueryDto = { limit: 50, offset: 0 };
+      balanceService.getUserBalances.mockResolvedValue(mockPaginatedResponse);
+
+      const result = await controller.getUserBalances('1', pagination);
+
+      expect(balanceService.getUserBalances).toHaveBeenCalledWith('1', pagination);
+      expect(result).toHaveProperty('limit', 50);
+    });
+
+    it('should return paginated user balances with custom offset', async () => {
+      const mockPaginatedResponse = {
+        data: [{ asset: 'BTC', balance: 1.5 }],
+        total: 100,
+        limit: 20,
+        offset: 20,
+      };
+      const pagination: PaginationQueryDto = { limit: 20, offset: 20 };
+      balanceService.getUserBalances.mockResolvedValue(mockPaginatedResponse);
+
+      const result = await controller.getUserBalances('1', pagination);
+
+      expect(balanceService.getUserBalances).toHaveBeenCalledWith('1', pagination);
+      expect(result).toHaveProperty('offset', 20);
+    });
+
+    it('should cap limit at 100', async () => {
+      const mockPaginatedResponse = {
+        data: Array.from({ length: 100 }, (_, i) => ({
+          asset: `ASSET_${i}`,
+          balance: i * 0.1,
+        })),
+        total: 500,
+        limit: 100,
+        offset: 0,
+      };
+      const pagination: PaginationQueryDto = { limit: 200, offset: 0 };
+      balanceService.getUserBalances.mockResolvedValue(mockPaginatedResponse);
+
+      const result = await controller.getUserBalances('1', pagination);
+
+      expect(balanceService.getUserBalances).toHaveBeenCalledWith('1', pagination);
+      expect(result).toHaveProperty('limit', 100);
+    });
+
+    it('should handle empty paginated response', async () => {
+      const mockPaginatedResponse = {
+        data: [],
+        total: 0,
+        limit: 20,
+        offset: 0,
+      };
+      const pagination: PaginationQueryDto = { limit: 20, offset: 0 };
+      balanceService.getUserBalances.mockResolvedValue(mockPaginatedResponse);
+
+      const result = await controller.getUserBalances('1', pagination);
+
+      expect(result).toEqual(mockPaginatedResponse);
     });
   });
 

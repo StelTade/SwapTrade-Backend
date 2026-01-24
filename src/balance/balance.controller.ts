@@ -2,6 +2,7 @@ import { Controller, Get, Param, Query, Post, Body, UseGuards, HttpCode, HttpSta
 import { BalanceService } from './balance.service';
 import { BalanceHistoryQueryDto } from './dto/balance-history.dto';
 import { UpdateBalanceDto } from './dto/update-balance.dto';
+import { PaginationQueryDto } from '../common/interfaces/pagination.dto';
 import { BalanceHistoryGuard } from '../common/guards/balance-history.guard';
 
 @Controller('balances')
@@ -9,8 +10,11 @@ export class BalanceController {
   constructor(private readonly balanceService: BalanceService) {}
 
   @Get(':userId')
-  async getUserBalances(@Param('userId') userId: string) {
-    return this.balanceService.getUserBalances(userId);
+  async getUserBalances(
+    @Param('userId') userId: string,
+    @Query() pagination?: PaginationQueryDto,
+  ) {
+    return this.balanceService.getUserBalances(userId, pagination);
   }
 
   @Get('history/:userId')

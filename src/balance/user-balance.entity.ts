@@ -8,7 +8,7 @@ import {
   UpdateDateColumn,
   Unique,
 } from 'typeorm';
-import { VirtualAsset } from 'src/trading/entities/virtual-asset.entity';
+import { VirtualAsset } from '../trading/entities/virtual-asset.entity';
 
 @Entity('user_balances')
 @Unique(['userId', 'assetId'])

@@ -8,6 +8,11 @@ import {
   BalanceHistoryResponseDto,
   BalanceHistoryEntryDto,
 } from './dto/balance-history.dto';
+import {
+  GetUserBalancesDto,
+  GetUserBalancesResponseDto,
+} from './dto/get-user-balances.dto';
+import { PaginationQueryDto } from '../common/interfaces/pagination.dto';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { CacheService } from '../common/services/cache.service';
@@ -31,38 +36,60 @@ export class BalanceService {
 
   async getUserBalances(
     userId: string,
-  ): Promise<Array<{ asset: string; balance: number }>> {
-    try {
-      // Try to get from cache first
-      const cached = await this.cacheService.getUserBalanceCache(userId);
-      if (cached) {
-        return cached;
+    pagination?: PaginationQueryDto,
+  ): Promise<GetUserBalancesResponseDto | Array<{ asset: string; balance: number }>> {
+    // Handle backward compatibility: if no pagination provided, return simple array
+    if (!pagination) {
+      try {
+        const cached = await this.cacheService.getUserBalanceCache(userId);
+        if (cached) {
+          return cached;
+        }
+      } catch (error) {
+        console.warn(
+          'Cache unavailable, falling back to database:',
+          error.message,
+        );
       }
-    } catch (error) {
-      // If cache is unavailable, log and fall back to database
-      console.warn(
-        'Cache unavailable, falling back to database:',
-        error.message,
-      );
+
+      const balances = await this.balanceRepository.find({
+        where: { userId },
+      });
+      const result = balances.map((b) => ({
+        asset: b.asset,
+        balance: b.balance,
+      }));
+
+      try {
+        await this.cacheService.setUserBalanceCache(userId, result);
+      } catch (error) {
+        console.warn('Failed to cache result:', error.message);
+      }
+
+      return result;
     }
 
-    const balances = await this.balanceRepository.find({
+    // Paginated response
+    const limit = Math.min(pagination.limit || 20, 100);
+    const offset = pagination.offset || 0;
+
+    if (offset < 0) {
+      throw new BadRequestException('Offset cannot be negative');
+    }
+
+    const [balances, total] = await this.balanceRepository.findAndCount({
       where: { userId },
+      skip: offset,
+      take: limit,
+      order: { asset: 'ASC' },
     });
-    const result = balances.map((b) => ({
+
+    const data: GetUserBalancesDto[] = balances.map((b) => ({
       asset: b.asset,
       balance: b.balance,
     }));
 
-    try {
-      // Cache the result if cache is available
-      await this.cacheService.setUserBalanceCache(userId, result);
-    } catch (error) {
-      // If cache fails, log but don't fail the operation
-      console.warn('Failed to cache result:', error.message);
-    }
-
-    return result;
+    return new GetUserBalancesResponseDto(data, total, limit, offset);
   }
 
   async getBalance(

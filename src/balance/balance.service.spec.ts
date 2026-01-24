@@ -2,14 +2,21 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BalanceService } from './balance.service';
 import { BalanceAudit } from './balance-audit.entity';
 import { Balance } from './balance.entity';
+import { UserBalance } from './user-balance.entity';
 import { BalanceHistoryQueryDto } from './dto/balance-history.dto';
-import { Repository } from 'typeorm';
+import { PaginationQueryDto } from '../common/interfaces/pagination.dto';
+import { Repository, DataSource } from 'typeorm';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { BadRequestException } from '@nestjs/common';
+import { CacheService } from '../common/services/cache.service';
 
 describe('BalanceService', () => {
   let service: BalanceService;
   let balanceAuditRepository: jest.Mocked<Repository<BalanceAudit>>;
   let balanceRepository: jest.Mocked<Repository<Balance>>;
+  let userBalanceRepository: jest.Mocked<Repository<UserBalance>>;
+  let dataSource: jest.Mocked<DataSource>;
+  let cacheService: jest.Mocked<CacheService>;
 
   const mockBalanceAudit: BalanceAudit = {
     id: 1,
@@ -24,6 +31,14 @@ describe('BalanceService', () => {
     previousBalance: 1.0,
   };
 
+  const mockBalance: Balance = {
+    id: 1,
+    userId: '1',
+    asset: 'BTC',
+    balance: 1.5,
+    available: 1.5,
+  };
+
   beforeEach(async () => {
     const mockBalanceAuditRepository = {
       count: jest.fn(),
@@ -34,6 +49,24 @@ describe('BalanceService', () => {
 
     const mockBalanceRepository = {
       find: jest.fn(),
+      findAndCount: jest.fn(),
+    } as any;
+
+    const mockUserBalanceRepository = {
+      findOne: jest.fn(),
+      create: jest.fn(),
+      save: jest.fn(),
+    } as any;
+
+    const mockDataSource = {
+      manager: jest.fn(),
+      transaction: jest.fn(),
+    } as any;
+
+    const mockCacheService = {
+      getUserBalanceCache: jest.fn(),
+      setUserBalanceCache: jest.fn(),
+      invalidateBalanceRelatedCaches: jest.fn(),
     } as any;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -47,12 +80,179 @@ describe('BalanceService', () => {
           provide: getRepositoryToken(Balance),
           useValue: mockBalanceRepository,
         },
+        {
+          provide: getRepositoryToken(UserBalance),
+          useValue: mockUserBalanceRepository,
+        },
+        {
+          provide: DataSource,
+          useValue: mockDataSource,
+        },
+        {
+          provide: CacheService,
+          useValue: mockCacheService,
+        },
       ],
     }).compile();
 
     service = module.get<BalanceService>(BalanceService);
     balanceAuditRepository = module.get(getRepositoryToken(BalanceAudit));
     balanceRepository = module.get(getRepositoryToken(Balance));
+    userBalanceRepository = module.get(getRepositoryToken(UserBalance));
+    dataSource = module.get(DataSource) as jest.Mocked<DataSource>;
+    cacheService = module.get(CacheService) as jest.Mocked<CacheService>;
+  });
+
+  describe('getUserBalances', () => {
+    it('should return non-paginated array when no pagination provided', async () => {
+      cacheService.getUserBalanceCache.mockRejectedValue(new Error('Cache miss'));
+      balanceRepository.find.mockResolvedValue([mockBalance]);
+
+      const result = await service.getUserBalances('1');
+
+      expect(Array.isArray(result)).toBe(true);
+      expect(result).toEqual([
+        {
+          asset: 'BTC',
+          balance: 1.5,
+        },
+      ]);
+    });
+
+    it('should return paginated response with default pagination', async () => {
+      const pagination: PaginationQueryDto = {};
+      balanceRepository.findAndCount.mockResolvedValue([
+        [mockBalance],
+        1,
+      ]);
+
+      const result = await service.getUserBalances('1', pagination);
+
+      expect(balanceRepository.findAndCount).toHaveBeenCalledWith({
+        where: { userId: '1' },
+        skip: 0,
+        take: 20,
+        order: { asset: 'ASC' },
+      });
+      expect(result).toEqual({
+        data: [
+          {
+            asset: 'BTC',
+            balance: 1.5,
+          },
+        ],
+        total: 1,
+        limit: 20,
+        offset: 0,
+      });
+    });
+
+    it('should return paginated response with custom limit', async () => {
+      const pagination: PaginationQueryDto = { limit: 50, offset: 0 };
+      balanceRepository.findAndCount.mockResolvedValue([
+        [mockBalance],
+        1,
+      ]);
+
+      const result = await service.getUserBalances('1', pagination);
+
+      expect(balanceRepository.findAndCount).toHaveBeenCalledWith({
+        where: { userId: '1' },
+        skip: 0,
+        take: 50,
+        order: { asset: 'ASC' },
+      });
+      expect(result).toHaveProperty('limit', 50);
+    });
+
+    it('should cap limit at 100 when exceeded', async () => {
+      const pagination: PaginationQueryDto = { limit: 200, offset: 0 };
+      balanceRepository.findAndCount.mockResolvedValue([
+        [mockBalance],
+        1,
+      ]);
+
+      const result = await service.getUserBalances('1', pagination);
+
+      expect(balanceRepository.findAndCount).toHaveBeenCalledWith({
+        where: { userId: '1' },
+        skip: 0,
+        take: 100,
+        order: { asset: 'ASC' },
+      });
+      expect(result).toHaveProperty('limit', 100);
+    });
+
+    it('should reject negative offset with BadRequestException', async () => {
+      const pagination: PaginationQueryDto = { limit: 20, offset: -1 };
+
+      await expect(
+        service.getUserBalances('1', pagination),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should return paginated response with custom offset', async () => {
+      const pagination: PaginationQueryDto = { limit: 20, offset: 10 };
+      balanceRepository.findAndCount.mockResolvedValue([
+        [mockBalance],
+        100,
+      ]);
+
+      const result = await service.getUserBalances('1', pagination);
+
+      expect(balanceRepository.findAndCount).toHaveBeenCalledWith({
+        where: { userId: '1' },
+        skip: 10,
+        take: 20,
+        order: { asset: 'ASC' },
+      });
+      expect(result).toHaveProperty('offset', 10);
+      expect(result).toHaveProperty('total', 100);
+    });
+
+    it('should handle empty balance list with pagination', async () => {
+      const pagination: PaginationQueryDto = { limit: 20, offset: 0 };
+      balanceRepository.findAndCount.mockResolvedValue([[], 0]);
+
+      const result = await service.getUserBalances('1', pagination);
+
+      expect(result).toEqual({
+        data: [],
+        total: 0,
+        limit: 20,
+        offset: 0,
+      });
+    });
+
+    it('should handle large dataset pagination', async () => {
+      const pagination: PaginationQueryDto = { limit: 20, offset: 0 };
+      const largeDataset = Array.from({ length: 20 }, (_, i) => ({
+        ...mockBalance,
+        id: i,
+        asset: `ASSET_${i}`,
+      }));
+      balanceRepository.findAndCount.mockResolvedValue([
+        largeDataset,
+        1000,
+      ]);
+
+      const result = await service.getUserBalances('1', pagination);
+
+      expect(result).toHaveProperty('total', 1000);
+      expect(result).toHaveProperty('data');
+      expect(result.data).toHaveLength(20);
+    });
+
+    it('should use cache when available for non-paginated requests', async () => {
+      const cachedData = [{ asset: 'BTC', balance: 1.5 }];
+      cacheService.getUserBalanceCache.mockResolvedValue(cachedData);
+
+      const result = await service.getUserBalances('1');
+
+      expect(cacheService.getUserBalanceCache).toHaveBeenCalledWith('1');
+      expect(result).toEqual(cachedData);
+      expect(balanceRepository.find).not.toHaveBeenCalled();
+    });
   });
 
   describe('getBalanceHistory', () => {
