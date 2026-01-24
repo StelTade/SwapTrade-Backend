@@ -33,10 +33,9 @@ export class Bid {
   @Column()
   asset: string;
 
-  @Index()
-  @Column()
-  status: string;
-
   @CreateDateColumn()
   createdAt: Date;
+
+  status: 'PENDING' | 'MATCHED' | 'CANCELLED' | 'SETTLED';
+  reservedAmount: number;
 }

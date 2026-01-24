@@ -1,9 +1,13 @@
 import { Injectable, BadRequestException, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, EntityManager } from 'typeorm';
 import { Balance } from './balance.entity';
 import { BalanceAudit } from './balance-audit.entity';
-import { BalanceHistoryQueryDto, BalanceHistoryResponseDto, BalanceHistoryEntryDto } from './dto/balance-history.dto';
+import {
+  BalanceHistoryQueryDto,
+  BalanceHistoryResponseDto,
+  BalanceHistoryEntryDto,
+} from './dto/balance-history.dto';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { CacheService } from '../common/services/cache.service';
@@ -17,7 +21,7 @@ export class BalanceService {
     private readonly balanceRepository: Repository<Balance>,
     @InjectRepository(BalanceAudit)
     private readonly balanceAuditRepository: Repository<BalanceAudit>,
- @InjectRepository(UserBalance)
+    @InjectRepository(UserBalance)
     private readonly userBalanceRepository: Repository<UserBalance>,
     private readonly dataSource: DataSource,
     private readonly cacheService: CacheService,
@@ -36,14 +40,20 @@ export class BalanceService {
       }
     } catch (error) {
       // If cache is unavailable, log and fall back to database
-      console.warn('Cache unavailable, falling back to database:', error.message);
+      console.warn(
+        'Cache unavailable, falling back to database:',
+        error.message,
+      );
     }
 
-    const balances = await this.balanceRepository.find({ 
+    const balances = await this.balanceRepository.find({
       where: { userId },
     });
-    const result = balances.map((b) => ({ asset: b.asset, balance: b.balance }));
-    
+    const result = balances.map((b) => ({
+      asset: b.asset,
+      balance: b.balance,
+    }));
+
     try {
       // Cache the result if cache is available
       await this.cacheService.setUserBalanceCache(userId, result);
@@ -51,8 +61,32 @@ export class BalanceService {
       // If cache fails, log but don't fail the operation
       console.warn('Failed to cache result:', error.message);
     }
-    
+
     return result;
+  }
+
+  async getBalance(
+    userId: string,
+    manager?: EntityManager,
+  ): Promise<UserBalance> {
+    const repo = (manager ?? this.dataSource.manager).getRepository(
+      UserBalance,
+    );
+
+    let balance = await repo.findOne({ where: { userId } });
+    if (!balance) {
+      balance = repo.create({ userId, total: 0, reserved: 0 });
+      await repo.save(balance);
+    }
+    return balance;
+  }
+
+  async getAvailableBalance(
+    userId: string,
+    manager?: EntityManager,
+  ): Promise<number> {
+    const balance = await this.getBalance(userId, manager);
+    return Number(balance.total) - Number(balance.reserved);
   }
 
   /** Add a balance audit entry */
@@ -78,10 +112,10 @@ export class BalanceService {
     });
 
     const savedEntry = await this.balanceAuditRepository.save(auditEntry);
-    
+
     // Invalidate user balance cache since balance has changed
     await this.cacheService.invalidateBalanceRelatedCaches(userId);
-    
+
     return savedEntry;
   }
 
@@ -89,10 +123,13 @@ export class BalanceService {
    * Atomically update user's balance
    */
   async updateUserBalance(dto: UpdateBalanceDto): Promise<number> {
-    const { userId, assetId, amount, reason, transactionId, relatedOrderId } = dto;
+    const { userId, assetId, amount, reason, transactionId, relatedOrderId } =
+      dto;
 
-    if (!userId || !assetId) throw new BadRequestException('Invalid userId or assetId');
-    if (amount === undefined || isNaN(amount)) throw new BadRequestException('Invalid amount');
+    if (!userId || !assetId)
+      throw new BadRequestException('Invalid userId or assetId');
+    if (amount === undefined || isNaN(amount))
+      throw new BadRequestException('Invalid amount');
     if (!reason) throw new BadRequestException('Reason is required');
 
     return await this.dataSource.transaction(async (manager) => {
@@ -135,5 +172,35 @@ export class BalanceService {
 
       return newBalance;
     });
+  }
+
+  async reserveFunds(
+    userId: string,
+    amount: number,
+    reason: string,
+    manager: EntityManager,
+  ) {
+    const repo = manager.getRepository(UserBalance);
+
+    const balance = await repo.findOne({
+      where: { userId },
+      lock: { mode: 'pessimistic_write' },
+    });
+
+    if (!balance || balance.total - balance.reserved < amount) {
+      throw new BadRequestException('Insufficient balance');
+    }
+
+    balance.reserved += amount;
+    await repo.save(balance);
+
+    await manager.save(
+      BalanceTransactionEntity,
+      manager.create(BalanceTransactionEntity, {
+        userId,
+        amount: -amount,
+        reason,
+      }),
+    );
   }
 }

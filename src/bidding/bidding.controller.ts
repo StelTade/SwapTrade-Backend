@@ -1,4 +1,4 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Req } from '@nestjs/common';
 import { BiddingService } from './bidding.service';
 import { CreateBidDto } from './dto/create-bid.dto';
 
@@ -6,8 +6,13 @@ import { CreateBidDto } from './dto/create-bid.dto';
 export class BiddingController {
   constructor(private readonly biddingService: BiddingService) {}
 
-  @Post('create')
-  async createBid(@Body() createBidDto: CreateBidDto) {
-    return await this.biddingService.createBid(createBidDto);
-  }
+ @Post()
+async createBid(
+  @Req() req,
+  @Body() dto: CreateBidDto,
+) {
+  await this.biddingService.validateBid(req.user.id, dto);
+  return this.biddingService.createBid(req.user.id, dto);
+}
+
 }
