@@ -37,6 +37,12 @@ export class UserBalance {
   @JoinColumn({ name: 'assetId' })
   asset: VirtualAsset;
 
+  @Column('decimal', { precision: 18, scale: 8, default: 0 })
+  total: number;
+
+  @Column('decimal', { precision: 18, scale: 8, default: 0 })
+  reserved: number;
+
   @CreateDateColumn()
   createdAt: Date;
 
