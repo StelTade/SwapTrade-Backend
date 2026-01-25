@@ -47,8 +47,8 @@ import { CustomCacheModule } from './common/cache/cache.module';
     // Cache Module
     CustomCacheModule,
 
-    // Background Job Queue (NEW)
-    QueueModule,
+    // Background Job Queue (NEW) - Temporarily disabled due to compilation issue
+    // QueueModule,
 
     // Existing modules
     AuthModule,

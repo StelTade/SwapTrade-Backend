@@ -1,12 +1,14 @@
-import { IsNumber, IsString } from 'class-validator';
+import { IsNumber, IsString, Min } from 'class-validator';
+import { IsUserId, IsAssetType } from '../../common/validation';
 
 export class UpdatePortfolioDto {
-  @IsNumber()
+  @IsUserId()
   userId: number;
 
-  @IsString()
+  @IsAssetType()
   asset: string;
 
   @IsNumber()
+  @Min(0)
   balance: number;
 }
