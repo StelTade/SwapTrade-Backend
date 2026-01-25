@@ -1,16 +1,22 @@
-import { IsNumber, IsPositive, IsUUID, IsString } from 'class-validator';
+import { IsNumber, IsPositive, IsString, MinLength, MaxLength, IsIn } from 'class-validator';
+import { IsUserId, IsAssetType } from '../../common/validation';
 
 export class CreateBidDto {
-  @IsNumber()
+  @IsUserId()
   userId: number;
 
-  @IsString()
+  @IsAssetType()
   asset: string;
 
   @IsString()
+  @IsIn(['pending', 'active', 'completed', 'cancelled', 'failed'])
+  @MinLength(1)
+  @MaxLength(20)
   status: string;
 
-  @IsUUID()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(100)
   assetId: string;
 
   @IsNumber()

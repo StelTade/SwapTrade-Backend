@@ -1,12 +1,15 @@
-import { IsBoolean } from 'class-validator';
+import { IsBoolean, IsOptional } from 'class-validator';
 
 export class UpdatePreferencesDto {
+  @IsOptional()
   @IsBoolean()
-  orderFilled: boolean;
+  orderFilled?: boolean;
 
+  @IsOptional()
   @IsBoolean()
-  priceAlerts: boolean;
+  priceAlerts?: boolean;
 
+  @IsOptional()
   @IsBoolean()
-  achievementUnlocked: boolean;
+  achievementUnlocked?: boolean;
 }

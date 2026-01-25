@@ -18,6 +18,8 @@ async function bootstrap() {
       whitelist: true,
       transform: true,
       forbidNonWhitelisted: true,
+      disableErrorMessages: false, // Keep error messages for validation feedback
+      errorHttpStatusCode: 400, // Set default error status code for validation errors
     }),
   );
 

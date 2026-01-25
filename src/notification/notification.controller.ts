@@ -25,9 +25,9 @@ export class NotificationController {
   ) {
     return this.notificationService.setPreferences({
       userId,
-      orderFilled: body.orderFilled,
-      priceAlerts: body.priceAlerts,
-      achievementUnlocked: body.achievementUnlocked,
+      orderFilled: body.orderFilled ?? false,
+      priceAlerts: body.priceAlerts ?? false,
+      achievementUnlocked: body.achievementUnlocked ?? false,
     });
   }
 
