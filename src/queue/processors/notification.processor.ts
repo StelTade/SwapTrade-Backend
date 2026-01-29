@@ -1,8 +1,14 @@
 // src/queue/processors/notification.processor.ts
-import { Processor, Process, OnQueueActive, OnQueueCompleted, OnQueueFailed } from '@nestjs/bull';
+import {
+  Processor,
+  Process,
+  OnQueueActive,
+  OnQueueCompleted,
+  OnQueueFailed,
+} from '@nestjs/bull';
 import { Logger } from '@nestjs/common';
 import type { Job } from 'bull';
-import { QueueName } from '../queue.module';
+import { QueueName } from '../queue.constants';
 import { NotificationJobData } from '../queue.service';
 
 @Processor(QueueName.NOTIFICATIONS)
@@ -51,9 +57,7 @@ export class NotificationJobProcessor {
 
   @OnQueueActive()
   onActive(job: Job<NotificationJobData>): void {
-    this.logger.debug(
-      `Job ${job.id} is now active. User: ${job.data.userId}`,
-    );
+    this.logger.debug(`Job ${job.id} is now active. User: ${job.data.userId}`);
   }
 
   @OnQueueCompleted()
@@ -68,7 +72,7 @@ export class NotificationJobProcessor {
     const attempts = job.opts.attempts || 3;
     this.logger.error(
       `Job ${job.id} failed for user ${job.data.userId}. ` +
-      `Attempt ${job.attemptsMade}/${attempts}`,
+        `Attempt ${job.attemptsMade}/${attempts}`,
       error.stack,
     );
 
@@ -84,13 +88,15 @@ export class NotificationJobProcessor {
 
     const notificationId = this.generateNotificationId(data);
     const alreadySent = await this.isNotificationSent(notificationId);
-    
+
     if (alreadySent) {
       this.logger.warn(`Notification ${notificationId} already sent, skipping`);
       return;
     }
 
-    this.logger.debug(`Sending ${data.type} notification to user ${data.userId}`);
+    this.logger.debug(
+      `Sending ${data.type} notification to user ${data.userId}`,
+    );
   }
 
   private async storeNotification(data: NotificationJobData): Promise<void> {
@@ -107,7 +113,6 @@ export class NotificationJobProcessor {
   }
 
   private async simulateAsyncOperation(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
-

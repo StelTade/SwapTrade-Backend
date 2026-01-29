@@ -21,6 +21,7 @@ import { TutorialModule } from './tutorial/tutorial.module';
 import { PerformanceModule } from './performance/performance.module';
 import { QueueModule } from './queue/queue.module';
 import { CustomCacheModule } from './common/cache/cache.module';
+import { BullModule } from '@nestjs/bull';
 
 @Module({
   imports: [
@@ -46,6 +47,14 @@ import { CustomCacheModule } from './common/cache/cache.module';
 
     // Cache Module
     CustomCacheModule,
+
+    BullModule.forRoot({
+      redis: {
+        host: process.env.REDIS_HOST,
+        port: Number(process.env.REDIS_PORT),
+        password: process.env.REDIS_PASSWORD || undefined,
+      },
+    }),
 
     // Background Job Queue (NEW) - Temporarily disabled due to compilation issue
     // QueueModule,

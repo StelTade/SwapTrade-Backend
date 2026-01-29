@@ -1,8 +1,14 @@
 // src/queue/processors/cleanup.processor.ts
-import { Processor, Process, OnQueueActive, OnQueueCompleted, OnQueueFailed } from '@nestjs/bull';
+import {
+  Processor,
+  Process,
+  OnQueueActive,
+  OnQueueCompleted,
+  OnQueueFailed,
+} from '@nestjs/bull';
 import { Logger } from '@nestjs/common';
 import type { Job } from 'bull';
-import { QueueName } from '../queue.module';
+import { QueueName } from '../queue.constants';
 import { CleanupJobData } from '../queue.service';
 
 @Processor(QueueName.CLEANUP)
@@ -28,7 +34,7 @@ export class CleanupJobProcessor {
         hasMore = cleaned === batchSize;
 
         if (hasMore) {
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise((resolve) => setTimeout(resolve, 100));
         }
       }
 
@@ -37,7 +43,10 @@ export class CleanupJobProcessor {
         `Cleanup completed: ${type}, total items cleaned: ${totalCleaned}`,
       );
     } catch (error) {
-      this.logger.error(`Failed to process cleanup job ${job.id}:`, error.stack);
+      this.logger.error(
+        `Failed to process cleanup job ${job.id}:`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -79,26 +88,35 @@ export class CleanupJobProcessor {
     }
   }
 
-  private async cleanupOldTrades(olderThan: Date | undefined, batchSize: number): Promise<number> {
-    await new Promise(resolve => setTimeout(resolve, 500));
+  private async cleanupOldTrades(
+    olderThan: Date | undefined,
+    batchSize: number,
+  ): Promise<number> {
+    await new Promise((resolve) => setTimeout(resolve, 500));
     this.logger.debug(`Cleaned up old trades`);
     return Math.floor(Math.random() * batchSize);
   }
 
   private async cleanupExpiredSessions(batchSize: number): Promise<number> {
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise((resolve) => setTimeout(resolve, 300));
     this.logger.debug(`Cleaned up expired sessions`);
     return Math.floor(Math.random() * batchSize);
   }
 
-  private async cleanupTempFiles(olderThan: Date | undefined, batchSize: number): Promise<number> {
-    await new Promise(resolve => setTimeout(resolve, 400));
+  private async cleanupTempFiles(
+    olderThan: Date | undefined,
+    batchSize: number,
+  ): Promise<number> {
+    await new Promise((resolve) => setTimeout(resolve, 400));
     this.logger.debug(`Cleaned up temp files`);
     return Math.floor(Math.random() * batchSize);
   }
 
-  private async cleanupOldLogs(olderThan: Date | undefined, batchSize: number): Promise<number> {
-    await new Promise(resolve => setTimeout(resolve, 600));
+  private async cleanupOldLogs(
+    olderThan: Date | undefined,
+    batchSize: number,
+  ): Promise<number> {
+    await new Promise((resolve) => setTimeout(resolve, 600));
     this.logger.debug(`Cleaned up old logs`);
     return Math.floor(Math.random() * batchSize);
   }

@@ -9,11 +9,16 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { QueueService } from './queue.service';
 import { QueueMonitoringService } from './queue-monitoring.service';
 import { SchedulerService } from './scheduler.service';
-import { QueueName } from './queue.module';
+import { QueueName } from './queue.constants';
 
 // Uncomment if you have auth guards
 // import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -176,9 +181,7 @@ export class QueueController {
   @Post('test/notification')
   @ApiOperation({ summary: 'Test notification job' })
   @ApiResponse({ status: 200, description: 'Test notification queued' })
-  async testNotification(
-    @Body() body: { userId: string; message: string },
-  ) {
+  async testNotification(@Body() body: { userId: string; message: string }) {
     const job = await this.queueService.addNotificationJob({
       userId: body.userId,
       type: 'system_alert',

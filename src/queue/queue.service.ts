@@ -2,11 +2,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import type { Queue, Job, JobOptions } from 'bull';
-import { QueueName } from './queue.module';
+import { QueueName } from './queue.constants';
 
 export interface NotificationJobData {
   userId: string;
-  type: 'trade_completed' | 'trade_disputed' | 'message_received' | 'system_alert';
+  type:
+    | 'trade_completed'
+    | 'trade_disputed'
+    | 'message_received'
+    | 'system_alert';
   title: string;
   message: string;
   data?: Record<string, any>;
@@ -67,11 +71,11 @@ export class QueueService {
       };
 
       const job = await this.notificationQueue.add(data, jobOptions);
-      
+
       this.logger.log(
         `Notification job added: ${job.id} for user ${data.userId}`,
       );
-      
+
       return job;
     } catch (error) {
       this.logger.error('Failed to add notification job:', error);
@@ -83,16 +87,16 @@ export class QueueService {
     notifications: NotificationJobData[],
   ): Promise<Job<NotificationJobData>[]> {
     try {
-      const jobs = notifications.map(data => ({
+      const jobs = notifications.map((data) => ({
         name: 'bulk-notification',
         data,
         opts: { priority: this.getPriority(data.priority) },
       }));
 
       const addedJobs = await this.notificationQueue.addBulk(jobs);
-      
+
       this.logger.log(`Bulk notifications added: ${addedJobs.length} jobs`);
-      
+
       return addedJobs;
     } catch (error) {
       this.logger.error('Failed to add bulk notifications:', error);
@@ -106,11 +110,11 @@ export class QueueService {
   ): Promise<Job<EmailJobData>> {
     try {
       const job = await this.emailQueue.add(data, options);
-      
+
       this.logger.log(
         `Email job added: ${job.id} to ${Array.isArray(data.to) ? data.to.join(', ') : data.to}`,
       );
-      
+
       return job;
     } catch (error) {
       this.logger.error('Failed to add email job:', error);
@@ -118,7 +122,10 @@ export class QueueService {
     }
   }
 
-  async sendWelcomeEmail(email: string, name: string): Promise<Job<EmailJobData>> {
+  async sendWelcomeEmail(
+    email: string,
+    name: string,
+  ): Promise<Job<EmailJobData>> {
     return this.addEmailJob({
       to: email,
       subject: 'Welcome to SwapTrade!',
@@ -148,9 +155,9 @@ export class QueueService {
         ...options,
         priority: 5,
       });
-      
+
       this.logger.log(`Report job added: ${job.id} type=${data.reportType}`);
-      
+
       return job;
     } catch (error) {
       this.logger.error('Failed to add report job:', error);
@@ -163,7 +170,7 @@ export class QueueService {
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
     yesterday.setHours(0, 0, 0, 0);
-    
+
     const endOfYesterday = new Date(yesterday);
     endOfYesterday.setHours(23, 59, 59, 999);
 
@@ -185,9 +192,9 @@ export class QueueService {
         ...options,
         priority: 10,
       });
-      
+
       this.logger.log(`Cleanup job added: ${job.id} type=${data.type}`);
-      
+
       return job;
     } catch (error) {
       this.logger.error('Failed to add cleanup job:', error);

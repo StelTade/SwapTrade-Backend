@@ -1,8 +1,14 @@
 // src/queue/processors/email.processor.ts
-import { Processor, Process, OnQueueActive, OnQueueCompleted, OnQueueFailed } from '@nestjs/bull';
+import {
+  Processor,
+  Process,
+  OnQueueActive,
+  OnQueueCompleted,
+  OnQueueFailed,
+} from '@nestjs/bull';
 import { Logger } from '@nestjs/common';
 import type { Job } from 'bull';
-import { QueueName } from '../queue.module';
+import { QueueName } from '../queue.constants';
 import { EmailJobData } from '../queue.service';
 
 @Processor(QueueName.EMAILS)
@@ -26,7 +32,7 @@ export class EmailJobProcessor {
 
       const emailId = this.generateEmailId(job.data);
       const alreadySent = await this.isEmailSent(emailId);
-      
+
       if (alreadySent) {
         this.logger.warn(`Email ${emailId} already sent, skipping`);
         await job.progress(100);
@@ -36,7 +42,12 @@ export class EmailJobProcessor {
       await job.progress(30);
       const html = await this.renderTemplate(template, context);
       await job.progress(50);
-      await this.sendEmail({ to, subject, html, attachments: job.data.attachments });
+      await this.sendEmail({
+        to,
+        subject,
+        html,
+        attachments: job.data.attachments,
+      });
       await job.progress(80);
       await this.markEmailAsSent(emailId);
       await job.progress(100);
@@ -63,7 +74,7 @@ export class EmailJobProcessor {
     const attempts = job.opts.attempts || 3;
     this.logger.error(
       `Email job ${job.id} failed. Subject: ${job.data.subject}. ` +
-      `Attempt ${job.attemptsMade}/${attempts}`,
+        `Attempt ${job.attemptsMade}/${attempts}`,
       error.stack,
     );
 
@@ -102,7 +113,9 @@ export class EmailJobProcessor {
   }
 
   private generateEmailId(data: EmailJobData): string {
-    const recipients = Array.isArray(data.to) ? data.to.sort().join(',') : data.to;
+    const recipients = Array.isArray(data.to)
+      ? data.to.sort().join(',')
+      : data.to;
     return `${recipients}-${data.subject}-${data.template}`;
   }
 
@@ -120,14 +133,14 @@ export class EmailJobProcessor {
   ): Promise<void> {
     this.logger.error(
       `ADMIN ALERT: Email permanently failed\n` +
-      `Job ID: ${job.id}\n` +
-      `Subject: ${job.data.subject}\n` +
-      `Recipients: ${job.data.to}\n` +
-      `Error: ${error.message}`,
+        `Job ID: ${job.id}\n` +
+        `Subject: ${job.data.subject}\n` +
+        `Recipients: ${job.data.to}\n` +
+        `Error: ${error.message}`,
     );
   }
 
   private async simulateAsyncOperation(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
