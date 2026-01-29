@@ -8,7 +8,18 @@ import { CacheMonitoringService } from './services/cache.monitoring.service';
 
 @Module({
   controllers: [CommonController],
-  providers: [CommonService, CacheService, CacheInterceptor, CacheWarmingService, CacheMonitoringService],
-  exports: [CacheService, CacheInterceptor, CacheWarmingService, CacheMonitoringService],
+  providers: [
+    CommonService,
+    CacheService,
+    CacheInterceptor,
+    CacheWarmingService,
+    CacheMonitoringService,
+  ],
+  exports: [
+    CacheService,
+    CacheInterceptor,
+    CacheWarmingService,
+    CacheMonitoringService,
+  ],
 })
 export class CommonModule {}

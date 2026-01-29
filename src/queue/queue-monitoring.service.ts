@@ -2,7 +2,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import type { Queue, JobCounts } from 'bull';
-import { QueueName } from './queue.module';
+import { QueueName } from './queue.constants';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
 export interface QueueMetrics {
@@ -49,7 +49,7 @@ export class QueueMonitoringService {
 
   async getQueueMetrics(queueName: QueueName): Promise<QueueMetrics> {
     const queue = this.getQueue(queueName);
-    
+
     const [counts, isPaused, workers, failed, active] = await Promise.all([
       queue.getJobCounts(),
       queue.isPaused(),
@@ -65,14 +65,14 @@ export class QueueMonitoringService {
       counts,
       isPaused,
       workers: workers.length,
-      failedJobs: failed.map(job => ({
+      failedJobs: failed.map((job) => ({
         id: String(job.id),
         data: job.data,
         failedReason: job.failedReason,
         attemptsMade: job.attemptsMade,
         timestamp: job.timestamp,
       })),
-      activeJobs: active.map(job => ({
+      activeJobs: active.map((job) => ({
         id: String(job.id),
         progress: job.progress(),
         timestamp: job.timestamp,
@@ -85,13 +85,16 @@ export class QueueMonitoringService {
 
   async getAllQueueMetrics(): Promise<QueueMetrics[]> {
     const queueNames = Object.values(QueueName);
-    
+
     return Promise.all(
-      queueNames.map(queueName => this.getQueueMetrics(queueName)),
+      queueNames.map((queueName) => this.getQueueMetrics(queueName)),
     );
   }
 
-  async getJobStatus(queueName: QueueName, jobId: string): Promise<JobMetrics | null> {
+  async getJobStatus(
+    queueName: QueueName,
+    jobId: string,
+  ): Promise<JobMetrics | null> {
     const queue = this.getQueue(queueName);
     const job = await queue.getJob(jobId);
 
@@ -109,9 +112,10 @@ export class QueueMonitoringService {
       progress: typeof progress === 'number' ? progress : 0,
       attempts: job.attemptsMade,
       timestamp: new Date(job.timestamp),
-      processingTime: job.finishedOn && job.processedOn 
-        ? job.finishedOn - job.processedOn 
-        : undefined,
+      processingTime:
+        job.finishedOn && job.processedOn
+          ? job.finishedOn - job.processedOn
+          : undefined,
       error: job.failedReason,
     };
   }
@@ -121,11 +125,11 @@ export class QueueMonitoringService {
     const failed = await queue.getFailed(0, limit);
 
     return failed
-      .filter(job => {
+      .filter((job) => {
         const attempts = job.opts.attempts || 3;
         return job.attemptsMade >= attempts;
       })
-      .map(job => ({
+      .map((job) => ({
         id: String(job.id),
         data: job.data,
         error: job.failedReason,
@@ -144,7 +148,7 @@ export class QueueMonitoringService {
 
     for (const queueName of Object.values(QueueName)) {
       const metrics = await this.getQueueMetrics(queueName);
-      
+
       queues[queueName] = {
         healthy: !metrics.isPaused,
         waiting: metrics.waitingJobs,
@@ -157,7 +161,9 @@ export class QueueMonitoringService {
       }
 
       if (metrics.waitingJobs > 1000) {
-        alerts.push(`Queue ${queueName} has ${metrics.waitingJobs} waiting jobs`);
+        alerts.push(
+          `Queue ${queueName} has ${metrics.waitingJobs} waiting jobs`,
+        );
       }
 
       if (metrics.successRate < 0.9) {
@@ -184,7 +190,7 @@ export class QueueMonitoringService {
     successRate: number;
   } {
     const queueMetrics = this.metrics.get(queueName);
-    
+
     if (!queueMetrics || queueMetrics.length === 0) {
       return { avgProcessingTime: 0, successRate: 1 };
     }
@@ -195,7 +201,7 @@ export class QueueMonitoringService {
     );
     const avgProcessingTime = totalTime / queueMetrics.length;
 
-    const successCount = queueMetrics.filter(m => m.success).length;
+    const successCount = queueMetrics.filter((m) => m.success).length;
     const successRate = successCount / queueMetrics.length;
 
     return { avgProcessingTime, successRate };
@@ -222,7 +228,7 @@ export class QueueMonitoringService {
     const cutoff = Date.now() - this.METRIC_RETENTION_HOURS * 3600 * 1000;
     this.metrics.set(
       queueName,
-      queueMetrics.filter(m => m.timestamp.getTime() > cutoff),
+      queueMetrics.filter((m) => m.timestamp.getTime() > cutoff),
     );
   }
 
@@ -233,27 +239,61 @@ export class QueueMonitoringService {
     this.setupQueueListeners(QueueName.CLEANUP, this.cleanupQueue);
   }
 
+  /**
+   * Verify that all queues can connect to Redis by making a lightweight call to each queue.
+   * Throws an error if any queue cannot respond within the timeout.
+   */
+  async verifyConnections(timeoutMs = 5000): Promise<void> {
+    const queues = [
+      { name: QueueName.NOTIFICATIONS, queue: this.notificationQueue },
+      { name: QueueName.EMAILS, queue: this.emailQueue },
+      { name: QueueName.REPORTS, queue: this.reportQueue },
+      { name: QueueName.CLEANUP, queue: this.cleanupQueue },
+    ];
+
+    const checks = queues.map(async ({ name, queue }) => {
+      try {
+        await Promise.race([
+          // lightweight RPC that will fail if redis is unreachable
+          queue.getJobCounts(),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('timeout')), timeoutMs),
+          ),
+        ]);
+      } catch (err) {
+        this.logger.error(
+          `Queue ${name} failed to connect to Redis: ${err?.message || err}`,
+        );
+        throw new Error(`Queue ${name} connectivity check failed`);
+      }
+    });
+
+    await Promise.all(checks);
+
+    this.logger.log('All queues connected to Redis');
+  }
+
   private setupQueueListeners(queueName: QueueName, queue: Queue): void {
     queue.on('completed', (job, result) => {
-      const processingTime = (job.processedOn && job.finishedOn) 
-        ? job.finishedOn - job.processedOn 
-        : 0;
+      const processingTime =
+        job.processedOn && job.finishedOn
+          ? job.finishedOn - job.processedOn
+          : 0;
       this.recordMetric(queueName, String(job.id), true, processingTime);
-      
+
       this.logger.debug(
         `[${queueName}] Job ${job.id} completed in ${processingTime}ms`,
       );
     });
 
     queue.on('failed', (job, err) => {
-      const processingTime = (job.processedOn && job.finishedOn) 
-        ? job.finishedOn - job.processedOn 
-        : 0;
+      const processingTime =
+        job.processedOn && job.finishedOn
+          ? job.finishedOn - job.processedOn
+          : 0;
       this.recordMetric(queueName, String(job.id), false, processingTime);
-      
-      this.logger.error(
-        `[${queueName}] Job ${job.id} failed: ${err.message}`,
-      );
+
+      this.logger.error(`[${queueName}] Job ${job.id} failed: ${err.message}`);
     });
 
     queue.on('stalled', (job) => {
@@ -271,7 +311,7 @@ export class QueueMonitoringService {
 
     for (const queueName of Object.values(QueueName)) {
       const queue = this.getQueue(queueName);
-      
+
       await queue.clean(24 * 3600 * 1000, 'completed');
       await queue.clean(7 * 24 * 3600 * 1000, 'failed');
     }
@@ -290,8 +330,8 @@ export class QueueMonitoringService {
     for (const [queueName, metrics] of Object.entries(health.queues)) {
       this.logger.debug(
         `[${queueName}] Waiting: ${metrics.waiting}, ` +
-        `Failed: ${metrics.failed}, ` +
-        `Success Rate: ${(metrics.successRate * 100).toFixed(1)}%`,
+          `Failed: ${metrics.failed}, ` +
+          `Success Rate: ${(metrics.successRate * 100).toFixed(1)}%`,
       );
     }
   }

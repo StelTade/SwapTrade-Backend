@@ -4,6 +4,9 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { QueueService } from './queue/queue.service';
+import { QueueMonitoringService } from './queue/queue-monitoring.service';
+import { validateMigrations } from './database/migrations/migration.guard';
+import { AppDataSource } from './database/data-source';
 
 // Import rate limiting middleware (will be available after npm install)
 // import { rateLimitMiddleware } from './ratelimit/ratelimit.middleware';
@@ -29,10 +32,9 @@ async function bootstrap() {
     credentials: true,
   });
 
-  
   // Enable CORS
   app.enableCors();
-  
+
   // TODO: Uncomment and configure rate limiting middleware after installing dependencies
   /*
   app.use((req, res, next) => {
@@ -41,7 +43,7 @@ async function bootstrap() {
     next(); // Temporary bypass until dependencies are installed
   });
   */
-  
+
   // Swagger configuration
   const config = new DocumentBuilder()
     .setTitle('SwapTrade API')
@@ -92,7 +94,7 @@ async function bootstrap() {
 
       const shutdownPromise = (async () => {
         logger.log('Waiting for in-flight requests to complete...');
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
 
         logger.log('Closing queue connections and waiting for active jobs...');
         await queueService.closeAllQueues();
@@ -127,13 +129,24 @@ async function bootstrap() {
     gracefulShutdown('unhandledRejection');
   });
 
+  // Verify queue connectivity before accepting traffic
+  const queueMonitoringService = app.get(QueueMonitoringService);
+  try {
+    await queueMonitoringService.verifyConnections();
+  } catch (err) {
+    logger.error('Queue connectivity check failed, aborting startup', err);
+    process.exit(1);
+  }
+
   const port = process.env.PORT ?? 3000;
   await app.listen(port);
-  
+
   logger.log(`Application is running on: http://localhost:${port}`);
   logger.log(`Swagger documentation: http://localhost:${port}/api/docs`);
   logger.log('Graceful shutdown handlers registered');
   logger.log(`Shutdown timeout: ${30000}ms`);
+
+  await validateMigrations(AppDataSource);
 }
 
 bootstrap().catch((error) => {

@@ -31,6 +31,25 @@
 $ npm install
 ```
 
+## Redis Setup (Local Development)
+
+This project uses Redis for background job queues (Bull).
+
+### Using Docker (Recommended)
+
+````bash
+docker compose up -d redis
+
+Redis will be available at:
+
+Host: localhost
+
+Port: 6379
+
+Ensure .env contains the correct Redis settings.
+
+
+
 ## Compile and run the project
 
 ```bash
@@ -42,7 +61,7 @@ $ npm run start:dev
 
 # production mode
 $ npm run start:prod
-```
+````
 
 ## Run tests
 

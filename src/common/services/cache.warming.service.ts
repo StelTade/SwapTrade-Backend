@@ -1,4 +1,4 @@
-import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable, OnApplicationBootstrap, Optional } from '@nestjs/common';
 import { CacheService } from './cache.service';
 import { BalanceService } from '../../balance/balance.service';
 import { PortfolioService } from '../../portfolio/portfolio.service';
@@ -10,8 +10,8 @@ export class CacheWarmingService implements OnApplicationBootstrap {
 
   constructor(
     private readonly cacheService: CacheService,
-    private readonly balanceService: BalanceService,
-    private readonly portfolioService: PortfolioService,
+    @Optional() private readonly balanceService?: BalanceService,
+    @Optional() private readonly portfolioService?: PortfolioService,
   ) {}
 
   async onApplicationBootstrap() {
@@ -26,7 +26,7 @@ export class CacheWarmingService implements OnApplicationBootstrap {
       await this.warmUpUserBalances();
       await this.warmUpPortfolioData();
       // Add more warming operations as needed
-      
+
       this.logger.log('Cache warming completed successfully');
     } catch (error) {
       this.logger.error(`Cache warming failed: ${error.message}`, error.stack);
@@ -36,11 +36,15 @@ export class CacheWarmingService implements OnApplicationBootstrap {
   private async warmUpUserBalances(): Promise<void> {
     // This is a simplified version - in production, you'd want to get user IDs from the database
     // For demo purposes, we'll skip this or use sample data
-    this.logger.log('Warm-up user balances skipped - requires user enumeration');
+    this.logger.log(
+      'Warm-up user balances skipped - requires user enumeration',
+    );
   }
 
   private async warmUpPortfolioData(): Promise<void> {
     // Similar to user balances, this would require enumeration of users
-    this.logger.log('Warm-up portfolio data skipped - requires user enumeration');
+    this.logger.log(
+      'Warm-up portfolio data skipped - requires user enumeration',
+    );
   }
 }

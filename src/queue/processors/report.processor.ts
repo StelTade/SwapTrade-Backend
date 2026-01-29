@@ -1,8 +1,14 @@
 // src/queue/processors/report.processor.ts
-import { Processor, Process, OnQueueActive, OnQueueCompleted, OnQueueFailed } from '@nestjs/bull';
+import {
+  Processor,
+  Process,
+  OnQueueActive,
+  OnQueueCompleted,
+  OnQueueFailed,
+} from '@nestjs/bull';
 import { Logger } from '@nestjs/common';
 import type { Job } from 'bull';
-import { QueueName } from '../queue.module';
+import { QueueName } from '../queue.constants';
 import { ReportJobData } from '../queue.service';
 
 @Processor(QueueName.REPORTS)
@@ -42,7 +48,9 @@ export class ReportJobProcessor {
 
   @OnQueueActive()
   onActive(job: Job<ReportJobData>): void {
-    this.logger.debug(`Report job ${job.id} is now active: ${job.data.reportType}`);
+    this.logger.debug(
+      `Report job ${job.id} is now active: ${job.data.reportType}`,
+    );
   }
 
   @OnQueueCompleted()
@@ -55,14 +63,14 @@ export class ReportJobProcessor {
     const attempts = job.opts.attempts || 2;
     this.logger.error(
       `Report job ${job.id} failed: ${job.data.reportType}. ` +
-      `Attempt ${job.attemptsMade}/${attempts}`,
+        `Attempt ${job.attemptsMade}/${attempts}`,
       error.stack,
     );
   }
 
   private async fetchReportData(jobData: ReportJobData): Promise<any> {
     this.logger.debug(`Fetching data for ${jobData.reportType} report`);
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     return {
       reportType: jobData.reportType,
@@ -75,11 +83,14 @@ export class ReportJobProcessor {
 
   private async generateReport(data: any, format: string): Promise<Buffer> {
     this.logger.debug(`Generating report in ${format} format`);
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    await new Promise((resolve) => setTimeout(resolve, 3000));
     return Buffer.from(JSON.stringify(data, null, 2));
   }
 
-  private async saveReport(buffer: Buffer, jobData: ReportJobData): Promise<string> {
+  private async saveReport(
+    buffer: Buffer,
+    jobData: ReportJobData,
+  ): Promise<string> {
     const filename = `report-${jobData.reportType}-${Date.now()}.${jobData.format}`;
     const path = `reports/${filename}`;
     this.logger.debug(`Report saved to ${path}`);

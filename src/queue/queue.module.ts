@@ -1,5 +1,5 @@
 // src/queue/queue.module.ts
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { NotificationJobProcessor } from './processors/notification.processor';
@@ -12,13 +12,7 @@ import { SchedulerService } from './scheduler.service';
 import { NotificationModule } from '../notification/notification.module';
 import { UserModule } from '../user/user.module';
 import { TradingModule } from '../trading/trading.module';
-
-export enum QueueName {
-  NOTIFICATIONS = 'notifications',
-  EMAILS = 'emails',
-  REPORTS = 'reports',
-  CLEANUP = 'cleanup',
-}
+import { QueueName } from './queue.constants';
 
 @Module({
   imports: [
@@ -103,7 +97,7 @@ export enum QueueName {
       },
     }),
 
-    NotificationModule,
+    forwardRef(() => NotificationModule),
     UserModule,
     TradingModule,
   ],
