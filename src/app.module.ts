@@ -22,6 +22,9 @@ import { PerformanceModule } from './performance/performance.module';
 import { QueueModule } from './queue/queue.module';
 import { CustomCacheModule } from './common/cache/cache.module';
 import { BullModule } from '@nestjs/bull';
+import { APP_FILTER } from '@nestjs/core';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { ErrorLoggerService } from './common/logging/error-logger.service';
 
 @Module({
   imports: [
@@ -75,6 +78,13 @@ import { BullModule } from '@nestjs/bull';
     PerformanceModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    ErrorLoggerService,
+    {
+      provide: APP_FILTER,
+      useClass: GlobalExceptionFilter,
+    },
+  ],
 })
 export class AppModule {}

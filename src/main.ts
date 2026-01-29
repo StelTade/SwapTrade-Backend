@@ -7,6 +7,7 @@ import { QueueService } from './queue/queue.service';
 import { QueueMonitoringService } from './queue/queue-monitoring.service';
 import { validateMigrations } from './database/migrations/migration.guard';
 import { AppDataSource } from './database/data-source';
+import { ErrorLoggerService } from './common/logging/error-logger.service';
 
 // Import rate limiting middleware (will be available after npm install)
 // import { rateLimitMiddleware } from './ratelimit/ratelimit.middleware';
@@ -14,6 +15,9 @@ import { AppDataSource } from './database/data-source';
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
+
+  // Get error logger service for global error handling
+  const errorLoggerService = app.get(ErrorLoggerService);
 
   // Global validation pipe
   app.useGlobalPipes(
@@ -119,13 +123,20 @@ async function bootstrap() {
   process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
   process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
+  // Setup global error handlers for unhandled rejections and uncaught exceptions
   process.on('uncaughtException', (error) => {
     logger.error('Uncaught Exception:', error);
+    if (errorLoggerService) {
+      errorLoggerService.logUncaughtException(error);
+    }
     gracefulShutdown('uncaughtException');
   });
 
   process.on('unhandledRejection', (reason, promise) => {
     logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    if (errorLoggerService) {
+      errorLoggerService.logUnhandledRejection(reason, promise);
+    }
     gracefulShutdown('unhandledRejection');
   });
 
@@ -145,6 +156,7 @@ async function bootstrap() {
   logger.log(`Swagger documentation: http://localhost:${port}/api/docs`);
   logger.log('Graceful shutdown handlers registered');
   logger.log(`Shutdown timeout: ${30000}ms`);
+  logger.log('Global error handlers registered for uncaught exceptions and unhandled rejections');
 
   await validateMigrations(AppDataSource);
 }
