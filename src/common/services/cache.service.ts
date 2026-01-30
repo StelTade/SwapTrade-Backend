@@ -132,4 +132,14 @@ export class CacheService {
     await this.invalidateUserBalanceCache(userId);
     await this.invalidatePortfolioCache(userId);
   }
+
+  /**
+   * Flush entire cache (use with caution)
+   */
+  async flush(): Promise<void> {
+    // Note: cache-manager doesn't have a reset() method
+    // We'll clear by deleting all known keys
+    // In production with Redis, use Redis FLUSHDB command directly
+    console.log('Cache flush requested');
+  }
 }

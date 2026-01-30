@@ -18,6 +18,8 @@ import { Cache } from 'cache-manager';
 import { CacheService } from '../common/services/cache.service';
 import { UserBalance } from './user-balance.entity';
 import { UpdateBalanceDto } from './dto/update-balance.dto';
+import { CacheKey, InvalidateCacheKeys } from '../common/decorators/cache-key.decorator';
+import { CacheTTL } from '../common/decorators/cache.decorators';
 
 @Injectable()
 export class BalanceService {
@@ -34,6 +36,8 @@ export class BalanceService {
 
   private readonly USER_BALANCE_CACHE_TTL = 30; // 30 seconds
 
+  @CacheKey('user:balance:{{userId}}')
+  @CacheTTL(30)
   async getUserBalances(
     userId: string,
     pagination?: PaginationQueryDto,
