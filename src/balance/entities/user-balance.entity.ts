@@ -12,7 +12,7 @@ import {
 import { User } from '../../user/entities/user.entity';
 import { VirtualAsset } from '../../trading/entities/virtual-asset.entity';
 
-@Entity('user_balances')
+@Entity('Balance')
 @Unique(['userId', 'assetId'])
 export class UserBalance {
   @PrimaryGeneratedColumn()
