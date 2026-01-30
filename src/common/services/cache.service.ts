@@ -1,16 +1,36 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
+import { CacheHitMissMetrics } from '../cache/interfaces/cache-warming.interface';
 
 @Injectable()
 export class CacheService {
+  private hits = 0;
+  private misses = 0;
+  private warmedHits = 0;
+  private warmedMisses = 0;
+  
   constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
   /**
    * Get value from cache
    */
   async get<T>(key: string): Promise<T | undefined> {
-    return await this.cacheManager.get<T>(key);
+    const value = await this.cacheManager.get<T>(key);
+    if (value !== undefined) {
+      this.hits++;
+      // Track warmed cache hits
+      if (this.isWarmedCacheKey(key)) {
+        this.warmedHits++;
+      }
+    } else {
+      this.misses++;
+      // Track warmed cache misses
+      if (this.isWarmedCacheKey(key)) {
+        this.warmedMisses++;
+      }
+    }
+    return value;
   }
 
   /**
@@ -134,12 +154,54 @@ export class CacheService {
   }
 
   /**
-   * Flush entire cache (use with caution)
+   * Check if a key is from warmed cache
    */
-  async flush(): Promise<void> {
-    // Note: cache-manager doesn't have a reset() method
-    // We'll clear by deleting all known keys
-    // In production with Redis, use Redis FLUSHDB command directly
-    console.log('Cache flush requested');
+  private isWarmedCacheKey(key: string): boolean {
+    // Keys that are typically warmed
+    const warmedPatterns = [
+      'user_balances:',
+      'market_price:',
+      'portfolio:',
+      'trading_pairs:',
+      'market_data:'
+    ];
+    return warmedPatterns.some(pattern => key.startsWith(pattern));
+  }
+
+  /**
+   * Get cache hit/miss metrics
+   */
+  getCacheMetrics(): CacheHitMissMetrics {
+    const total = this.hits + this.misses;
+    const hitRate = total > 0 ? (this.hits / total) * 100 : 0;
+    
+    const warmedTotal = this.warmedHits + this.warmedMisses;
+    const warmedHitRate = warmedTotal > 0 ? (this.warmedHits / warmedTotal) * 100 : 0;
+    
+    return {
+      hits: this.hits,
+      misses: this.misses,
+      hitRate,
+      warmedHits: this.warmedHits,
+      warmedMisses: this.warmedMisses,
+      warmedHitRate
+    };
+  }
+
+  /**
+   * Reset cache metrics
+   */
+  resetMetrics(): void {
+    this.hits = 0;
+    this.misses = 0;
+    this.warmedHits = 0;
+    this.warmedMisses = 0;
+  }
+
+  /**
+   * Get cache manager instance for advanced operations
+   */
+  getCacheManager(): Cache {
+    return this.cacheManager;
   }
 }

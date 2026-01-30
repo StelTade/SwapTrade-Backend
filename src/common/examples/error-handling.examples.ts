@@ -29,7 +29,8 @@ import { CreateTradeDto } from '../../trading/dto/create-trade.dto';
 export class BalanceServiceExample {
   constructor(
     @InjectRepository(Balance)
-    private readonly balanceRepository: Repository<any>,
+    private readonly balanceRepository: Repository<Balance>,
+
     private readonly errorLogger: ErrorLoggerService,
   ) {}
 
