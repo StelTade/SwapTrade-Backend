@@ -1,18 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import * as request from 'supertest';
-import { GlobalExceptionFilter } from '../common/filters/global-exception.filter';
-import {
-  InsufficientBalanceException,
-  InvalidTradeException,
-  ResourceNotFoundException,
-  UnauthorizedAccessException,
-  AuthenticationFailedException,
-  RateLimitExceededException,
-  ValidationException,
-  ConflictException,
-} from '../common/exceptions';
-import { AppModule } from '../app.module';
+import request from 'supertest';
+import { GlobalExceptionFilter } from '../src/common/filters/global-exception.filter';
+import { AppModule } from '../src/app.module';
 
 /**
  * Integration tests for global error handling and custom exceptions

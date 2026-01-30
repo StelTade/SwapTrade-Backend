@@ -15,10 +15,12 @@ import {
   DatabaseException,
   ValidationException,
   InvalidStateException,
-} from '../common/exceptions';
-
+} from '../exceptions';
 import { ErrorLoggerService } from '../logging/error-logger.service';
-
+import { Balance } from '../../balance/balance.entity';
+import { Trade } from '../../trading/entities/trade.entity';
+import { User } from '../../user/entities/user.entity';
+import { CreateTradeDto } from '../../trading/dto/create-trade.dto';
 
 /**
  * EXAMPLE 1: Balance Service with comprehensive error handling
@@ -39,7 +41,7 @@ export class BalanceServiceExample {
     userId: string,
     asset: string,
     amount: number,
-  ): Promise<Balance> {
+  ): Promise<any> {
     try {
       // Validate input
       if (amount <= 0) {
@@ -159,14 +161,14 @@ export class BalanceServiceExample {
 export class TradingServiceExample {
   constructor(
     @InjectRepository(Trade)
-    private readonly tradeRepository: Repository<Trade>,
+    private readonly tradeRepository: Repository<any>,
     private readonly errorLogger: ErrorLoggerService,
   ) {}
 
   /**
    * Execute trade with comprehensive validation
    */
-  async executeTrade(userId: string, tradeDto: CreateTradeDto): Promise<Trade> {
+  async executeTrade(userId: string, tradeDto: any): Promise<any> {
     try {
       // Validate trade parameters
       if (tradeDto.fromAsset === tradeDto.toAsset) {
@@ -265,7 +267,7 @@ export class AuthServiceExample {
 
   constructor(
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    private readonly userRepository: Repository<any>,
     private readonly errorLogger: ErrorLoggerService,
   ) {}
 
@@ -482,34 +484,4 @@ export class ValidationUtil {
   }
 }
 
-// Types/Entities (simplified for example)
-interface Balance {
-  id: string;
-  userId: string;
-  asset: string;
-  amount: number;
-}
-
-interface Trade {
-  id: string;
-  userId: string;
-  fromAsset: string;
-  toAsset: string;
-  amount: number;
-  status: string;
-  completedAt?: Date;
-  error?: string;
-}
-
-interface User {
-  id: string;
-  email: string;
-  password: string;
-}
-
-interface CreateTradeDto {
-  id: string;
-  fromAsset: string;
-  toAsset: string;
-  amount: number;
-}
+// Note: using real entity/DTO imports above for runtime usage in examples
