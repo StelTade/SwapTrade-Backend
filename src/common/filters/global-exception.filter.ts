@@ -8,7 +8,7 @@ import {
   Optional,
 } from '@nestjs/common';
 import { Response, Request } from 'express';
-import { BaseException } from './base.exception';
+import { BaseException } from '../exceptions/base.exception';
 import { ErrorLoggerService } from '../logging/error-logger.service';
 
 /**

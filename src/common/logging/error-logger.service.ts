@@ -55,17 +55,16 @@ export class ErrorLoggerService {
       // Log to logger service if available
       if (this.logger) {
         this.logger.error(
-          {
-            message: 'Application Error',
-            errorCode: errorLog.errorCode,
-            category: errorLog.errorCategory,
-            statusCode: errorLog.statusCode,
-          },
+          'Application Error',
+          errorLog.stack,
           {
             correlationId: errorLog.correlationId,
             userId: errorLog.userId,
             method: errorLog.method,
             url: errorLog.url,
+            statusCode: errorLog.statusCode,
+            errorCode: errorLog.errorCode,
+            errorCategory: errorLog.errorCategory,
           },
         );
       }
@@ -256,10 +255,8 @@ export class ErrorLoggerService {
 
     if (this.logger) {
       this.logger.error(
-        {
-          message: 'Unhandled Promise Rejection',
-          error: String(reason),
-        },
+        'Unhandled Promise Rejection',
+        reason instanceof Error ? reason.stack : String(reason),
         { errorCode: 'UNHANDLED_REJECTION' },
       );
     }
@@ -285,11 +282,8 @@ export class ErrorLoggerService {
 
     if (this.logger) {
       this.logger.error(
-        {
-          message: 'Uncaught Exception',
-          error: error.message,
-          stack: error.stack,
-        },
+        'Uncaught Exception',
+        error.stack,
         { errorCode: 'UNCAUGHT_EXCEPTION' },
       );
     }

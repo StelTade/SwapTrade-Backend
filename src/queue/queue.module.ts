@@ -99,7 +99,7 @@ import { QueueName } from './queue.constants';
 
     forwardRef(() => NotificationModule),
     UserModule,
-    TradingModule,
+    forwardRef(() => TradingModule),
   ],
   providers: [
     NotificationJobProcessor,

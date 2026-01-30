@@ -8,8 +8,10 @@ import { CacheMonitoringService } from './services/cache.monitoring.service';
 import { ErrorLoggerService } from './logging/error-logger.service';
 import { LoggerService } from './logging/logger_service';
 import { GlobalExceptionFilter } from './filters/global-exception.filter';
+import { CustomCacheModule } from './cache/cache.module';
 
 @Module({
+  imports: [CustomCacheModule],
   controllers: [CommonController],
   providers: [
     CommonService,
