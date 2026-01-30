@@ -7,7 +7,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 
-@Entity('balances')
+@Entity('Balance')
 @Index(['userId'])
 @Index(['asset'])
 @Index(['userId', 'asset'])

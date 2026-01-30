@@ -16,7 +16,9 @@ import {
   ValidationException,
   InvalidStateException,
 } from '../common/exceptions';
-import { ErrorLoggerService } from '../common/logging/error-logger.service';
+
+import { ErrorLoggerService } from '../logging/error-logger.service';
+
 
 /**
  * EXAMPLE 1: Balance Service with comprehensive error handling
@@ -26,6 +28,7 @@ export class BalanceServiceExample {
   constructor(
     @InjectRepository(Balance)
     private readonly balanceRepository: Repository<Balance>,
+
     private readonly errorLogger: ErrorLoggerService,
   ) {}
 
