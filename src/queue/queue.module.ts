@@ -12,6 +12,8 @@ import { SchedulerService } from './scheduler.service';
 import { ExponentialBackoffService } from './exponential-backoff.service';
 import { DeadLetterQueueService } from './dead-letter-queue.service';
 import { QueueAnalyticsService } from './queue-analytics.service';
+import { QueueController } from './queue.controller';
+import { QueueAdminController } from './queue-admin.controller';
 import { NotificationModule } from '../notification/notification.module';
 import { UserModule } from '../user/user.module';
 import { TradingModule } from '../trading/trading.module';
@@ -104,6 +106,7 @@ import { QueueName } from './queue.constants';
     UserModule,
     forwardRef(() => TradingModule),
   ],
+  controllers: [QueueController, QueueAdminController],
   providers: [
     NotificationJobProcessor,
     EmailJobProcessor,
