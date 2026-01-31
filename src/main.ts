@@ -51,7 +51,7 @@ async function bootstrap() {
   // Swagger configuration
   const config = new DocumentBuilder()
     .setTitle('SwapTrade API')
-    .setDescription('API documentation for the SwapTrade application')
+    .setDescription(`API documentation for the SwapTrade application.\n\n**Authentication:**\n- All endpoints (except /auth) require a Bearer JWT token.\n- Use the /auth/login endpoint to obtain a token.\n- Add the token using the "Authorize" button in Swagger UI.\n\n**Rate Limiting:**\n- Login: 5 attempts per 15 minutes per user.\n- Balance: 50 requests per minute.\n- See 429 responses for details.\n\n**Error Handling:**\n- Standardized error responses with codes and messages.\n- See error response examples for each endpoint.\n`)
     .setVersion('1.0')
     .addTag('auth', 'Authentication endpoints')
     .addTag('swap', 'Token swap endpoints')
@@ -66,7 +66,13 @@ async function bootstrap() {
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  SwaggerModule.setup('api', app, document, {
+    swaggerOptions: {
+      docExpansion: 'list',
+      persistAuthorization: true,
+    },
+    customSiteTitle: 'SwapTrade API Docs',
+  });
 
   // Enable graceful shutdown
   app.enableShutdownHooks();
@@ -153,7 +159,7 @@ async function bootstrap() {
   await app.listen(port);
 
   logger.log(`Application is running on: http://localhost:${port}`);
-  logger.log(`Swagger documentation: http://localhost:${port}/api/docs`);
+  logger.log(`Swagger documentation: http://localhost:${port}/api`);
   logger.log('Graceful shutdown handlers registered');
   logger.log(`Shutdown timeout: ${30000}ms`);
   logger.log('Global error handlers registered for uncaught exceptions and unhandled rejections');
