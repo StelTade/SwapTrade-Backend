@@ -9,6 +9,9 @@ import { CleanupJobProcessor } from './processors/cleanup.processor';
 import { QueueService } from './queue.service';
 import { QueueMonitoringService } from './queue-monitoring.service';
 import { SchedulerService } from './scheduler.service';
+import { ExponentialBackoffService } from './exponential-backoff.service';
+import { DeadLetterQueueService } from './dead-letter-queue.service';
+import { QueueAnalyticsService } from './queue-analytics.service';
 import { NotificationModule } from '../notification/notification.module';
 import { UserModule } from '../user/user.module';
 import { TradingModule } from '../trading/trading.module';
@@ -109,7 +112,16 @@ import { QueueName } from './queue.constants';
     QueueService,
     QueueMonitoringService,
     SchedulerService,
+    ExponentialBackoffService,
+    DeadLetterQueueService,
+    QueueAnalyticsService,
   ],
-  exports: [QueueService, QueueMonitoringService],
+  exports: [
+    QueueService,
+    QueueMonitoringService,
+    ExponentialBackoffService,
+    DeadLetterQueueService,
+    QueueAnalyticsService,
+  ],
 })
 export class QueueModule {}
