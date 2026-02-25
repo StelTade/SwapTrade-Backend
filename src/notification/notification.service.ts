@@ -1,7 +1,15 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThan } from 'typeorm';
-import { Notification, NotificationChannel } from './entities/notification.entity';
+import {
+  Notification,
+  NotificationChannel,
+} from './entities/notification.entity';
 import { NotificationPreference } from './entities/notification-preference.entity';
 import { NotificationTemplate } from './entities/notification-template.entity';
 import {
@@ -13,6 +21,7 @@ import { Twilio } from 'twilio';
 import * as Handlebars from 'handlebars';
 import { SendNotificationDto } from './dto/send-notification.dto';
 import { NotificationStatus } from '../common/enums/notification-status.enum';
+import { AuditNotifierService } from 'src/audit-log/audit-notifier.service';
 
 interface DeliveryContext {
   [key: string]: unknown;
@@ -20,6 +29,7 @@ interface DeliveryContext {
 
 @Injectable()
 export class NotificationService {
+  private readonly logger = new Logger(AuditNotifierService.name);
   private mailer: any;
   private twilioClient: any;
 
@@ -133,7 +143,8 @@ export class NotificationService {
       } catch (error) {
         await this.scheduleRetry(job, error);
         notification.status = NotificationStatus.FAILED;
-        notification.lastError = error instanceof Error ? error.message : String(error);
+        notification.lastError =
+          error instanceof Error ? error.message : String(error);
         await this.notificationRepo.save(notification);
         return;
       }
@@ -161,6 +172,15 @@ export class NotificationService {
     job.nextRunAt = new Date(Date.now() + delayMs);
     job.lastError = error instanceof Error ? error.message : String(error);
     await this.jobRepo.save(job);
+  }
+
+  async notifyAdmins(payload: {
+    title: string;
+    body: string;
+    metadata?: Record<string, any>;
+  }): Promise<void> {
+    this.logger.warn(`[ADMIN ALERT] ${payload.title}: ${payload.body}`);
+    // plug in email/Slack/webhook here
   }
 
   private async isChannelAllowed(
@@ -265,11 +285,9 @@ export class NotificationService {
     });
   }
 
-  private async deliverInApp(notification: Notification) {
-  }
+  private async deliverInApp(notification: Notification) {}
 
-  private async deliverPush(notification: Notification) {
-  }
+  private async deliverPush(notification: Notification) {}
 
   async getPreferences(userId: number) {
     return this.preferenceRepo.find({ where: { userId } });
