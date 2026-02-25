@@ -11,6 +11,7 @@ import { BiddingModule } from './bidding/bidding.module';
 import { CommonModule } from './common/common.module';
 import { DatabaseModule } from './database/database.module';
 import { MarketDataModule } from './market-data/market-data.module';
+import { ExportModule } from './export/export.module';
 
 import { BalanceModule } from './balance/balance.module';
 import { SwapModule } from './swap/swap.module';
@@ -41,6 +42,7 @@ import { GqlAppModule } from './graphql/graphql.module';
     TutorialModule,
     GqlAppModule,
     MarketDataModule,
+    ExportModule,
   ],
   controllers: [AppController],
   providers: [AppService],
