@@ -1,0 +1,124 @@
+slos:
+  api_latency:
+    name: "API Latency"
+    description: "95th percentile API response time should be under 500ms"
+    objective: "latency"
+    target: 0.5  # 500ms
+    window: "5m"
+    alerting:
+      burn_rate_thresholds: [1, 2, 5, 10]
+      alert_on_burn_rate: true
+      alert_on_error_budget: true
+      error_budget_threshold: 0.05  # 5% error budget
+
+  error_rate:
+    name: "Error Rate"
+    description: "Error rate should be under 1%"
+    objective: "error_rate"
+    target: 0.01  # 1%
+    window: "5m"
+    alerting:
+      burn_rate_thresholds: [1, 2, 5, 10]
+      alert_on_burn_rate: true
+      alert_on_error_budget: true
+      error_budget_threshold: 0.01  # 1% error budget
+
+  availability:
+    name: "Service Availability"
+    description: "Service should be available 99.9% of the time"
+    objective: "availability"
+    target: 0.999  # 99.9%
+    window: "30d"
+    alerting:
+      burn_rate_thresholds: [1, 2, 5, 10]
+      alert_on_burn_rate: true
+      alert_on_error_budget: true
+      error_budget_threshold: 0.001  # 0.1% error budget
+
+  trading_latency:
+    name: "Trading Latency"
+    description: "95th percentile trading execution time should be under 200ms"
+    objective: "latency"
+    target: 0.2  # 200ms
+    window: "5m"
+    alerting:
+      burn_rate_thresholds: [1, 2, 5]
+      alert_on_burn_rate: true
+      alert_on_error_budget: true
+      error_budget_threshold: 0.02  # 2% error budget
+
+  database_latency:
+    name: "Database Latency"
+    description: "95th percentile database query time should be under 100ms"
+    objective: "latency"
+    target: 0.1  # 100ms
+    window: "5m"
+    alerting:
+      burn_rate_thresholds: [1, 2, 5]
+      alert_on_burn_rate: true
+      alert_on_error_budget: true
+      error_budget_threshold: 0.05  # 5% error budget
+
+  queue_processing:
+    name: "Queue Processing Time"
+    description: "95th percentile queue processing time should be under 1s"
+    objective: "latency"
+    target: 1.0  # 1s
+    window: "5m"
+    alerting:
+      burn_rate_thresholds: [1, 2, 5]
+      alert_on_burn_rate: true
+      alert_on_error_budget: true
+      error_budget_threshold: 0.05  # 5% error budget
+
+# SLO Monitoring Configuration
+monitoring:
+  # Prometheus queries for SLO calculations
+  queries:
+    api_latency:
+      success: "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{status_code!~\"5..\"}[5m])) < 0.5"
+      total: "rate(http_requests_total[5m])"
+      
+    error_rate:
+      success: "rate(http_requests_total{status_code!~\"5..\"}[5m])"
+      total: "rate(http_requests_total[5m])"
+      
+    availability:
+      success: "up{job=\"swaptrade-backend\"}"
+      total: "up{job=\"swaptrade-backend\"}"
+      
+    trading_latency:
+      success: "histogram_quantile(0.95, rate(trading_execution_duration_seconds_bucket[5m])) < 0.2"
+      total: "rate(trading_executions_total[5m])"
+      
+    database_latency:
+      success: "histogram_quantile(0.95, rate(database_query_duration_seconds_bucket[5m])) < 0.1"
+      total: "rate(database_queries_total[5m])"
+      
+    queue_processing:
+      success: "histogram_quantile(0.95, rate(queue_processing_time_seconds_bucket[5m])) < 1.0"
+      total: "rate(queue_messages_processed_total[5m])"
+
+  # Error budget calculations
+  error_budgets:
+    api_latency: 0.05  # 5%
+    error_rate: 0.01    # 1%
+    availability: 0.001 # 0.1%
+    trading_latency: 0.02  # 2%
+    database_latency: 0.05  # 5%
+    queue_processing: 0.05  # 5%
+
+  # Burn rate alerts
+  burn_rate_alerts:
+    fast:
+      multiplier: 2
+      for: "2h"
+      severity: "critical"
+    medium:
+      multiplier: 1
+      for: "6h"
+      severity: "warning"
+    slow:
+      multiplier: 0.5
+      for: "24h"
+      severity: "info"
