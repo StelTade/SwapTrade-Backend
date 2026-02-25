@@ -10,6 +10,7 @@ import { NotificationModule } from './notification/notification.module';
 import { BiddingModule } from './bidding/bidding.module';
 import { CommonModule } from './common/common.module';
 import { DatabaseModule } from './database/database.module';
+import { MarketDataModule } from './market-data/market-data.module';
 
 import { BalanceModule } from './balance/balance.module';
 import { SwapModule } from './swap/swap.module';
@@ -39,6 +40,7 @@ import { GqlAppModule } from './graphql/graphql.module';
     SwapModule,
     TutorialModule,
     GqlAppModule,
+    MarketDataModule,
   ],
   controllers: [AppController],
   providers: [AppService],
