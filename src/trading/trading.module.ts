@@ -12,7 +12,8 @@ import { UserModule } from '../user/user.module';
     UserBadgeModule,
     UserModule,
   ],
-  controllers: [TradingController],
+  controllers: [TradingController, BotTradingController],
+import { BotTradingController } from './bot-trading.controller';
   providers: [TradingService],
 })
 export class TradingModule {}

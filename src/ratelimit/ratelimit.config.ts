@@ -21,6 +21,11 @@ export const RATE_LIMIT_CONFIG = {
     windowMs: 60 * 1000, // 1 minute
     name: 'trading'
   },
+  BOT_TRADING: {
+    limit: 5,
+    windowMs: 60 * 1000, // 1 minute
+    name: 'bot_trading'
+  },
   BIDDING: {
     limit: 20,
     windowMs: 60 * 1000, // 1 minute
@@ -37,6 +42,8 @@ export const RATE_LIMIT_CONFIG = {
 export const ENDPOINT_RATE_LIMIT_MAP = {
   '/trading': RATE_LIMIT_CONFIG.TRADING,
   '/trade': RATE_LIMIT_CONFIG.TRADING,
+  '/bot/trading': RATE_LIMIT_CONFIG.BOT_TRADING,
+  '/bot/trade': RATE_LIMIT_CONFIG.BOT_TRADING,
   '/bidding': RATE_LIMIT_CONFIG.BIDDING,
   '/bid': RATE_LIMIT_CONFIG.BIDDING,
   '/balance': RATE_LIMIT_CONFIG.BALANCE,
