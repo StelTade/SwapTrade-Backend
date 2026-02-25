@@ -26,6 +26,8 @@ export class ApiKeyGuard implements CanActivate {
     apiKey.lastUsedAt = new Date();
     await this.apiKeyRepo.save(apiKey);
     request.apiKeyOwnerId = apiKey.ownerId;
+    request.isBot = apiKey.isBot;
+    request.apiKeyPermissions = apiKey.permissions || [];
     return true;
   }
 }

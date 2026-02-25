@@ -13,8 +13,15 @@ export class ApiKey {
   @Index()
   ownerId: number;
 
+
   @Column({ default: true })
   active: boolean;
+
+  @Column({ default: false })
+  isBot: boolean;
+
+  @Column({ type: 'simple-array', nullable: true })
+  permissions?: string[];
 
   @Column({ type: 'timestamp', nullable: true })
   expiresAt: Date | null;

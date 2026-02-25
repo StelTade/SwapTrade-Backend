@@ -1,3 +1,12 @@
+  readonly botTradesTotal = new Counter({
+    name: 'bot_trades_total',
+    help: 'Total number of trades executed by bots',
+    labelNames: ['botId', 'asset', 'type'],
+    registers: [this.registry],
+  });
+  recordBotTrade(botId: number, asset: string, type: string): void {
+    this.botTradesTotal.labels(botId.toString(), asset, type).inc();
+  }
 import { Injectable } from '@nestjs/common';
 import {
   Counter,
