@@ -19,6 +19,7 @@ import { SwapModule } from './swap/swap.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TutorialModule } from './tutorial/tutorial.module';
 import { GqlAppModule } from './graphql/graphql.module';
+import { AuditLogModule } from './audit-log/audit-log.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { GqlAppModule } from './graphql/graphql.module';
     GqlAppModule,
     MarketDataModule,
     ExportModule,
+    AuditLogModule,
   ],
   controllers: [AppController],
   providers: [AppService],
