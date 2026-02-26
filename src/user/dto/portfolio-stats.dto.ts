@@ -23,9 +23,9 @@ class CurrentBalanceDto {
 }
 
 export class PortfolioStatsDto {
-  @ApiProperty({ example: '123', description: 'User ID' })
-  @IsString()
-  userId: string;
+  @ApiProperty({ example: 123, description: 'User ID' })
+  @IsNumber()
+  userId: number;
 
   @ApiProperty({ example: 25, description: 'Total number of trades' })
   @IsNumber()

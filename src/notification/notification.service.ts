@@ -93,6 +93,14 @@ export class NotificationService {
     return saved;
   }
 
+  async sendEvent(userId: number, type: string, message: string) {
+    return this.send({
+      userId,
+      type,
+      message,
+    });
+  }
+
   async processPendingBatch(limit = 50) {
     const now = new Date();
     const jobs = await this.jobRepo.find({

@@ -5,6 +5,7 @@ import { UserBadgeService } from '../rewards/services/user-badge.service';
 import { UserService } from '../user/user.service';
 import { Trade } from './entities/trade.entity';
 import { TradeType } from '../common/enums/trade-type.enum';
+import { VirtualAsset } from './entities/virtual-asset.entity';
 import { NotificationService } from '../notification/notification.service';
 import { NotificationEventType } from '../common/enums/notification-event-type.enum';
 import { OrderBook } from './entities/order-book.entity';
@@ -23,6 +24,8 @@ export class TradingService {
     private readonly notificationService: NotificationService,
     @InjectRepository(Trade)
     private readonly tradeRepository: Repository<Trade>,
+    @InjectRepository(VirtualAsset)
+    private readonly assetRepository: Repository<VirtualAsset>,
     @InjectRepository(OrderBook)
     private readonly orderBookRepository: Repository<OrderBook>,
     private readonly matchingEngine: MatchingEngineService,
@@ -45,6 +48,13 @@ export class TradingService {
     if (!userId || !asset || !amount || !price || !type) {
       return { success: false, error: 'Missing required swap parameters.' };
     }
+
+    // Lookup asset
+    const assetEntity = await this.assetRepository.findOne({ where: { symbol: asset } });
+    if (!assetEntity) {
+      return { success: false, error: `Asset ${asset} not found` };
+    }
+    const assetId = assetEntity.id;
 
     let trade: Trade;
     let badgeAwarded = false;
@@ -69,15 +79,12 @@ export class TradingService {
 
       // Calculate trade value
       const tradeValue = amount * price;
-
-     
       const pnl = tradeTypeEnum === TradeType.BUY ? -tradeValue : tradeValue;
 
       // Update portfolio after successful trade
-      // Convert userId to string and use asset as assetId
       await this.userService.updatePortfolioAfterTrade(
-        userId.toString(),
-        asset, // asset is the assetId
+        userId,
+        assetId,
         tradeValue,
         pnl,
       );
@@ -85,8 +92,8 @@ export class TradingService {
       // Update user balance
       const balanceChange = tradeTypeEnum === TradeType.BUY ? amount : -amount;
       await this.userService.updateBalance(
-        userId.toString(),
-        asset,
+        userId,
+        assetId,
         balanceChange,
       );
 

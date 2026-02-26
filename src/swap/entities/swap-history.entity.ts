@@ -30,9 +30,9 @@ export class SwapHistory {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: 'int' })
   @Index()
-  userId: string;
+  userId: number;
 
   @Column({ type: 'varchar', length: 20 })
   fromAsset: string;
@@ -48,67 +48,69 @@ export class SwapHistory {
   @Column({ type: 'decimal', precision: 36, scale: 18, nullable: true })
   amountOut: number | null;
 
-  /** Quoted price at submission time (amountOut / amountIn) */
   @Column({ type: 'decimal', precision: 36, scale: 18 })
   quotedRate: number;
 
-  /** Actual execution rate — may differ due to slippage */
   @Column({ type: 'decimal', precision: 36, scale: 18, nullable: true })
   executedRate: number | null;
 
-  /** Maximum acceptable slippage as a fraction, e.g. 0.005 = 0.5% */
-  @Column({ type: 'decimal', precision: 10, scale: 6, default: 0.005 })
+  @Column({ type: 'decimal', precision: 10, scale: 8 })
   slippageTolerance: number;
 
-  /** Actual slippage experienced: (quotedRate - executedRate) / quotedRate */
-  @Column({ type: 'decimal', precision: 10, scale: 6, nullable: true })
+  @Column({ type: 'decimal', precision: 10, scale: 8, nullable: true })
   actualSlippage: number | null;
 
-  /** Price impact as fraction of pool liquidity: amountIn / poolLiquidity */
-  @Column({ type: 'decimal', precision: 10, scale: 6, nullable: true })
+  @Column({ type: 'decimal', precision: 10, scale: 8, nullable: true })
   priceImpact: number | null;
 
-  @Column({ type: 'enum', enum: SwapStatus, default: SwapStatus.PENDING })
+  @Column({
+    type: 'simple-enum',
+    enum: SwapStatus,
+    default: SwapStatus.PENDING,
+  })
   status: SwapStatus;
 
-  @Column({ type: 'enum', enum: SwapType, default: SwapType.SINGLE })
+  @Column({
+    type: 'simple-enum',
+    enum: SwapType,
+    default: SwapType.SINGLE,
+  })
   swapType: SwapType;
 
-  /** Bull job ID for tracing */
-  @Column({ nullable: true })
-  jobId: string | null;
-
-  /** Groups swaps submitted together */
-  @Column({ nullable: true })
-  batchId: string | null;
-
-  /** For multi-leg: ordered array of intermediate assets */
-  @Column({ type: 'jsonb', nullable: true })
+  /**
+   * For multi-leg swaps, store the route as JSON array of asset symbols.
+   * e.g. ["USDT", "ETH", "BTC"]
+   */
+  @Column({ type: 'simple-json', nullable: true })
   route: string[] | null;
 
-  /** Retry attempt count for settlement */
-  @Column({ default: 0 })
+  @Column({ type: 'int', default: 0 })
   retryCount: number;
 
-  /** Error message on failure */
   @Column({ type: 'text', nullable: true })
   errorMessage: string | null;
 
-  /** Human-readable failure reason */
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   failureReason: string | null;
 
-  /** Timestamp when execution started */
-  @Column({ type: 'timestamptz', nullable: true })
+  /** ID of the Bull job processing this swap */
+  @Column({ type: 'varchar', nullable: true })
+  @Index()
+  jobId: string | null;
+
+  /** ID of the batch if part of a batch swap */
+  @Column({ type: 'uuid', nullable: true })
+  batchId: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
   executedAt: Date | null;
 
-  /** Timestamp of final settlement confirmation */
-  @Column({ type: 'timestamptz', nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   settledAt: Date | null;
 
-  @CreateDateColumn({ type: 'timestamptz' })
+  @CreateDateColumn()
   createdAt: Date;
 
-  @UpdateDateColumn({ type: 'timestamptz' })
+  @UpdateDateColumn()
   updatedAt: Date;
 }

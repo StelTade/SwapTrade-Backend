@@ -6,7 +6,8 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager } from 'typeorm';
 import { SwapHistory, SwapStatus } from './entities/swap-history.entity';
-import { Balance } from '../balance/balance.entity';
+import { UserBalance } from '../balance/entities/user-balance.entity';
+import { VirtualAsset } from '../trading/entities/virtual-asset.entity';
 import { SwapPricingService } from './swap-pricing.service';
 import { CacheService } from '../common/services/cache.service';
 
@@ -29,8 +30,10 @@ export class SwapSettlementService {
   constructor(
     @InjectRepository(SwapHistory)
     private readonly swapHistoryRepo: Repository<SwapHistory>,
-    @InjectRepository(Balance)
-    private readonly balanceRepo: Repository<Balance>,
+    @InjectRepository(UserBalance)
+    private readonly balanceRepo: Repository<UserBalance>,
+    @InjectRepository(VirtualAsset)
+    private readonly assetRepo: Repository<VirtualAsset>,
     private readonly pricingService: SwapPricingService,
     private readonly cacheService: CacheService,
   ) {}
@@ -189,22 +192,32 @@ export class SwapSettlementService {
 
   private async updateBalances(
     manager: EntityManager,
-    userId: string,
+    userId: number,
     fromAsset: string,
     toAsset: string,
     amountIn: number,
     amountOut: number,
   ): Promise<void> {
-    const balanceRepo = manager.getRepository(Balance);
+    const balanceRepo = manager.getRepository(UserBalance);
+    const assetRepo = manager.getRepository(VirtualAsset);
+
+    // Fetch asset IDs
+    const [fromAssetEntity, toAssetEntity] = await Promise.all([
+      assetRepo.findOne({ where: { symbol: fromAsset } }),
+      assetRepo.findOne({ where: { symbol: toAsset } }),
+    ]);
+
+    if (!fromAssetEntity) throw new BadRequestException(`Asset ${fromAsset} not found`);
+    if (!toAssetEntity) throw new BadRequestException(`Asset ${toAsset} not found`);
 
     // Lock both rows to prevent concurrent mutation
     const [fromBalance, toBalance] = await Promise.all([
       balanceRepo.findOne({
-        where: { userId, asset: fromAsset },
+        where: { userId, assetId: fromAssetEntity.id },
         lock: { mode: 'pessimistic_write' },
       }),
       balanceRepo.findOne({
-        where: { userId, asset: toAsset },
+        where: { userId, assetId: toAssetEntity.id },
         lock: { mode: 'pessimistic_write' },
       }),
     ]);
@@ -216,17 +229,21 @@ export class SwapSettlementService {
     }
 
     fromBalance.balance = Number(fromBalance.balance) - amountIn;
+    await balanceRepo.save(fromBalance);
 
     if (toBalance) {
       toBalance.balance = Number(toBalance.balance) + amountOut;
-      await balanceRepo.save([fromBalance, toBalance]);
+      await balanceRepo.save(toBalance);
     } else {
       const newBalance = balanceRepo.create({
         userId,
-        asset: toAsset,
+        assetId: toAssetEntity.id,
         balance: amountOut,
+        totalInvested: 0,
+        cumulativePnL: 0,
+        averageBuyPrice: 0,
       });
-      await balanceRepo.save([fromBalance, newBalance]);
+      await balanceRepo.save(newBalance);
     }
   }
 
@@ -238,9 +255,19 @@ export class SwapSettlementService {
     const swap = await manager.findOne(SwapHistory, { where: { id: swapId } });
     if (!swap) return;
 
+    const assetRepo = manager.getRepository(VirtualAsset);
+    const assetEntity = await assetRepo.findOne({ where: { symbol: swap.fromAsset } });
+
+    if (!assetEntity) {
+        this.logger.error(`Asset ${swap.fromAsset} not found during rollback for swap ${swapId}`);
+        // If asset not found, we can't restore balance properly. Log and maybe mark as manual intervention needed.
+        // But for rollback, we try our best.
+        return;
+    }
+
     // Restore the deducted amountIn back to the user
-    const fromBalance = await manager.findOne(Balance, {
-      where: { userId: swap.userId, asset: swap.fromAsset },
+    const fromBalance = await manager.findOne(UserBalance, {
+      where: { userId: swap.userId, assetId: assetEntity.id },
       lock: { mode: 'pessimistic_write' },
     });
 
