@@ -11,7 +11,7 @@ export class UserService {
         private readonly userBalanceRepository: Repository<UserBalance>,
     ) { }
 
-    async getPortfolioStats(userId: string): Promise<PortfolioStatsDto> {
+    async getPortfolioStats(userId: number): Promise<PortfolioStatsDto> {
         const userBalances = await this.userBalanceRepository.find({
             where: { userId },
         });
@@ -47,8 +47,8 @@ export class UserService {
             totalTradeVolume,
             lastTradeDate,
             currentBalances: userBalances.map((balance) => ({
-                asset: balance.asset?.name || balance.assetId,
-                amount: Number(balance.amount),
+                asset: balance.asset?.name || String(balance.assetId),
+                amount: Number(balance.balance),
                 trades: balance.totalTrades,
                 pnl: Number(balance.cumulativePnL),
             })),
@@ -58,8 +58,8 @@ export class UserService {
     }
 
     async updatePortfolioAfterTrade(
-        userId: string,
-        assetId: string,
+        userId: number,
+        assetId: number,
         tradeValue: number,
         pnl: number,
     ): Promise<void> {
@@ -71,7 +71,7 @@ export class UserService {
             userBalance = this.userBalanceRepository.create({
                 userId,
                 assetId,
-                amount: 0,
+                balance: 0,
                 totalTrades: 0,
                 cumulativePnL: 0,
                 totalTradeVolume: 0,
@@ -87,15 +87,15 @@ export class UserService {
         await this.userBalanceRepository.save(userBalance);
     }
 
-    async getUserBalance(userId: string, assetId: string): Promise<UserBalance | null> {
+    async getUserBalance(userId: number, assetId: number): Promise<UserBalance | null> {
         return this.userBalanceRepository.findOne({
             where: { userId, assetId },
         });
     }
 
     async updateBalance(
-        userId: string,
-        assetId: string,
+        userId: number,
+        assetId: number,
         amount: number,
     ): Promise<void> {
         let userBalance = await this.userBalanceRepository.findOne({
@@ -106,14 +106,14 @@ export class UserService {
             userBalance = this.userBalanceRepository.create({
                 userId,
                 assetId,
-                amount: 0,
+                balance: 0,
                 totalTrades: 0,
                 cumulativePnL: 0,
                 totalTradeVolume: 0,
             });
         }
 
-        userBalance.amount = Number(userBalance.amount) + amount;
+        userBalance.balance = Number(userBalance.balance) + amount;
         await this.userBalanceRepository.save(userBalance);
     }
 }

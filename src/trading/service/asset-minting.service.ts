@@ -21,7 +21,12 @@ export class AssetMintingService {
       throw new NotFoundException(`Asset ${assetSymbol} not found`);
     }
 
+    const userIdNum = parseInt(userId, 10);
+    if (isNaN(userIdNum)) {
+      throw new Error('Invalid userId: must be a number');
+    }
+
     // 2. Update or create user balance
-    return this.userBalanceService.addBalance(userId, asset.id.toString(), amount);
+    return this.userBalanceService.addBalance(userIdNum, asset.id, amount);
   }
 }

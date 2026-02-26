@@ -2,23 +2,27 @@
  * CreateSwapDto
  *
  * Data Transfer Object for creating a swap.
- * TODO: Define validation and fields.
  */
-import { IsString, IsNotEmpty, IsNumber, IsPositive } from 'class-validator';
+import { IsNumber, IsPositive, IsNotEmpty } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateSwapDto {
-  @IsString()
+  @ApiProperty({ description: 'The ID of the user performing the swap' })
+  @IsNumber()
   @IsNotEmpty()
-  userId: string;
+  userId: number;
 
-  @IsString()
+  @ApiProperty({ description: 'The ID of the asset to swap from' })
+  @IsNumber()
   @IsNotEmpty()
-  from: string; 
+  fromAssetId: number;
 
-  @IsString()
+  @ApiProperty({ description: 'The ID of the asset to swap to' })
+  @IsNumber()
   @IsNotEmpty()
-  to: string; 
+  toAssetId: number;
 
+  @ApiProperty({ description: 'The amount of the asset to swap' })
   @IsNumber()
   @IsPositive()
   amount: number;

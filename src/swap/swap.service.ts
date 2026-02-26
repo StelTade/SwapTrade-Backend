@@ -1,39 +1,34 @@
-/**
- * Swap Service
- *
- * Contains business logic for swap operations.
- * TODO: Implement swap service methods.
- */
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
-import { Balance } from '../balance/balance.entity';
+import { UserBalance } from '../balance/user-balance.entity';
 import { VirtualAsset } from '../trading/entities/virtual-asset.entity';
 import { CreateSwapDto } from './dto/create-swap.dto';
+import { CurrencyService } from '../balance/service/currency.service';
 
 @Injectable()
 export class SwapService {
   constructor(
     private readonly dataSource: DataSource,
-    @InjectRepository(Balance)
-    private readonly balanceRepo: Repository<Balance>,
     @InjectRepository(VirtualAsset)
     private readonly assetRepo: Repository<VirtualAsset>,
+    private readonly currencyService: CurrencyService,
   ) {}
 
   /**
    * Execute a token swap from one asset to another for a user.
-   * Current pricing policy: 1:1 swap rate (placeholder). Replace with real pricing when available.
    */
   async executeSwap(dto: CreateSwapDto): Promise<{
-    userId: string;
-    from: { asset: string; balance: number };
-    to: { asset: string; balance: number };
+    userId: number;
+    fromAssetId: number;
+    toAssetId: number;
+    sentAmount: number;
+    receivedAmount: number;
   }> {
-    const { userId, from, to, amount } = dto;
+    const { userId, fromAssetId, toAssetId, amount } = dto;
 
-    if (from === to) {
-      throw new BadRequestException('from and to must be different tokens');
+    if (fromAssetId === toAssetId) {
+      throw new BadRequestException('from and to must be different assets');
     }
     if (amount <= 0) {
       throw new BadRequestException('amount must be greater than 0');
@@ -41,102 +36,53 @@ export class SwapService {
 
     // Ensure both tokens are supported
     const [fromAsset, toAsset] = await Promise.all([
-      this.assetRepo.findOne({ where: { symbol: from } }),
-      this.assetRepo.findOne({ where: { symbol: to } }),
+      this.assetRepo.findOne({ where: { id: fromAssetId } }),
+      this.assetRepo.findOne({ where: { id: toAssetId } }),
     ]);
-    if (!fromAsset) throw new NotFoundException(`Unsupported token: ${from}`);
-    if (!toAsset) throw new NotFoundException(`Unsupported token: ${to}`);
+    
+    if (!fromAsset) throw new NotFoundException(`Unsupported asset ID: ${fromAssetId}`);
+    if (!toAsset) throw new NotFoundException(`Unsupported asset ID: ${toAssetId}`);
+
+    // Calculate receive amount using CurrencyService logic
+    const receiveAmount = await this.currencyService.convert(amount, fromAssetId, toAssetId);
 
     // Transaction to ensure atomic updates
     return this.dataSource.transaction(async (manager) => {
-      const balanceRepo = manager.getRepository(Balance);
+      const balanceRepo = manager.getRepository(UserBalance);
 
       // Load balances
-      let fromBalance = await balanceRepo.findOne({ where: { userId, asset: from } });
-      let toBalance = await balanceRepo.findOne({ where: { userId, asset: to } });
+      let fromBalance = await balanceRepo.findOne({ where: { userId, assetId: fromAssetId } });
+      let toBalance = await balanceRepo.findOne({ where: { userId, assetId: toAssetId } });
 
-      if (!fromBalance || fromBalance.balance < amount) {
+      if (!fromBalance || Number(fromBalance.balance) < amount) {
         throw new BadRequestException('Insufficient funds');
       }
-
-      // 1:1 rate placeholder
-      const receiveAmount = amount;
 
       // Update balances
       fromBalance.balance = Number(fromBalance.balance) - amount;
+      await balanceRepo.save(fromBalance);
+      
       if (toBalance) {
         toBalance.balance = Number(toBalance.balance) + receiveAmount;
+        await balanceRepo.save(toBalance);
       } else {
-        toBalance = balanceRepo.create({ userId, asset: to, balance: receiveAmount });
+        toBalance = balanceRepo.create({ 
+            userId, 
+            assetId: toAssetId, 
+            balance: receiveAmount,
+            totalInvested: 0,
+            cumulativePnL: 0,
+            averageBuyPrice: 0 // Initialize new balance fields
+        });
+        await balanceRepo.save(toBalance);
       }
-
-      await balanceRepo.save([fromBalance, toBalance]);
 
       return {
         userId,
-        from: { asset: from, balance: fromBalance.balance },
-        to: { asset: to, balance: toBalance.balance },
-      };
-    });
-  }
-
-  async swap(userId: string, fromSymbol: string, toSymbol: string, amount: number): Promise<{
-    userId: string;
-    from: { asset: string; balance: number };
-    to: { asset: string; balance: number };
-  }> {
-    if (fromSymbol === toSymbol) {
-      throw new BadRequestException('From and to assets must be different');
-    }
-
-    if (amount <= 0) {
-      throw new BadRequestException('Amount must be greater than 0');
-    }
-
-    // Ensure both tokens are supported
-    const [fromAsset, toAsset] = await Promise.all([
-      this.assetRepo.findOne({ where: { symbol: fromSymbol } }),
-      this.assetRepo.findOne({ where: { symbol: toSymbol } }),
-    ]);
-
-    if (!fromAsset) throw new NotFoundException(`Unsupported token: ${fromSymbol}`);
-    if (!toAsset) throw new NotFoundException(`Unsupported token: ${toSymbol}`);
-
-    // Execute the swap within a transaction
-    return this.dataSource.transaction(async (manager) => {
-      const balanceRepo = manager.withRepository(this.balanceRepo);
-
-      // Load balances
-      const fromBalance = await balanceRepo.findOne({ where: { userId, asset: fromSymbol } });
-      const toBalance = await balanceRepo.findOne({ where: { userId, asset: toSymbol } });
-
-      if (!fromBalance || fromBalance.balance < amount) {
-        throw new BadRequestException('Insufficient funds');
-      }
-
-      // 1:1 rate placeholder
-      const receiveAmount = amount;
-
-      // Update balances
-      fromBalance.balance -= amount;
-
-      let updatedToBalance: Balance;
-      if (toBalance) {
-        toBalance.balance += receiveAmount;
-        updatedToBalance = toBalance;
-      } else {
-        // Create a new balance entry if toBalance does not exist
-        const newBalance = balanceRepo.create({ userId, asset: toSymbol, balance: receiveAmount });
-        updatedToBalance = await balanceRepo.save(newBalance);
-      }
-
-      // Save the updated fromBalance
-      await balanceRepo.save(fromBalance);
-
-      return {
-        userId,
-        from: { asset: fromSymbol, balance: fromBalance.balance },
-        to: { asset: toSymbol, balance: updatedToBalance.balance },
+        fromAssetId,
+        toAssetId,
+        sentAmount: amount,
+        receivedAmount: receiveAmount,
       };
     });
   }

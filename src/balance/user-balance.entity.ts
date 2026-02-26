@@ -8,28 +8,34 @@ import {
   UpdateDateColumn,
   Unique,
 } from 'typeorm';
-import { VirtualAsset } from 'src/trading/entities/virtual-asset.entity';
+import { VirtualAsset } from '../trading/entities/virtual-asset.entity';
 
 @Entity('user_balances')
 @Unique(['userId', 'assetId'])
 export class UserBalance {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-  @Column({ type: 'uuid' })
-  userId: string;
+  @Column({ type: 'int' })
+  userId: number;
 
-  @Column({ type: 'uuid' })
-  assetId: string;
+  @Column({ type: 'int' })
+  assetId: number;
 
   @ManyToOne(() => VirtualAsset, { eager: true })
   @JoinColumn({ name: 'assetId' })
   asset: VirtualAsset;
 
   @Column({ type: 'decimal', precision: 18, scale: 8, default: 0 })
-  amount: number;
+  balance: number;
 
   // Portfolio tracking fields - NEW
+  @Column({ type: 'decimal', precision: 18, scale: 8, default: 0 })
+  totalInvested: number;
+
+  @Column({ type: 'decimal', precision: 18, scale: 8, default: 0 })
+  averageBuyPrice: number;
+
   @Column({ type: 'int', default: 0 })
   totalTrades: number;
 

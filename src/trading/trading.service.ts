@@ -5,6 +5,7 @@ import { UserBadgeService } from '../rewards/services/user-badge.service';
 import { UserService } from '../user/user.service';
 import { Trade } from './entities/trade.entity';
 import { TradeType } from '../common/enums/trade-type.enum';
+import { VirtualAsset } from './entities/virtual-asset.entity';
 
 @Injectable()
 export class TradingService {
@@ -13,6 +14,8 @@ export class TradingService {
 		private readonly userService: UserService,
 		@InjectRepository(Trade)
 		private readonly tradeRepository: Repository<Trade>,
+        @InjectRepository(VirtualAsset)
+        private readonly assetRepository: Repository<VirtualAsset>,
 	) { }
 
 	async swap(
@@ -31,6 +34,13 @@ export class TradingService {
 		if (!userId || !asset || !amount || !price || !type) {
 			return { success: false, error: 'Missing required swap parameters.' };
 		}
+
+        // Lookup asset
+        const assetEntity = await this.assetRepository.findOne({ where: { symbol: asset } });
+        if (!assetEntity) {
+            return { success: false, error: `Asset ${asset} not found` };
+        }
+        const assetId = assetEntity.id;
 
 		let trade: Trade;
 		let badgeAwarded = false;
@@ -54,10 +64,9 @@ export class TradingService {
 			const pnl = tradeTypeEnum === TradeType.BUY ? -tradeValue : tradeValue;
 
 			// Update portfolio after successful trade
-			// Convert userId to string and use asset as assetId
 			await this.userService.updatePortfolioAfterTrade(
-				userId.toString(),
-				asset, // asset is the assetId
+				userId,
+				assetId,
 				tradeValue,
 				pnl,
 			);
@@ -65,8 +74,8 @@ export class TradingService {
 			// Update user balance
 			const balanceChange = tradeTypeEnum === TradeType.BUY ? amount : -amount;
 			await this.userService.updateBalance(
-				userId.toString(),
-				asset,
+				userId,
+				assetId,
 				balanceChange,
 			);
 

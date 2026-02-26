@@ -1,4 +1,4 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
 import { UserService } from './user.service';
 import { PortfolioStatsDto } from './dto/portfolio-stats.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
@@ -14,7 +14,7 @@ export class UserController {
   @ApiResponse({ status: 404, description: 'User not found' })
   @ApiParam({ name: 'userId', description: 'User identifier' })
   async getPortfolioStats(
-    @Param('userId') userId: string,
+    @Param('userId', ParseIntPipe) userId: number,
   ): Promise<PortfolioStatsDto> {
     return this.userService.getPortfolioStats(userId);
   }

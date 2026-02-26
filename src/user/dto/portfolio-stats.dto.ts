@@ -1,5 +1,5 @@
 export class PortfolioStatsDto {
-    userId: string;
+    userId: number;
     totalTrades: number;
     cumulativePnL: number;
     totalTradeVolume: number;
