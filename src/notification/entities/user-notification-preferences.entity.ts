@@ -1,14 +1,16 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { NotificationChannel } from './notification.entity';
 
 export enum NotificationFrequency {
-  INSTANT = 'instant',
-  HOURLY = 'hourly',
-  DAILY = 'daily'
-}
-
-export enum NotificationChannel {
-  IN_APP = 'in-app',
-  EMAIL = 'email'
+  INSTANT = 'INSTANT',
+  HOURLY = 'HOURLY',
+  DAILY = 'DAILY',
 }
 
 @Entity('user_notification_preferences')
@@ -19,14 +21,10 @@ export class UserNotificationPreferences {
   @Column({ unique: true })
   userId: string;
 
-  @Column({
-    type: 'enum',
-    enum: NotificationFrequency,
-    default: NotificationFrequency.INSTANT
-  })
+  @Column({ type: 'varchar', default: NotificationFrequency.INSTANT })
   frequency: NotificationFrequency;
 
-  @Column('simple-array', { default: 'in-app,email' })
+  @Column({ type: 'simple-array', default: 'IN_APP,EMAIL' })
   channels: NotificationChannel[];
 
   @Column({ default: true })

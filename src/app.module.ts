@@ -20,6 +20,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { TutorialModule } from './tutorial/tutorial.module';
 import { GqlAppModule } from './graphql/graphql.module';
 import { AuditLogModule } from './audit-log/audit-log.module';
+import { AlertModule } from './alerts/alert.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { AuditLogModule } from './audit-log/audit-log.module';
     MarketDataModule,
     ExportModule,
     AuditLogModule,
+    AlertModule,
   ],
   controllers: [AppController],
   providers: [AppService],

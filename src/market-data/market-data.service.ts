@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MarketData } from '../trading/entities/market-data.entity';
 import { MarketDataProvider, PriceUpdate, MarketDataConfig } from './interfaces/market-provider.interface';
 import { BinanceProvider } from './providers/binance-provider';
@@ -8,6 +9,7 @@ import { CoinbaseProvider } from './providers/coinbase-provider';
 import { MarketDataValidatorService } from './services/market-data-validator.service';
 import { CacheService } from '../common/services/cache.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import type { MarketDataUpdate } from '../websocket/interfaces/websocket.interfaces';
 
 @Injectable()
 export class MarketDataService implements OnModuleInit, OnModuleDestroy {
@@ -24,6 +26,7 @@ export class MarketDataService implements OnModuleInit, OnModuleDestroy {
     private readonly marketDataRepository: Repository<MarketData>,
     private readonly validatorService: MarketDataValidatorService,
     private readonly cacheService: CacheService,
+    private readonly eventEmitter: EventEmitter2,
   ) {
     this.config = this.loadConfig();
   }
@@ -147,6 +150,16 @@ export class MarketDataService implements OnModuleInit, OnModuleDestroy {
 
       await this.updateMarketData(sanitizedData);
       await this.updateCache(data as any);
+
+      this.eventEmitter.emit('market.data.updated', {
+        asset: sanitizedData.symbol,
+        price: sanitizedData.price,
+        volume24h: (data as any).volume ?? 0,
+        change24h: 0,
+        high24h: 0,
+        low24h: 0,
+        timestamp: new Date().toISOString(),
+      } as MarketDataUpdate);
 
     } catch (error) {
       this.logger.error(`Error handling price update for ${data.symbol}:`, error);
