@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import { VirtualAsset } from '../trading/entities/virtual-asset.entity';
-import { UserBalance } from '../balance/user-balance.entity';
+import { UserBalance } from '../balance/entities/user-balance.entity';
 import { User } from '../user/entities/user.entity';
 import { Trade } from '../trading/entities/trade.entity';
 import { Portfolio } from '../portfolio/entities/portfolio.entity';

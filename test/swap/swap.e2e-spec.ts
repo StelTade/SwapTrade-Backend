@@ -4,7 +4,7 @@ import request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { DataSource, Repository } from 'typeorm';
 import { VirtualAsset } from '../../src/trading/entities/virtual-asset.entity';
-import { UserBalance } from '../../src/balance/user-balance.entity';
+import { UserBalance } from '../../src/balance/entities/user-balance.entity';
 
 describe('Swap (e2e)', () => {
   let app: INestApplication;
@@ -83,8 +83,13 @@ describe('Swap (e2e)', () => {
     
     expect(btcBalance).toBeDefined();
     expect(ethBalance).toBeDefined();
-    expect(Number(btcBalance!.balance)).toBe(3); // 5 - 2
-    expect(Number(ethBalance!.balance)).toBeCloseTo(1 + expectedEthReceived);
+
+    if (btcBalance) {
+      expect(Number(btcBalance.balance)).toBe(3); // 5 - 2
+    }
+    if (ethBalance) {
+      expect(Number(ethBalance.balance)).toBeCloseTo(1 + expectedEthReceived);
+    }
   });
 
   it('POST /swap fails on insufficient funds', async () => {

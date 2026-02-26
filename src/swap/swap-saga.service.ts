@@ -1,11 +1,10 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource, EntityManager } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { SwapHistory, SwapStatus, SwapType } from './entities/swap-history.entity';
 import { SwapPricingService, PriceQuote } from './swap-pricing.service';
 import { SwapSettlementService } from './swap-settlement.service';
-import { Balance } from '../balance/balance.entity';
 
 export interface SagaStep {
   swapId: string;
@@ -31,8 +30,6 @@ export class SwapSagaService {
   constructor(
     @InjectRepository(SwapHistory)
     private readonly swapHistoryRepo: Repository<SwapHistory>,
-    @InjectRepository(Balance)
-    private readonly balanceRepo: Repository<Balance>,
     private readonly dataSource: DataSource,
     private readonly pricingService: SwapPricingService,
     private readonly settlementService: SwapSettlementService,
@@ -47,7 +44,7 @@ export class SwapSagaService {
    * Leg 2: ETH  → BTC
    */
   async executeMultiLegSwap(
-    userId: string,
+    userId: number,
     route: string[],
     amountIn: number,
     slippageTolerance: number,

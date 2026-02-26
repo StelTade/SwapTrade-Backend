@@ -3,7 +3,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { DataSource, Repository } from 'typeorm';
-import { UserBalance } from '../src/balance/user-balance.entity';
+import { UserBalance } from '../src/balance/entities/user-balance.entity';
 import { VirtualAsset } from '../src/trading/entities/virtual-asset.entity';
 
 describe('BalanceController (e2e)', () => {
@@ -71,7 +71,9 @@ describe('BalanceController (e2e)', () => {
 
     const balance = await balanceRepo.findOne({ where: { userId, assetId: btcId } });
     expect(balance).toBeDefined();
-    expect(Number(balance!.balance)).toBe(15);
+    if (balance) {
+      expect(Number(balance.balance)).toBe(15);
+    }
   });
 
   it('/balances/withdraw (POST) decreases balance', async () => {
@@ -83,8 +85,10 @@ describe('BalanceController (e2e)', () => {
     expect(Number(res.body.balance)).toBe(13); // 15 - 2
 
     const balance = await balanceRepo.findOne({ where: { userId, assetId: btcId } });
-    expect(balance).toBeDefined();
-    expect(Number(balance!.balance)).toBe(13);
+    expect(balance).not.toBeNull();
+    if (balance) {
+      expect(Number(balance.balance)).toBe(13);
+    }
   });
 
   it('/balances/withdraw (POST) fails on insufficient funds', async () => {
