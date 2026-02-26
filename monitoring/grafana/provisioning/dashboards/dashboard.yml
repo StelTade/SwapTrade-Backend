@@ -1,0 +1,7 @@
+apiVersion: 1
+
+dashboards:
+  - name: SwapTrade Performance
+    type: file
+    options:
+      path: /var/lib/grafana/dashboards

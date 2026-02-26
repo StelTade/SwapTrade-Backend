@@ -1,0 +1,11 @@
+declare module 'nodemailer';
+declare module 'twilio';
+declare module 'bcryptjs';
+declare module 'helmet';
+declare module 'cookie-parser';
+declare module '@nestjs/graphql';
+declare module '@nestjs/apollo';
+declare module '@apollo/subgraph';
+declare module 'graphql-subscriptions';
+declare module 'dataloader';
+declare module 'graphql';

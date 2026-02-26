@@ -31,6 +31,65 @@
 $ npm install
 ```
 
+## Redis Setup (Local Development)
+
+This project uses Redis for background job queues (Bull).
+
+### Using Docker (Recommended)
+
+````bash
+docker compose up -d redis
+
+Redis will be available at:
+
+Host: localhost
+
+Port: 6379
+
+Ensure .env contains the correct Redis settings.
+
+## Configuration
+
+This application uses a comprehensive configuration management system with type safety, validation, and environment-specific profiles.
+
+### Environment Variables
+
+Copy `.env.example` to `.env` and configure the following key settings:
+
+#### Required Variables
+- `JWT_SECRET`: Secret key for JWT token signing (change in production)
+- `DB_NAME`: Database name
+
+#### Optional Variables
+- `NODE_ENV`: Environment (development/staging/production)
+- `PORT`: Application port (default: 3000)
+- `REDIS_HOST/PORT`: Redis connection settings
+- `CACHE_ENABLED`: Enable/disable caching
+- `LOG_LEVEL`: Logging level (error/warn/info/debug)
+
+### Configuration Features
+
+- **Type Safety**: All configuration values are strongly typed
+- **Validation**: Joi schema validation ensures correct values
+- **Environment Profiles**: Different settings for dev/staging/prod
+- **Hot Reload**: Configuration can reload without restart (when enabled)
+- **Audit Logging**: Track configuration changes
+- **Documentation**: Auto-generated config documentation
+
+### Configuration Commands
+
+```bash
+# Generate configuration documentation
+npm run config:docs
+
+# View current configuration
+npm run config:audit
+```
+
+See `CONFIG_DOCUMENTATION.md` for detailed parameter descriptions.
+
+
+
 ## Compile and run the project
 
 ```bash
@@ -42,7 +101,7 @@ $ npm run start:dev
 
 # production mode
 $ npm run start:prod
-```
+````
 
 ## Run tests
 

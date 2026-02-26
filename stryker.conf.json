@@ -1,0 +1,26 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "_comment": "This config was generated using 'stryker init'",
+  "packageManager": "npm",
+  "reporters": [
+    "html",
+    "clear-text",
+    "progress"
+  ],
+  "testRunner": "jest",
+  "testRunner_comment": "We use Jest to run tests",
+  "coverageAnalysis": "perTest",
+  "jest": {
+    "projectType": "custom",
+    "configFile": "package.json",
+    "enableFindRelatedTests": true
+  },
+  "mutate": [
+    "src/**/*.ts",
+    "!src/**/*.module.ts",
+    "!src/**/*.entity.ts",
+    "!src/**/*.dto.ts",
+    "!src/main.ts",
+    "!src/database/migrations/*.ts"
+  ]
+}

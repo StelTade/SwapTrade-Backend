@@ -1,13 +1,20 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
-import { UserBalance } from '../balance/user-balance.entity';
+import { UserBalance } from '../balance/entities/user-balance.entity';
 import { VirtualAsset } from '../trading/entities/virtual-asset.entity';
 import { CreateSwapDto } from './dto/create-swap.dto';
 import { CurrencyService } from '../balance/service/currency.service';
 
 @Injectable()
 export class SwapService {
+  private readonly logger = new Logger(SwapService.name);
+
   constructor(
     private readonly dataSource: DataSource,
     @InjectRepository(VirtualAsset)
@@ -17,6 +24,7 @@ export class SwapService {
 
   /**
    * Execute a token swap from one asset to another for a user.
+   * Supports both synchronous execution and future async expansion.
    */
   async executeSwap(dto: CreateSwapDto): Promise<{
     userId: number;
@@ -25,9 +33,9 @@ export class SwapService {
     sentAmount: number;
     receivedAmount: number;
   }> {
-    const { userId, fromAssetId, toAssetId, amount } = dto;
+    const { userId, from, to, amount } = dto;
 
-    if (fromAssetId === toAssetId) {
+    if (from === to) {
       throw new BadRequestException('from and to must be different assets');
     }
     if (amount <= 0) {
@@ -36,23 +44,24 @@ export class SwapService {
 
     // Ensure both tokens are supported
     const [fromAsset, toAsset] = await Promise.all([
-      this.assetRepo.findOne({ where: { id: fromAssetId } }),
-      this.assetRepo.findOne({ where: { id: toAssetId } }),
+      this.assetRepo.findOne({ where: { symbol: from } }),
+      this.assetRepo.findOne({ where: { symbol: to } }),
     ]);
     
-    if (!fromAsset) throw new NotFoundException(`Unsupported asset ID: ${fromAssetId}`);
-    if (!toAsset) throw new NotFoundException(`Unsupported asset ID: ${toAssetId}`);
+    if (!fromAsset) throw new NotFoundException(`Unsupported asset symbol: ${from}`);
+    if (!toAsset) throw new NotFoundException(`Unsupported asset symbol: ${to}`);
 
     // Calculate receive amount using CurrencyService logic
-    const receiveAmount = await this.currencyService.convert(amount, fromAssetId, toAssetId);
+    // This uses the real DB prices, not a simulation
+    const receiveAmount = await this.currencyService.convert(amount, fromAsset.id, toAsset.id);
 
     // Transaction to ensure atomic updates
     return this.dataSource.transaction(async (manager) => {
       const balanceRepo = manager.getRepository(UserBalance);
 
       // Load balances
-      let fromBalance = await balanceRepo.findOne({ where: { userId, assetId: fromAssetId } });
-      let toBalance = await balanceRepo.findOne({ where: { userId, assetId: toAssetId } });
+      let fromBalance = await balanceRepo.findOne({ where: { userId, assetId: fromAsset.id } });
+      let toBalance = await balanceRepo.findOne({ where: { userId, assetId: toAsset.id } });
 
       if (!fromBalance || Number(fromBalance.balance) < amount) {
         throw new BadRequestException('Insufficient funds');
@@ -68,7 +77,7 @@ export class SwapService {
       } else {
         toBalance = balanceRepo.create({ 
             userId, 
-            assetId: toAssetId, 
+            assetId: toAsset.id, 
             balance: receiveAmount,
             totalInvested: 0,
             cumulativePnL: 0,
@@ -77,10 +86,12 @@ export class SwapService {
         await balanceRepo.save(toBalance);
       }
 
+      this.logger.log(`Swap executed: User ${userId} swapped ${amount} ${from} for ${receiveAmount} ${to}`);
+
       return {
         userId,
-        fromAssetId,
-        toAssetId,
+        fromAssetId: fromAsset.id,
+        toAssetId: toAsset.id,
         sentAmount: amount,
         receivedAmount: receiveAmount,
       };

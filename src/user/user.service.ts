@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { UserBalance } from '../balance/user-balance.entity';
+import { UserBalance } from '../balance/entities/user-balance.entity';
 import { PortfolioStatsDto } from './dto/portfolio-stats.dto';
 
 @Injectable()
@@ -14,6 +14,7 @@ export class UserService {
     async getPortfolioStats(userId: number): Promise<PortfolioStatsDto> {
         const userBalances = await this.userBalanceRepository.find({
             where: { userId },
+            relations: ['asset'], // Eager load virtual asset
         });
 
         if (!userBalances || userBalances.length === 0) {
@@ -65,6 +66,7 @@ export class UserService {
     ): Promise<void> {
         let userBalance = await this.userBalanceRepository.findOne({
             where: { userId, assetId },
+            relations: ['asset'], // Eager load virtual asset
         });
 
         if (!userBalance) {
@@ -90,6 +92,7 @@ export class UserService {
     async getUserBalance(userId: number, assetId: number): Promise<UserBalance | null> {
         return this.userBalanceRepository.findOne({
             where: { userId, assetId },
+            relations: ['asset'], // Eager load virtual asset
         });
     }
 
@@ -100,6 +103,7 @@ export class UserService {
     ): Promise<void> {
         let userBalance = await this.userBalanceRepository.findOne({
             where: { userId, assetId },
+            relations: ['asset'], // Eager load virtual asset
         });
 
         if (!userBalance) {
@@ -110,6 +114,8 @@ export class UserService {
                 totalTrades: 0,
                 cumulativePnL: 0,
                 totalTradeVolume: 0,
+                totalInvested: 0,
+                averageBuyPrice: 0,
             });
         }
 

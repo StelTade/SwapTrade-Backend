@@ -4,10 +4,12 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
 } from 'typeorm';
 import { UserRole } from '../../common/enums/user-role.enum';
 
 @Entity()
+@Index(['id'])
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
@@ -18,7 +20,7 @@ export class User {
   @Column()
   email: string;
 
-  @Column({ type: 'enum', enum: UserRole })
+  @Column({ type: 'varchar', default: 'USER' })
   role: UserRole;
 
   @Column({ type: 'int', default: 0 })

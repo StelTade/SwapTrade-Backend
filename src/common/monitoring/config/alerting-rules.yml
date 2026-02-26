@@ -1,0 +1,155 @@
+groups:
+  - name: swaptrade-backend.rules
+    rules:
+      # High Error Rate Alert
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status_code=~"5.."}[5m]) / rate(http_requests_total[5m]) * 100 > 5
+        for: 2m
+        labels:
+          severity: critical
+          service: swaptrade-backend
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }}% for the last 5 minutes"
+          runbook_url: "https://docs.swaptrade.com/runbooks/high-error-rate"
+
+      # High Latency Alert
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: swaptrade-backend
+        annotations:
+          summary: "High latency detected"
+          description: "95th percentile latency is {{ $value }}s"
+          runbook_url: "https://docs.swaptrade.com/runbooks/high-latency"
+
+      # Database Connection Issues
+      - alert: DatabaseConnectionFailure
+        expr: up{job="database"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: swaptrade-backend
+        annotations:
+          summary: "Database connection failure"
+          description: "Database is not responding"
+          runbook_url: "https://docs.swaptrade.com/runbooks/database-failure"
+
+      # High Memory Usage
+      - alert: HighMemoryUsage
+        expr: system_memory_usage > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: swaptrade-backend
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value }}%"
+          runbook_url: "https://docs.swaptrade.com/runbooks/high-memory"
+
+      # High CPU Usage
+      - alert: HighCpuUsage
+        expr: system_cpu_usage > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: swaptrade-backend
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is {{ $value }}%"
+          runbook_url: "https://docs.swaptrade.com/runbooks/high-cpu"
+
+      # Queue Backlog Alert
+      - alert: QueueBacklog
+        expr: queue_size > 1000
+        for: 2m
+        labels:
+          severity: warning
+          service: swaptrade-backend
+        annotations:
+          summary: "Queue backlog detected"
+          description: "Queue {{ $labels.queue_name }} has {{ $value }} items"
+          runbook_url: "https://docs.swaptrade.com/runbooks/queue-backlog"
+
+      # Low Trading Volume Alert
+      - alert: LowTradingVolume
+        expr: rate(trading_volume_total[10m]) < 100
+        for: 10m
+        labels:
+          severity: info
+          service: swaptrade-backend
+        annotations:
+          summary: "Low trading volume"
+          description: "Trading volume is {{ $value }} XLM in the last 10 minutes"
+          runbook_url: "https://docs.swaptrade.com/runbooks/low-volume"
+
+      # Service Unavailable
+      - alert: ServiceUnavailable
+        expr: up{job="swaptrade-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: swaptrade-backend
+        annotations:
+          summary: "Service is unavailable"
+          description: "SwapTrade backend service is not responding"
+          runbook_url: "https://docs.swaptrade.com/runbooks/service-unavailable"
+
+      # SLO Violations
+      - alert: SLOViolationLatency
+        expr: slo_api_latency_passed == 0
+        for: 1m
+        labels:
+          severity: warning
+          service: swaptrade-backend
+        annotations:
+          summary: "SLO violation: API Latency"
+          description: "API latency SLO is not being met"
+          runbook_url: "https://docs.swaptrade.com/runbooks/slo-violation"
+
+      - alert: SLOViolationErrorRate
+        expr: slo_error_rate_passed == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: swaptrade-backend
+        annotations:
+          summary: "SLO violation: Error Rate"
+          description: "Error rate SLO is not being met"
+          runbook_url: "https://docs.swaptrade.com/runbooks/slo-violation"
+
+      - alert: SLOViolationAvailability
+        expr: slo_availability_passed == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: swaptrade-backend
+        annotations:
+          summary: "SLO violation: Availability"
+          description: "Availability SLO is not being met"
+          runbook_url: "https://docs.swaptrade.com/runbooks/slo-violation"
+
+      # Business Metrics Alerts
+      - alert: ZeroActiveUsers
+        expr: active_users_total == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: swaptrade-backend
+        annotations:
+          summary: "No active users"
+          description: "No active users detected for 5 minutes"
+          runbook_url: "https://docs.swaptrade.com/runbooks/no-users"
+
+      - alert: FeeProgressionStuck
+        expr: rate(fee_discounts_applied_total[1h]) == 0
+        for: 2h
+        labels:
+          severity: info
+          service: swaptrade-backend
+        annotations:
+          summary: "Fee progression system inactive"
+          description: "No fee discounts applied in the last 2 hours"
+          runbook_url: "https://docs.swaptrade.com/runbooks/fee-progression"

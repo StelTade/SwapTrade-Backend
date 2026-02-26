@@ -10,12 +10,16 @@ import { NotificationModule } from './notification/notification.module';
 import { BiddingModule } from './bidding/bidding.module';
 import { CommonModule } from './common/common.module';
 import { DatabaseModule } from './database/database.module';
+import { MarketDataModule } from './market-data/market-data.module';
+import { ExportModule } from './export/export.module';
 
 import { BalanceModule } from './balance/balance.module';
 import { SwapModule } from './swap/swap.module';
 
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TutorialModule } from './tutorial/tutorial.module';
+import { GqlAppModule } from './graphql/graphql.module';
+import { AuditLogModule } from './audit-log/audit-log.module';
 
 @Module({
   imports: [
@@ -37,6 +41,10 @@ import { TutorialModule } from './tutorial/tutorial.module';
     BalanceModule,
     SwapModule,
     TutorialModule,
+    GqlAppModule,
+    MarketDataModule,
+    ExportModule,
+    AuditLogModule,
   ],
   controllers: [AppController],
   providers: [AppService],

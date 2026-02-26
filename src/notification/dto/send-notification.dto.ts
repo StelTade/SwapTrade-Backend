@@ -1,5 +1,5 @@
-import { IsNumber, IsString, IsEnum } from 'class-validator';
-import { NotificationStatus } from '../../common/enums/notification-status.enum';
+import { IsNumber, IsString, IsEnum, IsOptional, IsArray } from 'class-validator';
+import { NotificationChannel } from '../entities/notification.entity';
 
 export class SendNotificationDto {
   @IsNumber()
@@ -11,6 +11,16 @@ export class SendNotificationDto {
   @IsString()
   message: string;
 
-  @IsEnum(NotificationStatus)
-  status: NotificationStatus;
+  @IsOptional()
+  @IsString()
+  subject?: string;
+
+  @IsOptional()
+  @IsString()
+  templateKey?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsEnum(NotificationChannel, { each: true })
+  channels?: NotificationChannel[];
 }

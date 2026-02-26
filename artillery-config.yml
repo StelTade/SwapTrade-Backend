@@ -1,0 +1,27 @@
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: Warm up
+    - duration: 120
+      arrivalRate: 5
+      rampTo: 50
+      name: Ramp up load
+    - duration: 600
+      arrivalRate: 50
+      name: Sustained load
+  defaults:
+    headers:
+      Content-Type: "application/json"
+      # Authorization: "Bearer <TOKEN>" # Token would be needed in real scenario
+
+scenarios:
+  - name: "Get Portfolio Summary"
+    flow:
+      - get:
+          url: "/api/portfolio/summary"
+  - name: "Get Market Prices"
+    flow:
+      - get:
+          url: "/api/trading/prices"
