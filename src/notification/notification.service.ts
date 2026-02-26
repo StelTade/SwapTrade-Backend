@@ -22,6 +22,10 @@ import * as Handlebars from 'handlebars';
 import { SendNotificationDto } from './dto/send-notification.dto';
 import { NotificationStatus } from '../common/enums/notification-status.enum';
 import { AuditNotifierService } from 'src/audit-log/audit-notifier.service';
+import {
+  UserNotificationPreferences,
+  NotificationFrequency,
+} from './entities/user-notification-preferences.entity';
 
 interface DeliveryContext {
   [key: string]: unknown;
@@ -42,6 +46,8 @@ export class NotificationService {
     private readonly templateRepo: Repository<NotificationTemplate>,
     @InjectRepository(NotificationJob)
     private readonly jobRepo: Repository<NotificationJob>,
+    @InjectRepository(UserNotificationPreferences)
+    private readonly userPrefsRepo: Repository<UserNotificationPreferences>,
   ) {
     this.mailer = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
@@ -293,9 +299,66 @@ export class NotificationService {
     });
   }
 
-  private async deliverInApp(notification: Notification) {}
+  private async deliverInApp(notification: Notification): Promise<void> {
+    // In-app delivery: the notification record is already persisted in the DB
+    // with status=SENT. Clients poll GET /notification/:userId or receive real-time
+    // updates via WebSocket ('user.notification.received').
+    // No additional transport is required — the record IS the delivery.
+    this.logger.log(
+      `In-app notification delivered: id=${notification.id} userId=${notification.userId}`,
+    );
+  }
 
-  private async deliverPush(notification: Notification) {}
+  private async deliverPush(notification: Notification): Promise<void> {
+    // Push delivery via FCM. Requires PUSH_PROVIDER=fcm and FIREBASE_SERVER_KEY env vars.
+    // The device token must be passed in notification.metadata.deviceToken.
+    const deviceToken = notification.metadata?.deviceToken as string | undefined;
+    const provider = process.env.PUSH_PROVIDER ?? 'none';
+
+    if (!deviceToken) {
+      this.logger.warn(
+        `Push skipped — no deviceToken in metadata: notificationId=${notification.id}`,
+      );
+      return;
+    }
+
+    if (provider !== 'fcm') {
+      this.logger.warn(
+        `Push skipped — PUSH_PROVIDER="${provider}" not configured. Set PUSH_PROVIDER=fcm and FIREBASE_SERVER_KEY to enable.`,
+      );
+      return;
+    }
+
+    const firebaseKey = process.env.FIREBASE_SERVER_KEY;
+    if (!firebaseKey) {
+      throw new BadRequestException('FIREBASE_SERVER_KEY env variable is not set');
+    }
+
+    const { subject, body } = await this.resolveTemplate(notification);
+
+    const payload = {
+      to: deviceToken,
+      notification: { title: subject || notification.type, body },
+      data: { notificationId: String(notification.id), type: notification.type },
+    };
+
+    const response = await fetch('https://fcm.googleapis.com/fcm/send', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `key=${firebaseKey}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`FCM push failed: ${response.status} ${response.statusText}`);
+    }
+
+    this.logger.log(
+      `Push notification sent via FCM: id=${notification.id} userId=${notification.userId}`,
+    );
+  }
 
   async getPreferences(userId: number) {
     return this.preferenceRepo.find({ where: { userId } });
@@ -355,5 +418,98 @@ export class NotificationService {
   ) {
     const base = `${userId}:${type}:${channel}:${Date.now()}`;
     return Buffer.from(base).toString('base64url');
+  }
+
+  async sendAlert(dto: {
+    userId: number;
+    message: string;
+    subject?: string;
+    channels: NotificationChannel[];
+    type: string;
+    metadata?: Record<string, unknown>;
+  }): Promise<Notification> {
+    return this.send(
+      {
+        userId: dto.userId,
+        type: dto.type,
+        message: dto.message,
+        subject: dto.subject,
+        channels: dto.channels,
+      },
+      dto.metadata ?? {},
+    );
+  }
+
+  async sendEvent(
+    userId: number,
+    eventType: string,
+    message: string,
+  ): Promise<Notification> {
+    return this.send({
+      userId,
+      type: eventType,
+      message,
+      channels: [NotificationChannel.InApp],
+    });
+  }
+
+  async getNotifications(
+    userId: number,
+    opts: { limit?: number; offset?: number; status?: NotificationStatus } = {},
+  ): Promise<Notification[]> {
+    const { limit = 20, offset = 0, status } = opts;
+    const where: Record<string, unknown> = { userId };
+    if (status) where.status = status;
+
+    return this.notificationRepo.find({
+      where: where as any,
+      order: { createdAt: 'DESC' },
+      take: limit,
+      skip: offset,
+    });
+  }
+
+  async markAsRead(notificationId: number, userId: number): Promise<Notification> {
+    const notification = await this.notificationRepo.findOne({
+      where: { id: notificationId, userId },
+    });
+    if (!notification) {
+      throw new NotFoundException('Notification not found');
+    }
+    notification.status = NotificationStatus.READ;
+    notification.readAt = new Date();
+    return this.notificationRepo.save(notification);
+  }
+
+  async getUserNotificationPreferences(userId: string): Promise<UserNotificationPreferences> {
+    let prefs = await this.userPrefsRepo.findOne({ where: { userId } });
+    if (!prefs) {
+      prefs = this.userPrefsRepo.create({
+        userId,
+        frequency: NotificationFrequency.INSTANT,
+        channels: [NotificationChannel.InApp, NotificationChannel.Email],
+        tradeNotifications: true,
+        balanceNotifications: true,
+        milestoneNotifications: true,
+      });
+      prefs = await this.userPrefsRepo.save(prefs);
+    }
+    return prefs;
+  }
+
+  async updateUserNotificationPreferences(
+    userId: string,
+    updates: Partial<Pick<
+      UserNotificationPreferences,
+      'frequency' | 'channels' | 'tradeNotifications' | 'balanceNotifications' | 'milestoneNotifications'
+    >>,
+  ): Promise<UserNotificationPreferences> {
+    let prefs = await this.userPrefsRepo.findOne({ where: { userId } });
+    if (!prefs) {
+      prefs = this.userPrefsRepo.create({ userId, ...updates });
+    } else {
+      Object.assign(prefs, updates);
+    }
+    return this.userPrefsRepo.save(prefs);
   }
 }

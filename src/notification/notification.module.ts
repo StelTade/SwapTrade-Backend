@@ -6,6 +6,7 @@ import { Notification } from './entities/notification.entity';
 import { NotificationPreference } from './entities/notification-preference.entity';
 import { NotificationTemplate } from './entities/notification-template.entity';
 import { NotificationJob } from './entities/notification-job.entity';
+import { UserNotificationPreferences } from './entities/user-notification-preferences.entity';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { NotificationJob } from './entities/notification-job.entity';
       NotificationPreference,
       NotificationTemplate,
       NotificationJob,
+      UserNotificationPreferences,
     ]),
   ],
   controllers: [NotificationController],

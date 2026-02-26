@@ -4,4 +4,5 @@ export enum QueueName {
   REPORTS = 'reports',
   CLEANUP = 'cleanup',
   SWAPS = 'swaps',
+  ALERTS = 'alerts',
 }

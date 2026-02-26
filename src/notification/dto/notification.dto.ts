@@ -1,7 +1,9 @@
 import { IsEnum, IsOptional, IsBoolean, IsArray, IsInt, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { NotificationType } from '../entities/notification-event.entity';
-import { NotificationChannel, NotificationFrequency } from '../entities/user-notification-preferences.entity';
+import { NotificationChannel } from '../entities/notification.entity';
+import { NotificationFrequency } from '../entities/user-notification-preferences.entity';
 
 export class GetNotificationsDto {
   @IsOptional()
@@ -28,23 +30,28 @@ export class GetNotificationsDto {
 }
 
 export class UpdatePreferencesDto {
+  @ApiPropertyOptional({ enum: NotificationFrequency })
   @IsOptional()
   @IsEnum(NotificationFrequency)
   frequency?: NotificationFrequency;
 
+  @ApiPropertyOptional({ enum: NotificationChannel, isArray: true })
   @IsOptional()
   @IsArray()
   @IsEnum(NotificationChannel, { each: true })
   channels?: NotificationChannel[];
 
+  @ApiPropertyOptional()
   @IsOptional()
   @IsBoolean()
   tradeNotifications?: boolean;
 
+  @ApiPropertyOptional()
   @IsOptional()
   @IsBoolean()
   balanceNotifications?: boolean;
 
+  @ApiPropertyOptional()
   @IsOptional()
   @IsBoolean()
   milestoneNotifications?: boolean;
