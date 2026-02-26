@@ -7,29 +7,29 @@ import {
   IsArray,
   Min,
   Max,
-  IsEnum,
-  IsUUID,
+  IsNotEmpty,
   ArrayMinSize,
   ArrayMaxSize,
-  ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateSwapDto {
-  @ApiProperty({ example: 'user-uuid-123' })
-  @IsString()
-  userId: string;
+  @ApiProperty({ description: 'The ID of the user performing the swap' })
+  @IsNumber()
+  @IsNotEmpty()
+  userId: number;
 
-  @ApiProperty({ example: 'USDT' })
+  @ApiProperty({ example: 'USDT', description: 'Symbol of the asset to swap from' })
   @IsString()
+  @IsNotEmpty()
   from: string;
 
-  @ApiProperty({ example: 'BTC' })
+  @ApiProperty({ example: 'BTC', description: 'Symbol of the asset to swap to' })
   @IsString()
+  @IsNotEmpty()
   to: string;
 
-  @ApiProperty({ example: 100 })
+  @ApiProperty({ example: 100, description: 'Amount to swap' })
   @IsNumber()
   @IsPositive()
   amount: number;

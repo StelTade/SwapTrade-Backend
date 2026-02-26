@@ -3,7 +3,6 @@ import { VirtualAsset } from '../trading/entities/virtual-asset.entity';
 import { UserBalance } from '../balance/entities/user-balance.entity';
 import { User } from '../user/entities/user.entity';
 import { Trade } from '../trading/entities/trade.entity';
-import { Balance } from '../balance/balance.entity';
 import { Portfolio } from '../portfolio/entities/portfolio.entity';
 import { Reward } from '../rewards/entities/reward.entity';
 import { Notification } from '../notification/entities/notification.entity';
@@ -17,7 +16,6 @@ export const AppDataSource = new DataSource({
     UserBalance,
     User,
     Trade,
-    Balance,
     Portfolio,
     Reward,
     Notification,

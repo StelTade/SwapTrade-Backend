@@ -198,9 +198,10 @@ export class CacheService {
    * Invalidate all balance-related caches for a user.
    * Also triggers dependency-graph cascades (e.g. portfolio).
    */
-  async invalidateBalanceRelatedCaches(userId: string): Promise<void> {
+  async invalidateBalanceRelatedCaches(userId: number | string): Promise<void> {
+    const uid = userId.toString();
     await this.invalidateKeys(
-      [`user_balances:${userId}`, `portfolio:${userId}`],
+      [`user_balances:${uid}`, `portfolio:${uid}`],
       'Balance',
     );
   }
@@ -208,11 +209,12 @@ export class CacheService {
   /**
    * Invalidate all trade-related caches after a trade is executed.
    */
-  async invalidateTradeRelatedCaches(userId: string, asset: string): Promise<void> {
+  async invalidateTradeRelatedCaches(userId: number | string, asset: string): Promise<void> {
+    const uid = userId.toString();
     await this.invalidateKeys(
       [
-        `user_balances:${userId}`,
-        `portfolio:${userId}`,
+        `user_balances:${uid}`,
+        `portfolio:${uid}`,
         `market_price:${asset}`,
       ],
       'Trade',
@@ -222,9 +224,10 @@ export class CacheService {
   /**
    * Invalidate all bid-related caches after a bid is created.
    */
-  async invalidateBidRelatedCaches(userId: string, asset: string): Promise<void> {
+  async invalidateBidRelatedCaches(userId: number | string, asset: string): Promise<void> {
+    const uid = userId.toString();
     await this.invalidateKeys(
-      [`user_balances:${userId}`, `portfolio:${userId}`],
+      [`user_balances:${uid}`, `portfolio:${uid}`],
       'Bid',
     );
   }
