@@ -43,6 +43,24 @@ export class UserBalance {
   @Column('decimal', { precision: 18, scale: 8, default: 0 })
   reserved: number;
 
+  @Column('decimal', { precision: 18, scale: 8, default: 0 })
+  totalInvested: number;
+
+  @Column('decimal', { precision: 18, scale: 8, default: 0 })
+  cumulativePnL: number;
+
+  @Column('decimal', { precision: 18, scale: 8, default: 0 })
+  averageBuyPrice: number;
+
+  @Column('int', { default: 0 })
+  totalTrades: number;
+
+  @Column('decimal', { precision: 18, scale: 8, default: 0 })
+  totalTradeVolume: number;
+
+  @Column({ type: 'datetime', nullable: true })
+  lastTradeDate: Date;
+
   @CreateDateColumn()
   createdAt: Date;
 
