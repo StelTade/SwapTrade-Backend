@@ -15,6 +15,7 @@ import { ExportModule } from './export/export.module';
 
 import { BalanceModule } from './balance/balance.module';
 import { SwapModule } from './swap/swap.module';
+import { ReferralModule } from './referral/referral.module';
 
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TutorialModule } from './tutorial/tutorial.module';
@@ -41,6 +42,7 @@ import { AlertModule } from './alerts/alert.module';
     DatabaseModule,
     BalanceModule,
     SwapModule,
+    ReferralModule,
     TutorialModule,
     GqlAppModule,
     MarketDataModule,
