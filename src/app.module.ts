@@ -47,6 +47,7 @@ import { AlertModule } from './alerts/alert.module';
     ExportModule,
     AuditLogModule,
     AlertModule,
+    ReferralModule,
   ],
   controllers: [AppController],
   providers: [AppService],
