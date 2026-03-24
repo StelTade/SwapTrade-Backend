@@ -27,6 +27,7 @@ async function bootstrap() {
     .addTag('notification', 'Notification endpoints')
     .addTag('bidding', 'Bidding endpoints')
     .addTag('balance', 'Balance management endpoints')
+    .addTag('waitlist', 'Waitlist registration and email verification endpoints')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
