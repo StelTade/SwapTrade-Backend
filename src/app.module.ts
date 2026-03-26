@@ -21,6 +21,7 @@ import { TutorialModule } from './tutorial/tutorial.module';
 import { GqlAppModule } from './graphql/graphql.module';
 import { AuditLogModule } from './audit-log/audit-log.module';
 import { AlertModule } from './alerts/alert.module';
+import { ScheduledSyncModule } from './scheduled-sync/scheduled-sync.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { AlertModule } from './alerts/alert.module';
     ExportModule,
     AuditLogModule,
     AlertModule,
+    ScheduledSyncModule,
   ],
   controllers: [AppController],
   providers: [AppService],
