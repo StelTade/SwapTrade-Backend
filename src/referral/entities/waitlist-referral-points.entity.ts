@@ -21,8 +21,8 @@ export class WaitlistReferralPoints {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'int' })
-  userId: number;
+  @Column({ type: 'uuid' })
+  userId: string;
 
   @ManyToOne(() => WaitlistUser)
   @JoinColumn({ name: 'userId' })

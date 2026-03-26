@@ -16,8 +16,8 @@ export class VerificationToken {
   @Column({ type: 'varchar', length: 64, unique: true })
   token: string;
 
-  @Column({ type: 'int' })
-  waitlistUserId: number;
+  @Column({ type: 'uuid' })
+  waitlistUserId: string;
 
   @ManyToOne(() => WaitlistUser)
   @JoinColumn({ name: 'waitlistUserId' })

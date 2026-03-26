@@ -20,8 +20,8 @@ describe('ReferralService', () => {
 
   const mockReferral: WaitlistReferral = {
     id: 1,
-    referrerId: 1,
-    refereeId: 2,
+    referrerId: '550e8400-e29b-41d4-a716-446655440001',
+    refereeId: '550e8400-e29b-41d4-a716-446655440002',
     referralCode: 'ABC123XY',
     status: ReferralStatus.PENDING,
     refereeIP: null,
@@ -35,7 +35,7 @@ describe('ReferralService', () => {
 
   const mockPoints: WaitlistReferralPoints = {
     id: 1,
-    userId: 1,
+    userId: '550e8400-e29b-41d4-a716-446655440001',
     points: 1,
     reason: PointsReason.REFERRAL_SIGNUP,
     referralId: 1,
@@ -90,21 +90,17 @@ describe('ReferralService', () => {
       referralRepository.findOne.mockResolvedValue(null);
 
       const result = await service.createReferral({
-        referrerId: 1,
-        refereeId: 2,
-        referralCode: 'ABC123XY',
+        referrerId: '550e8400-e29b-41d4-a716-446655440001',
       });
 
-      expect(result.referrerId).toBe(1);
-      expect(result.refereeId).toBe(2);
+      expect(result.referrerId).toBe('550e8400-e29b-41d4-a716-446655440001');
       expect(result.status).toBe(ReferralStatus.PENDING);
     });
 
     it('should throw BadRequestException for self-referral', async () => {
       await expect(
         service.createReferral({
-          referrerId: 1,
-          refereeId: 1,
+          referrerId: '550e8400-e29b-41d4-a716-446655440001',
         }),
       ).rejects.toThrow(BadRequestException);
     });
@@ -114,8 +110,7 @@ describe('ReferralService', () => {
 
       await expect(
         service.createReferral({
-          referrerId: 1,
-          refereeId: 2,
+          referrerId: '550e8400-e29b-41d4-a716-446655440001',
         }),
       ).rejects.toThrow(BadRequestException);
     });
@@ -161,8 +156,7 @@ describe('ReferralService', () => {
       await expect(
         service.processReferralCallback({
           referralCode: 'INVALID',
-          refereeId: 2,
-          referrerId: 1,
+          refereeId: '550e8400-e29b-41d4-a716-446655440002',
         }),
       ).rejects.toThrow(BadRequestException);
     });
@@ -173,6 +167,10 @@ describe('ReferralService', () => {
         status: ReferralStatus.PENDING,
       };
       referralRepository.findOne.mockResolvedValue(existingReferral);
+      waitlistService.getUserByReferralCode.mockResolvedValue({
+        id: '550e8400-e29b-41d4-a716-446655440001',
+        referralCode: 'ABC123XY',
+      } as any);
       referralRepository.save.mockResolvedValue({
         ...existingReferral,
         status: ReferralStatus.VERIFIED,
@@ -180,9 +178,8 @@ describe('ReferralService', () => {
       });
 
       const result = await service.processReferralCallback({
-        referrerId: 1,
-        refereeId: 2,
         referralCode: 'ABC123XY',
+        refereeId: '550e8400-e29b-41d4-a716-446655440002',
       });
 
       expect(result.referral.status).toBe(ReferralStatus.VERIFIED);
@@ -194,9 +191,9 @@ describe('ReferralService', () => {
       referralRepository.find.mockResolvedValue([mockReferral]);
       pointsRepository.find.mockResolvedValue([mockPoints]);
 
-      const result = await service.getUserReferralStats(1);
+      const result = await service.getUserReferralStats('550e8400-e29b-41d4-a716-446655440001');
 
-      expect(result.userId).toBe(1);
+      expect(result.userId).toBe('550e8400-e29b-41d4-a716-446655440001');
       expect(result.totalReferrals).toBe(1);
       expect(result.totalPoints).toBe(1);
       expect(result.pointsHistory).toHaveLength(1);
@@ -206,7 +203,7 @@ describe('ReferralService', () => {
       referralRepository.find.mockResolvedValue([]);
       pointsRepository.find.mockResolvedValue([]);
 
-      const result = await service.getUserReferralStats(999);
+      const result = await service.getUserReferralStats('non-existent-uuid');
 
       expect(result.totalReferrals).toBe(0);
       expect(result.totalPoints).toBe(0);
@@ -217,11 +214,11 @@ describe('ReferralService', () => {
     it('should return list of user referrals', async () => {
       referralRepository.find.mockResolvedValue([mockReferral]);
 
-      const result = await service.getUserReferrals(1);
+      const result = await service.getUserReferrals('550e8400-e29b-41d4-a716-446655440001');
 
       expect(result).toHaveLength(1);
       expect(referralRepository.find).toHaveBeenCalledWith({
-        where: { referrerId: 1 },
+        where: { referrerId: '550e8400-e29b-41d4-a716-446655440001' },
         order: { createdAt: 'DESC' },
       });
     });

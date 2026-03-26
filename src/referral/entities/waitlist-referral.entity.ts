@@ -25,15 +25,15 @@ export class WaitlistReferral {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'int' })
-  referrerId: number;
+  @Column({ type: 'uuid' })
+  referrerId: string;
 
   @ManyToOne(() => WaitlistUser)
   @JoinColumn({ name: 'referrerId' })
   referrer: WaitlistUser;
 
-  @Column({ type: 'int' })
-  refereeId: number;
+  @Column({ type: 'uuid' })
+  refereeId: string;
 
   @ManyToOne(() => WaitlistUser)
   @JoinColumn({ name: 'refereeId' })

@@ -56,7 +56,7 @@ export class ReferralService {
 
     const referral = this.referralRepository.create({
       referrerId: dto.referrerId,
-      refereeId: dto.refereeId,
+      refereeId: dto.refereeId || '',
       referralCode: dto.referralCode || '',
       status: ReferralStatus.PENDING,
     });
@@ -70,13 +70,20 @@ export class ReferralService {
     referral: WaitlistReferral;
     points: WaitlistReferralPoints | null;
   }> {
-    if (dto.referrerId === dto.refereeId) {
+    const referrer = await this.waitlistService.getUserByReferralCode(
+      dto.referralCode,
+    );
+    if (!referrer) {
+      throw new BadRequestException('Invalid referral code');
+    }
+
+    if (referrer.id === dto.refereeId) {
       throw new BadRequestException('Cannot refer yourself');
     }
 
     const existingReferral = await this.referralRepository.findOne({
       where: {
-        referrerId: dto.referrerId,
+        referrerId: referrer.id,
         refereeId: dto.refereeId,
       },
     });
@@ -92,20 +99,13 @@ export class ReferralService {
       const updatedReferral =
         await this.referralRepository.save(existingReferral);
 
-      await this.awardPoints(dto.referrerId, existingReferral.id);
+      await this.awardPoints(referrer.id, existingReferral.id);
 
       this.logger.log(
-        `Referral verified: ${dto.referrerId} -> ${dto.refereeId}`,
+        `Referral verified: ${referrer.id} -> ${dto.refereeId}`,
       );
 
       return { referral: updatedReferral, points: null };
-    }
-
-    const referrer = await this.waitlistService.getUserByReferralCode(
-      dto.referralCode,
-    );
-    if (!referrer) {
-      throw new BadRequestException('Invalid referral code');
     }
 
     const referral = this.referralRepository.create({
@@ -129,7 +129,7 @@ export class ReferralService {
   }
 
   private async awardPoints(
-    userId: number,
+    userId: string,
     referralId: number,
   ): Promise<WaitlistReferralPoints> {
     const points = this.pointsRepository.create({
@@ -155,8 +155,8 @@ export class ReferralService {
     return savedPoints;
   }
 
-  async getUserReferralStats(userId: number): Promise<{
-    userId: number;
+  async getUserReferralStats(userId: string): Promise<{
+    userId: string;
     totalReferrals: number;
     verifiedReferrals: number;
     totalPoints: number;
@@ -189,7 +189,7 @@ export class ReferralService {
     };
   }
 
-  async getUserReferrals(userId: number): Promise<WaitlistReferral[]> {
+  async getUserReferrals(userId: string): Promise<WaitlistReferral[]> {
     return this.referralRepository.find({
       where: { referrerId: userId },
       order: { createdAt: 'DESC' },
