@@ -91,6 +91,8 @@ describe('ReferralService', () => {
 
       const result = await service.createReferral({
         referrerId: '550e8400-e29b-41d4-a716-446655440001',
+        refereeId: '550e8400-e29b-41d4-a716-446655440002',
+        referralCode: 'ABC123XY',
       });
 
       expect(result.referrerId).toBe('550e8400-e29b-41d4-a716-446655440001');
@@ -101,6 +103,7 @@ describe('ReferralService', () => {
       await expect(
         service.createReferral({
           referrerId: '550e8400-e29b-41d4-a716-446655440001',
+          refereeId: '550e8400-e29b-41d4-a716-446655440001',
         }),
       ).rejects.toThrow(BadRequestException);
     });
@@ -111,6 +114,7 @@ describe('ReferralService', () => {
       await expect(
         service.createReferral({
           referrerId: '550e8400-e29b-41d4-a716-446655440001',
+          refereeId: '550e8400-e29b-41d4-a716-446655440002',
         }),
       ).rejects.toThrow(BadRequestException);
     });

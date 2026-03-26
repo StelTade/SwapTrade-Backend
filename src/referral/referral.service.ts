@@ -39,19 +39,23 @@ export class ReferralService {
   }
 
   async createReferral(dto: CreateReferralDto): Promise<WaitlistReferral> {
-    if (dto.referrerId === dto.refereeId) {
+    // Self-referral check
+    if (dto.refereeId && dto.referrerId === dto.refereeId) {
       throw new BadRequestException('Cannot refer yourself');
     }
 
-    const existingReferral = await this.referralRepository.findOne({
-      where: {
-        referrerId: dto.referrerId,
-        refereeId: dto.refereeId,
-      },
-    });
+    // Duplicate referral check
+    if (dto.refereeId) {
+      const existingReferral = await this.referralRepository.findOne({
+        where: {
+          referrerId: dto.referrerId,
+          refereeId: dto.refereeId,
+        },
+      });
 
-    if (existingReferral) {
-      throw new BadRequestException('Referral already exists');
+      if (existingReferral) {
+        throw new BadRequestException('Referral already exists');
+      }
     }
 
     const referral = this.referralRepository.create({

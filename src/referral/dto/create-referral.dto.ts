@@ -11,6 +11,11 @@ export class CreateReferralDto {
   @IsUUID()
   referrerId: string;
 
+  @ApiPropertyOptional({ example: '550e8400-e29b-41d4-a716-446655440001', description: 'Referee user ID' })
+  @IsOptional()
+  @IsUUID()
+  refereeId?: string;
+
   @ApiPropertyOptional({
     example: 'ABC123XY',
     description: 'Referral code used',
