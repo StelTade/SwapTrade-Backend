@@ -35,7 +35,7 @@ describe('WaitlistService', () => {
     token: 'valid_token_12345678901234567890123456789012',
     waitlistUserId: 1,
     waitlistUser: mockUser,
-    expiresAt: new Date(Date.now() + 86400000),
+    expiresAt: new Date(Date.now() + 72 * 60 * 60 * 1000), // 72 hours
     used: false,
     createdAt: new Date(),
   };
@@ -138,6 +138,7 @@ describe('WaitlistService', () => {
         ...mockUser,
         id: 'referrer-id',
         referralCode: 'VALID123',
+        status: WaitlistUserStatus.VERIFIED,
       };
       waitlistUserRepository.findOne
         .mockResolvedValueOnce(null)
@@ -149,6 +150,25 @@ describe('WaitlistService', () => {
       });
 
       expect(result.user.referredBy).toBe('VALID123');
+    });
+
+    it('should throw BadRequestException when referrer is not verified', async () => {
+      const unverifiedReferrer = {
+        ...mockUser,
+        id: 'unverified-referrer-id',
+        referralCode: 'PENDING123',
+        status: WaitlistUserStatus.PENDING,
+      };
+      waitlistUserRepository.findOne
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(unverifiedReferrer);
+
+      await expect(
+        service.signup({
+          email: 'test@example.com',
+          referralCode: 'PENDING123',
+        }),
+      ).rejects.toThrow('Referrer email is not verified');
     });
   });
 

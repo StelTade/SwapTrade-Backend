@@ -60,6 +60,11 @@ export class WaitlistService {
       if (!referrer) {
         throw new BadRequestException('Invalid referral code');
       }
+      if (referrer.status !== WaitlistUserStatus.VERIFIED) {
+        throw new BadRequestException(
+          'Referrer email is not verified. Only verified users can refer.',
+        );
+      }
     }
 
     const user = this.waitlistUserRepository.create({
@@ -74,7 +79,7 @@ export class WaitlistService {
 
     const token = this.generateToken();
     const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 24);
+    expiresAt.setHours(expiresAt.getHours() + 72);
 
     const verificationToken = this.verificationTokenRepository.create({
       token,

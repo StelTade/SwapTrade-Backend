@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   HttpCode,
   HttpStatus,
+  ValidationPipe,
 } from '@nestjs/common';
 import { ReferralService } from './referral.service';
 import { CreateReferralDto, ReferralCallbackDto } from './dto';
@@ -27,7 +28,10 @@ export class ReferralController {
   @ApiBody({ type: CreateReferralDto })
   @ApiResponse({ status: 201, description: 'Referral created successfully' })
   @ApiErrorResponses()
-  async createReferral(@Body() dto: CreateReferralDto) {
+  async createReferral(
+    @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }))
+    dto: CreateReferralDto,
+  ) {
     return this.referralService.createReferral(dto);
   }
 
@@ -43,7 +47,10 @@ export class ReferralController {
     description: 'Referral callback processed successfully',
   })
   @ApiErrorResponses()
-  async referralCallback(@Body() dto: ReferralCallbackDto) {
+  async referralCallback(
+    @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }))
+    dto: ReferralCallbackDto,
+  ) {
     return this.referralService.processReferralCallback(dto);
   }
 
