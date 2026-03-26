@@ -22,6 +22,7 @@ import { GqlAppModule } from './graphql/graphql.module';
 import { AuditLogModule } from './audit-log/audit-log.module';
 import { AlertModule } from './alerts/alert.module';
 import { WaitlistModule } from './waitlist/waitlist.module';
+import { ReferralModule } from './referral/referral.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { WaitlistModule } from './waitlist/waitlist.module';
     AuditLogModule,
     AlertModule,
     WaitlistModule,
+    ReferralModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -6,6 +6,7 @@ import {
   WaitlistUserStatus,
 } from './entities/waitlist-user.entity';
 import { VerificationToken } from './entities/verification-token.entity';
+import { ReferralService } from '../referral/referral.service';
 import {
   ConflictException,
   BadRequestException,
@@ -16,6 +17,7 @@ describe('WaitlistService', () => {
   let service: WaitlistService;
   let waitlistUserRepository: any;
   let verificationTokenRepository: any;
+  let referralService: any;
 
   const mockUser: WaitlistUser = {
     id: '550e8400-e29b-41d4-a716-446655440000',
@@ -53,6 +55,12 @@ describe('WaitlistService', () => {
       save: jest.fn((dto) => Promise.resolve({ id: 1, ...dto })),
     };
 
+    referralService = {
+      processReferralCallback: jest
+        .fn()
+        .mockResolvedValue({ referral: {}, points: null }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         WaitlistService,
@@ -63,6 +71,10 @@ describe('WaitlistService', () => {
         {
           provide: getRepositoryToken(VerificationToken),
           useValue: verificationTokenRepository,
+        },
+        {
+          provide: ReferralService,
+          useValue: referralService,
         },
       ],
     }).compile();
@@ -187,7 +199,7 @@ describe('WaitlistService', () => {
       );
     });
 
-    it('should log referral info when user was referred', async () => {
+    it('should trigger referral callback when user was referred', async () => {
       const referredUser = {
         ...mockUser,
         referredBy: 'REFERER123',
@@ -202,9 +214,13 @@ describe('WaitlistService', () => {
         status: WaitlistUserStatus.VERIFIED,
       });
 
-      const result = await service.verify({ token: 'valid_token' });
+      await service.verify({ token: 'valid_token' });
 
-      expect(result.user.status).toBe(WaitlistUserStatus.VERIFIED);
+      expect(referralService.processReferralCallback).toHaveBeenCalledWith({
+        referralCode: 'REFERER123',
+        refereeId: referredUser.id,
+        refereeIP: null,
+      });
     });
   });
 

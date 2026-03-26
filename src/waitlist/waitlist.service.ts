@@ -13,6 +13,7 @@ import {
 } from './entities/waitlist-user.entity';
 import { VerificationToken } from './entities/verification-token.entity';
 import { SignupWaitlistDto, VerifyWaitlistDto } from './dto';
+import { ReferralService } from '../referral/referral.service';
 import { randomBytes } from 'crypto';
 
 @Injectable()
@@ -24,6 +25,7 @@ export class WaitlistService {
     private readonly waitlistUserRepository: Repository<WaitlistUser>,
     @InjectRepository(VerificationToken)
     private readonly verificationTokenRepository: Repository<VerificationToken>,
+    private readonly referralService: ReferralService,
   ) {}
 
   private generateReferralCode(): string {
@@ -122,8 +124,13 @@ export class WaitlistService {
 
     if (user.referredBy) {
       this.logger.log(
-        `User ${user.id} was referred by ${user.referredBy}. Referral will be processed by Issue #198 implementation.`,
+        `Processing referral for user ${user.id}, referred by ${user.referredBy}`,
       );
+      await this.referralService.processReferralCallback({
+        referralCode: user.referredBy,
+        refereeId: user.id,
+        refereeIP: null,
+      });
     }
 
     return {
