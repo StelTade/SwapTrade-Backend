@@ -6,6 +6,7 @@ import {
   Param,
   HttpCode,
   HttpStatus,
+  ValidationPipe,
 } from '@nestjs/common';
 import { WaitlistService } from './waitlist.service';
 import {
@@ -34,7 +35,10 @@ export class WaitlistController {
     description: 'Signup successful, verification email sent',
   })
   @ApiErrorResponses()
-  async signup(@Body() dto: SignupWaitlistDto) {
+  async signup(
+    @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }))
+    dto: SignupWaitlistDto,
+  ) {
     const result = await this.waitlistService.signup(dto);
     return {
       user: result.user,
@@ -51,7 +55,10 @@ export class WaitlistController {
   @ApiBody({ type: VerifyWaitlistDto })
   @ApiResponse({ status: 200, description: 'Email verified successfully' })
   @ApiErrorResponses()
-  async verify(@Body() dto: VerifyWaitlistDto) {
+  async verify(
+    @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }))
+    dto: VerifyWaitlistDto,
+  ) {
     const result = await this.waitlistService.verify(dto);
     return {
       user: result.user,
