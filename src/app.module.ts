@@ -21,6 +21,8 @@ import { TutorialModule } from './tutorial/tutorial.module';
 import { GqlAppModule } from './graphql/graphql.module';
 import { AuditLogModule } from './audit-log/audit-log.module';
 import { AlertModule } from './alerts/alert.module';
+import { WaitlistModule } from './waitlist/waitlist.module';
+import { WaitlistAnalyticsModule } from './waitlist-analytics/waitlist-analytics.module';
 
 @Module({
   imports: [
@@ -47,6 +49,8 @@ import { AlertModule } from './alerts/alert.module';
     ExportModule,
     AuditLogModule,
     AlertModule,
+    WaitlistModule,
+    WaitlistAnalyticsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
