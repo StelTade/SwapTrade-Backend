@@ -22,6 +22,7 @@ import { GqlAppModule } from './graphql/graphql.module';
 import { AuditLogModule } from './audit-log/audit-log.module';
 import { AlertModule } from './alerts/alert.module';
 import { ReferralModule } from './referral/referral.module';
+import { ConfigModule } from './config/config.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { ReferralModule } from './referral/referral.module';
     ExportModule,
     AuditLogModule,
     AlertModule,
+    ConfigModule,
   ],
   controllers: [AppController],
   providers: [AppService],

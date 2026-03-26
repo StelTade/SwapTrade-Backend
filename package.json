@@ -53,6 +53,7 @@
     "graphql": "^16.9.0",
     "graphql-subscriptions": "^2.0.0",
     "helmet": "^7.0.0",
+    "joi": "^18.1.1",
     "nodemailer": "^6.9.16",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
