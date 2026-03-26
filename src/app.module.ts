@@ -22,6 +22,7 @@ import { GqlAppModule } from './graphql/graphql.module';
 import { AuditLogModule } from './audit-log/audit-log.module';
 import { AlertModule } from './alerts/alert.module';
 import { ReferralModule } from './referral/referral.module';
+import { StellarUsdcModule } from './stellar-usdc/stellar-usdc.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { ReferralModule } from './referral/referral.module';
     ExportModule,
     AuditLogModule,
     AlertModule,
+    StellarUsdcModule,
   ],
   controllers: [AppController],
   providers: [AppService],
