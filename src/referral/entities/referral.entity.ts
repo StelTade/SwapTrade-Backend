@@ -4,23 +4,25 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  Index,
   ManyToOne,
   JoinColumn,
+  Index,
+  Unique,
 } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
 
 export enum ReferralStatus {
   PENDING = 'PENDING',
-  COMPLETED = 'COMPLETED',
+  VERIFIED = 'VERIFIED',
   REWARDED = 'REWARDED',
-  CANCELLED = 'CANCELLED',
+  EXPIRED = 'EXPIRED',
 }
 
-@Entity('Referral')
+@Entity('referral')
 @Index(['referrerId'])
-@Index(['referredUserId'])
+@Index(['refereeId'])
 @Index(['status'])
+@Unique(['refereeId'])
 export class Referral {
   @PrimaryGeneratedColumn()
   id: number;
@@ -30,47 +32,54 @@ export class Referral {
   referrerId: number;
 
   @Index()
-  @Column()
-  referredUserId: number;
-
   @Column({ unique: true })
+  refereeId: number;
+
+  @Column({ type: 'varchar', length: 50 })
   referralCode: string;
 
   @Column({
-    type: 'varchar',
+    type: 'enum',
+    enum: ReferralStatus,
     default: ReferralStatus.PENDING,
   })
   status: ReferralStatus;
 
-  @Column('decimal', { precision: 18, scale: 8, default: 0 })
-  pendingReward: number;
+  @Column({ type: 'datetime', nullable: true })
+  verifiedAt: Date;
 
-  @Column('decimal', { precision: 18, scale: 8, default: 0 })
-  earnedReward: number;
-
-  @Column({ nullable: true })
-  referredUserEmail: string;
-
-  @Column({ nullable: true })
-  referredUserUsername: string;
-
-  @Column({ nullable: true })
-  referredAt: Date;
-
-  @Column({ nullable: true })
+  @Column({ type: 'datetime', nullable: true })
   rewardedAt: Date;
-
-  @ManyToOne(() => User)
-  @JoinColumn({ name: 'referrerId' })
-  referrer: User;
-
-  @ManyToOne(() => User)
-  @JoinColumn({ name: 'referredUserId' })
-  referredUser: User;
 
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'referrerId' })
+  referrer: User;
+
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'refereeId' })
+  referee: User;
+}
+
+export class CreateReferralDto {
+  referrerId: number;
+  refereeId: number;
+  referralCode: string;
+}
+
+export class VerifyReferralDto {
+  refereeId: number;
+}
+
+export class RewardDistributionDto {
+  referralId: number;
+  userId: number;
+  rewardType: string;
+  amount: number;
+  recipientType: 'REFERRER' | 'REFEREE';
 }

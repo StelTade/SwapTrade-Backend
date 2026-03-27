@@ -1,152 +1,142 @@
-import { Controller, Get, Post, Body, Param, ParseIntPipe, Query, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger';
-import { ReferralService } from './referral.service';
-import { ReferralQueryDto, ReferralDashboardResponseDto, GenerateReferralCodeResponseDto } from './dto/referral.dto';
-import { ReferralStatus } from './entities/referral.entity';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  ParseIntPipe,
+  UseGuards,
+  Req,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
+import { ReferralService } from './service/referral.service';
+import { ReferralCodeService } from './service/referral-code.service';
+import { CreateReferralDto, VerifyReferralDto } from './dto/referral.dto';
+import {
+  GenerateReferralCodeResponseDto,
+  GetMyCodeResponseDto,
+} from './dto/referral-code.dto';
+import { Referral } from './entities/referral.entity';
+import { RewardDistribution } from './entities/reward-distribution.entity';
+import { RewardConfig } from './entities/reward-config.entity';
 
-@ApiTags('referrals')
-@Controller('referrals')
+@Controller('referral')
 export class ReferralController {
-  constructor(private readonly referralService: ReferralService) {}
+  constructor(
+    private readonly referralService: ReferralService,
+    private readonly referralCodeService: ReferralCodeService,
+  ) {}
 
   /**
-   * Get user referral dashboard data
-   * GET /referrals/dashboard/:userId
+   * Generate a new referral code for the authenticated user
+   * POST /referrals/generate-code
    */
-  @Get('dashboard/:userId')
+  @Post('generate-code')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
-    summary: 'Get user referral dashboard', 
-    description: 'Returns complete referral data including code, stats, and history with pagination' 
-  })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Referral dashboard data retrieved',
-    type: ReferralDashboardResponseDto 
-  })
-  @ApiParam({ name: 'userId', type: Number, description: 'User ID' })
-  @ApiQuery({ name: 'status', required: false, enum: ReferralStatus, description: 'Filter by status' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Results per page (default: 50, max: 100)' })
-  @ApiQuery({ name: 'offset', required: false, type: Number, description: 'Pagination offset (default: 0)' })
-  async getReferralDashboard(
-    @Param('userId', ParseIntPipe) userId: number,
-    @Query() query: ReferralQueryDto,
-  ): Promise<ReferralDashboardResponseDto> {
-    return this.referralService.getReferralDashboard(userId, query);
+  async generateCode(@Req() req): Promise<GenerateReferralCodeResponseDto> {
+    const userId = req.user?.id || req.user?.userId;
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+    return this.referralCodeService.generateCode(userId);
   }
 
   /**
-   * Get referral history with pagination
-   * GET /referrals/history/:userId
+   * Get the current user's referral code
+   * GET /referrals/my-code
    */
-  @Get('history/:userId')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
-    summary: 'Get user referral history', 
-    description: 'Returns paginated referral history entries' 
-  })
-  @ApiResponse({ status: 200, description: 'Referral history retrieved' })
-  @ApiParam({ name: 'userId', type: Number, description: 'User ID' })
-  @ApiQuery({ name: 'status', required: false, enum: ReferralStatus, description: 'Filter by status' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Results per page (default: 50, max: 100)' })
-  @ApiQuery({ name: 'offset', required: false, type: Number, description: 'Pagination offset (default: 0)' })
-  async getReferralHistory(
-    @Param('userId', ParseIntPipe) userId: number,
-    @Query() query: ReferralQueryDto,
-  ) {
-    return this.referralService.getReferralHistory(userId, query);
+  @Get('my-code')
+  async getMyCode(@Req() req): Promise<GetMyCodeResponseDto> {
+    const userId = req.user?.id || req.user?.userId;
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+    return this.referralCodeService.getMyCode(userId);
   }
 
   /**
-   * Generate or get user's referral code and link
-   * GET /referrals/code/:userId
+   * Create a new referral relationship
    */
-  @Get('code/:userId')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
-    summary: 'Get user referral code', 
-    description: 'Returns the user\'s unique referral code and shareable link' 
-  })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Referral code retrieved',
-    type: GenerateReferralCodeResponseDto 
-  })
-  @ApiParam({ name: 'userId', type: Number, description: 'User ID' })
-  async getReferralCode(
-    @Param('userId', ParseIntPipe) userId: number,
-  ): Promise<GenerateReferralCodeResponseDto> {
-    return this.referralService.generateReferralCode(userId);
+  @Post()
+  async createReferral(
+    @Body() dto: CreateReferralDto,
+  ): Promise<{ referral: Referral }> {
+    const referral = await this.referralService.createReferral(dto);
+    return { referral };
   }
 
   /**
-   * Validate a referral code
-   * POST /referrals/validate
+   * Verify a referral (triggered when referee completes KYC/verification)
+   * This automatically distributes rewards
    */
-  @Post('validate')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
-    summary: 'Validate referral code', 
-    description: 'Validates if a referral code is valid and returns the referrer ID' 
-  })
-  @ApiResponse({ status: 200, description: 'Validation result' })
-  async validateReferralCode(
-    @Body() body: { code: string },
-  ) {
-    return this.referralService.validateReferralCode(body.code);
+  @Post('verify')
+  async verifyReferral(
+    @Body() dto: VerifyReferralDto,
+  ): Promise<{
+    referral: Referral;
+    distributions: RewardDistribution[];
+  }> {
+    const result = await this.referralService.verifyReferral(dto);
+    return result;
   }
 
   /**
-   * Get referral statistics for a user
-   * GET /referrals/stats/:userId
+   * Get referral by referee ID
    */
-  @Get('stats/:userId')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
-    summary: 'Get referral statistics', 
-    description: 'Returns detailed referral statistics including counts and reward totals' 
-  })
-  @ApiResponse({ status: 200, description: 'Referral statistics retrieved' })
-  @ApiParam({ name: 'userId', type: Number, description: 'User ID' })
-  async getReferralStats(
-    @Param('userId', ParseIntPipe) userId: number,
-  ) {
-    return this.referralService.getReferralStats(userId);
+  @Get('referee/:refereeId')
+  async getReferralByRefereeId(
+    @Param('refereeId', ParseIntPipe) refereeId: number,
+  ): Promise<{ referral: Referral | null }> {
+    const referral = await this.referralService.getReferralByRefereeId(
+      refereeId,
+    );
+    return { referral };
   }
 
   /**
-   * Handle a new referral (internal endpoint)
-   * POST /referrals/register
+   * Get all referrals for a referrer
    */
-  @Post('register')
-  @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ 
-    summary: 'Register a new referral', 
-    description: 'Creates a new referral relationship between users' 
-  })
-  @ApiResponse({ status: 201, description: 'Referral created' })
-  async registerReferral(
-    @Body() body: { referrerId: number; referredUserId: number },
-  ) {
-    return this.referralService.handleReferral(body.referrerId, body.referredUserId);
+  @Get('referrer/:referrerId')
+  async getReferralsByReferrerId(
+    @Param('referrerId', ParseIntPipe) referrerId: number,
+  ): Promise<{ referrals: Referral[] }> {
+    const referrals = await this.referralService.getReferralsByReferrerId(
+      referrerId,
+    );
+    return { referrals };
   }
 
   /**
-   * Credit reward to a referral (internal endpoint)
-   * POST /referrals/:referralId/reward
+   * Get reward distributions for a referral
    */
-  @Post(':referralId/reward')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
-    summary: 'Credit referral reward', 
-    description: 'Credits a reward to the referrer for a completed referral' 
-  })
-  @ApiResponse({ status: 200, description: 'Reward credited' })
-  @ApiParam({ name: 'referralId', type: Number, description: 'Referral ID' })
-  async creditReward(
+  @Get(':referralId/distributions')
+  async getDistributionsByReferralId(
     @Param('referralId', ParseIntPipe) referralId: number,
-    @Body() body: { amount: number },
-  ) {
-    return this.referralService.creditReward(referralId, body.amount);
+  ): Promise<{ distributions: RewardDistribution[] }> {
+    const distributions =
+      await this.referralService.getDistributionsByReferralId(referralId);
+    return { distributions };
+  }
+
+  /**
+   * Get all reward configurations
+   */
+  @Get('config')
+  async getAllRewardConfigs(): Promise<{ configs: RewardConfig[] }> {
+    const configs = await this.referralService.getAllRewardConfigs();
+    return { configs };
+  }
+
+  /**
+   * Update reward configuration
+   */
+  @Post('config/:id')
+  async updateRewardConfig(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updates: Partial<RewardConfig>,
+  ): Promise<{ config: RewardConfig }> {
+    const config = await this.referralService.updateRewardConfig(id, updates);
+    return { config };
   }
 }

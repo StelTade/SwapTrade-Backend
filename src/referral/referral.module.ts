@@ -1,25 +1,35 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ReferralService } from './referral.service';
 import { ReferralController } from './referral.controller';
-import { ReferralAdminService } from './referral-admin.service';
-import { ReferralAdminController } from './referral-admin.controller';
+import { ReferralService } from './service/referral.service';
+import { ReferralCodeService } from './service/referral-code.service';
 import { Referral } from './entities/referral.entity';
-import { ReferralConfig } from './entities/referral-config.entity';
-import { ReferralDispute } from './entities/referral-dispute.entity';
+import { RewardConfig } from './entities/reward-config.entity';
+import { RewardDistribution } from './entities/reward-distribution.entity';
+import { UserReferralCode } from './entities/user-referral-code.entity';
+import { UserBalance } from '../balance/entities/user-balance.entity';
+import { BalanceAudit } from '../balance/balance-audit.entity';
 import { User } from '../user/entities/user.entity';
-import { NotificationModule } from '../notification/notification.module';
-import { AuditLogModule } from '../audit-log/audit-log.module';
+import { VirtualAsset } from '../trading/entities/virtual-asset.entity';
+import { UserBadgeService } from '../rewards/services/user-badge.service';
+import { UserBadge } from '../rewards/entities/user-badge.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Referral, ReferralConfig, ReferralDispute, User]),
-    NotificationModule,
-    AuditLogModule,
+    TypeOrmModule.forFeature([
+      Referral,
+      RewardConfig,
+      RewardDistribution,
+      UserReferralCode,
+      UserBalance,
+      BalanceAudit,
+      User,
+      VirtualAsset,
+      UserBadge,
+    ]),
   ],
-  controllers: [ReferralController, ReferralAdminController],
-  providers: [ReferralService, ReferralAdminService],
-  exports: [ReferralService, ReferralAdminService],
-
+  controllers: [ReferralController],
+  providers: [ReferralService, ReferralCodeService, UserBadgeService],
+  exports: [ReferralService, ReferralCodeService],
 })
 export class ReferralModule {}
