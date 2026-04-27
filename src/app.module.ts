@@ -57,6 +57,8 @@ import { MarketSurveillanceModule } from './market-surveillance/market-surveilla
 import { DatabaseModule } from './database/database.module';
 import { HorizontalScalingModule } from './queue/horizontal-scaling.module';
 import { MLPipelineModule } from './ml-pipeline/ml-pipeline.module';
+import { TradingBonusesModule } from './trading-bonuses/trading-bonuses.module';
+import { TradingBonus } from './trading-bonuses/entities/trading-bonus.entity';
 
 import { 
   AnomalyAlert, 
@@ -113,7 +115,7 @@ import * as path from 'path';
         PortfolioSnapshot, RiskMetrics, PerformanceHistory, Benchmark,
         AnomalyAlert, OrderBookSnapshot, SuspiciousActor, ViolationEvent, HeatmapMetric, PatternTemplate,
         TrainingJob, ModelVersion, PerformanceMetrics,
-        UserBalance, VirtualAsset, KycRecord,
+        UserBalance, VirtualAsset, KycRecord, TradingBonus,
       ],
       synchronize: true,
     }),
@@ -129,6 +131,7 @@ import * as path from 'path';
     PricePredictionModule,
     PrivacyModule,
     KycModule,
+    TradingBonusesModule,
     ErrorModule,
     DatabaseModule,
     // Note: Some modules are now loaded dynamically to optimize startup
