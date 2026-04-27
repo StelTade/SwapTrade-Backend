@@ -18,13 +18,12 @@ export class KycRecord {
   userId!: number;
 
   @Column({
-    type: 'enum',
-    enum: KycStatus,
+    type: 'varchar',
     default: KycStatus.PENDING,
   })
   status!: KycStatus;
 
-  @Column({ type: 'uuid', nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   reviewedBy!: string | null;
 
   @Column({ type: 'text', nullable: true })

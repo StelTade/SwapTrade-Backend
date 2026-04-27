@@ -1,7 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserBalance } from '../balance/entities/user-balance.entity';
+import { UserRole } from '../common/enums/user-role.enum';
+import {
+    RoleSeparationViolation,
+    assertNoGovernanceKycRoleConflict,
+    normalizeRoleValues,
+} from '../common/security/role-separation';
+import { User } from './entities/user.entity';
 import { PortfolioStatsDto } from './dto/portfolio-stats.dto';
 
 @Injectable()
@@ -9,7 +16,47 @@ export class UserService {
     constructor(
         @InjectRepository(UserBalance)
         private readonly userBalanceRepository: Repository<UserBalance>,
+        @Optional()
+        @InjectRepository(User)
+        private readonly userRepository?: Repository<User>,
     ) { }
+
+    validateRoleAssignment(roles: UserRole | UserRole[]): UserRole[] {
+        const normalizedRoles = normalizeRoleValues(roles) as UserRole[];
+
+        if (normalizedRoles.length === 0) {
+            throw new BadRequestException('At least one role must be assigned.');
+        }
+
+        try {
+            assertNoGovernanceKycRoleConflict(normalizedRoles);
+        } catch (error) {
+            if (error instanceof RoleSeparationViolation) {
+                throw new BadRequestException(error.message);
+            }
+            throw error;
+        }
+
+        return normalizedRoles;
+    }
+
+    async assignRoles(userId: number, roles: UserRole | UserRole[]): Promise<User> {
+        if (!this.userRepository) {
+            throw new BadRequestException('User repository is not configured.');
+        }
+
+        const normalizedRoles = this.validateRoleAssignment(roles);
+        const user = await this.userRepository.findOne({ where: { id: userId } });
+
+        if (!user) {
+            throw new NotFoundException(`User ${userId} not found`);
+        }
+
+        user.roles = normalizedRoles;
+        user.role = normalizedRoles[0];
+
+        return this.userRepository.save(user);
+    }
 
     async getPortfolioStats(userId: number): Promise<PortfolioStatsDto> {
         const userBalances = await this.userBalanceRepository.find({

@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -24,8 +25,10 @@ export class GovernanceService {
     private readonly voteRepository: Repository<GovernanceVote>,
     @InjectRepository(GovernanceStake)
     private readonly stakeRepository: Repository<GovernanceStake>,
-    private readonly auditService: AuditService,
-    private readonly mobileCacheService: MobileCacheService,
+    @Optional()
+    private readonly auditService?: AuditService,
+    @Optional()
+    private readonly mobileCacheService?: MobileCacheService,
   ) {}
 
   async upsertStake(dto: UpsertGovernanceStakeDto): Promise<GovernanceStake> {
@@ -33,7 +36,7 @@ export class GovernanceService {
     const stake = existing ?? this.stakeRepository.create({ userId: dto.userId });
     stake.stakedAmount = dto.stakedAmount;
     const saved = await this.stakeRepository.save(stake);
-    await this.auditService.log({
+    await this.auditService?.log({
       domain: 'governance',
       action: 'stake.updated',
       actorUserId: dto.userId,
@@ -62,7 +65,7 @@ export class GovernanceService {
       status: ProposalStatus.ACTIVE,
     });
     const saved = await this.proposalRepository.save(proposal);
-    await this.auditService.log({
+    await this.auditService?.log({
       domain: 'governance',
       action: 'proposal.created',
       actorUserId: dto.proposerUserId,
@@ -101,7 +104,7 @@ export class GovernanceService {
     );
 
     await this.recomputeProposalTallies(proposal);
-    await this.auditService.log({
+    await this.auditService?.log({
       domain: 'governance',
       action: 'vote.cast',
       actorUserId: dto.voterUserId,
@@ -125,7 +128,7 @@ export class GovernanceService {
     proposal.status = passed ? ProposalStatus.SUCCEEDED : ProposalStatus.DEFEATED;
     const saved = await this.proposalRepository.save(proposal);
 
-    await this.auditService.log({
+    await this.auditService?.log({
       domain: 'governance',
       action: 'proposal.tallied',
       entityId: proposalId,
@@ -154,7 +157,7 @@ export class GovernanceService {
       hook: 'internal-protocol-update',
     };
     const saved = await this.proposalRepository.save(proposal);
-    await this.auditService.log({
+    await this.auditService?.log({
       domain: 'governance',
       action: 'proposal.executed',
       entityId: proposalId,
@@ -288,7 +291,7 @@ export class GovernanceService {
     Object.assign(proposal, dto);
     const updated = await this.proposalRepository.save(proposal);
     
-    await this.auditService.log({
+    await this.auditService?.log({
       domain: 'governance',
       action: 'proposal.updated',
       entityId: proposalId,
@@ -310,7 +313,7 @@ export class GovernanceService {
     proposal.status = ProposalStatus.CANCELLED;
     const cancelled = await this.proposalRepository.save(proposal);
     
-    await this.auditService.log({
+    await this.auditService?.log({
       domain: 'governance',
       action: 'proposal.cancelled',
       entityId: proposalId,
@@ -380,9 +383,9 @@ export class GovernanceService {
   }
 
   private invalidateCaches(userId?: number): void {
-    this.mobileCacheService.invalidateTag('mobile-dashboard');
+    this.mobileCacheService?.invalidateTag('mobile-dashboard');
     if (userId !== undefined) {
-      this.mobileCacheService.invalidateTag(`mobile-user:${userId}`);
+      this.mobileCacheService?.invalidateTag(`mobile-user:${userId}`);
     }
   }
 }

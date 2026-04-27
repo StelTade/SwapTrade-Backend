@@ -8,7 +8,16 @@ describe('KycController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [KycController],
-      providers: [KycService],
+      providers: [
+        {
+          provide: KycService,
+          useValue: {
+            updateStatus: jest.fn(),
+            governanceOverride: jest.fn(),
+            getRecord: jest.fn(),
+          },
+        },
+      ],
     }).compile();
 
     controller = module.get<KycController>(KycController);

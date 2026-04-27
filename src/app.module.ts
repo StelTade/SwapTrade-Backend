@@ -10,6 +10,8 @@ import { MobileModule } from './mobile/mobile.module';
 import { PrivacyModule } from './privacy/privacy.module';
 import { AuditEntry } from './platform/entities/audit-entry.entity';
 import { GovernanceProposal } from './governance/entities/governance-proposal.entity';
+import { GovernanceParameter } from './governance/entities/governance-parameter.entity';
+import { PendingGovernanceParameterUpdate } from './governance/entities/pending-governance-parameter-update.entity';
 import { GovernanceVote } from './governance/entities/governance-vote.entity';
 import { GovernanceStake } from './governance/entities/governance-stake.entity';
 import { OptionContract } from './options/entities/option-contract.entity';
@@ -68,6 +70,7 @@ import { TrainingJob, ModelVersion, PerformanceMetrics } from './ml-pipeline/ent
 import { UserBalance } from './balance/entities/user-balance.entity';
 import { VirtualAsset } from './trading/entities/virtual-asset.entity';
 import { KycModule } from './kyc/kyc.module';
+import { KycRecord } from './kyc/entities/kyc-records.entity';
 import { I18nModule, AcceptLanguageResolver, HeaderResolver, QueryResolver } from 'nestjs-i18n';
 import * as path from 'path';
 
@@ -100,6 +103,7 @@ import * as path from 'path';
       database: 'swaptrade.db',
       entities: [
         AuditEntry, GovernanceProposal, GovernanceVote, GovernanceStake,
+        GovernanceParameter, PendingGovernanceParameterUpdate,
         OptionContract, OptionOrder, OptionPosition,
         LiquidityPool, LiquidityMiningProgram, LiquidityStakePosition, LiquidityRewardLedger,
         User, Trade, RiskOrder, RiskProfile,
@@ -109,7 +113,7 @@ import * as path from 'path';
         PortfolioSnapshot, RiskMetrics, PerformanceHistory, Benchmark,
         AnomalyAlert, OrderBookSnapshot, SuspiciousActor, ViolationEvent, HeatmapMetric, PatternTemplate,
         TrainingJob, ModelVersion, PerformanceMetrics,
-        UserBalance, VirtualAsset,
+        UserBalance, VirtualAsset, KycRecord,
       ],
       synchronize: true,
     }),
@@ -124,6 +128,7 @@ import * as path from 'path';
     AdvancedAnalyticsModule,
     PricePredictionModule,
     PrivacyModule,
+    KycModule,
     ErrorModule,
     DatabaseModule,
     // Note: Some modules are now loaded dynamically to optimize startup

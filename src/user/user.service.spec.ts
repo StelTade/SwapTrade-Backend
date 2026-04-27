@@ -1,11 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserService } from './user.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { UserBalance } from '../balance/user-balance.entity';
+import { BadRequestException } from '@nestjs/common';
+import { UserBalance } from '../balance/entities/user-balance.entity';
+import { UserRole } from '../common/enums/user-role.enum';
+import { User } from './entities/user.entity';
 
 describe('UserService - Portfolio Tracking', () => {
     let service: UserService;
     let mockRepository: any;
+    let mockUserRepository: any;
 
     beforeEach(async () => {
         mockRepository = {
@@ -14,6 +18,10 @@ describe('UserService - Portfolio Tracking', () => {
             save: jest.fn(),
             create: jest.fn((dto) => dto),
         };
+        mockUserRepository = {
+            findOne: jest.fn(),
+            save: jest.fn(async (value) => value),
+        };
 
         const module: TestingModule = await Test.createTestingModule({
             providers: [
@@ -21,6 +29,10 @@ describe('UserService - Portfolio Tracking', () => {
                 {
                     provide: getRepositoryToken(UserBalance),
                     useValue: mockRepository,
+                },
+                {
+                    provide: getRepositoryToken(User),
+                    useValue: mockUserRepository,
                 },
             ],
         }).compile();
@@ -32,10 +44,10 @@ describe('UserService - Portfolio Tracking', () => {
         const mockBalances = [
             {
                 id: 'balance-uuid-1',
-                userId: '123e4567-e89b-12d3-a456-426614174000',
-                assetId: 'asset-uuid-btc',
+                userId: 123,
+                assetId: 1,
                 asset: { name: 'BTC', symbol: 'BTC' },
-                amount: 1.5,
+                balance: 1.5,
                 totalTrades: 10,
                 cumulativePnL: 1000,
                 totalTradeVolume: 50000,
@@ -45,7 +57,7 @@ describe('UserService - Portfolio Tracking', () => {
 
         mockRepository.find.mockResolvedValue(mockBalances);
 
-        const result = await service.getPortfolioStats('123e4567-e89b-12d3-a456-426614174000');
+        const result = await service.getPortfolioStats(123);
 
         expect(result.totalTrades).toBe(10);
         expect(result.cumulativePnL).toBe(1000);
@@ -54,9 +66,9 @@ describe('UserService - Portfolio Tracking', () => {
     it('should update portfolio after trade', async () => {
         const mockBalance = {
             id: 'balance-uuid-1',
-            userId: '123e4567-e89b-12d3-a456-426614174000',
-            assetId: 'asset-uuid-btc',
-            amount: 1.5,
+            userId: 123,
+            assetId: 1,
+            balance: 1.5,
             totalTrades: 10,
             cumulativePnL: 1000,
             totalTradeVolume: 50000,
@@ -66,12 +78,35 @@ describe('UserService - Portfolio Tracking', () => {
         mockRepository.save.mockResolvedValue({ ...mockBalance, totalTrades: 11 });
 
         await service.updatePortfolioAfterTrade(
-            '123e4567-e89b-12d3-a456-426614174000',
-            'asset-uuid-btc',
+            123,
+            1,
             5000,
             100,
         );
 
         expect(mockRepository.save).toHaveBeenCalled();
+    });
+
+    it('rejects assigning governance and KYC roles to the same user', () => {
+        expect(() =>
+            service.validateRoleAssignment([
+                UserRole.GOVERNANCE_OPERATOR,
+                UserRole.KYC_OPERATOR,
+            ]),
+        ).toThrow(BadRequestException);
+    });
+
+    it('assigns a single security role', async () => {
+        mockUserRepository.findOne.mockResolvedValue({
+            id: 1,
+            role: UserRole.USER,
+            roles: [UserRole.USER],
+        });
+
+        const updated = await service.assignRoles(1, [UserRole.GOVERNANCE_OPERATOR]);
+
+        expect(updated.roles).toEqual([UserRole.GOVERNANCE_OPERATOR]);
+        expect(updated.role).toBe(UserRole.GOVERNANCE_OPERATOR);
+        expect(mockUserRepository.save).toHaveBeenCalledWith(updated);
     });
 });

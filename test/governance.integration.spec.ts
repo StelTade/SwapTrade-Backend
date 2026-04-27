@@ -4,8 +4,10 @@ import { GovernanceModule } from '../src/governance/governance.module';
 import { GovernanceService } from '../src/governance/governance.service';
 import { GovernanceController } from '../src/governance/governance.controller';
 import { GovernanceProposal, ProposalStatus } from '../src/governance/entities/governance-proposal.entity';
+import { GovernanceParameter } from '../src/governance/entities/governance-parameter.entity';
 import { GovernanceVote, VoteChoice } from '../src/governance/entities/governance-vote.entity';
 import { GovernanceStake } from '../src/governance/entities/governance-stake.entity';
+import { PendingGovernanceParameterUpdate } from '../src/governance/entities/pending-governance-parameter-update.entity';
 import { CreateGovernanceProposalDto } from '../src/governance/dto/create-governance-proposal.dto';
 import { CastVoteDto } from '../src/governance/dto/cast-vote.dto';
 import { UpsertGovernanceStakeDto } from '../src/governance/dto/upsert-governance-stake.dto';
@@ -20,7 +22,13 @@ describe('Governance Voting System Integration Tests', () => {
     const testConfig = {
       type: 'sqlite',
       database: ':memory:',
-      entities: [GovernanceProposal, GovernanceVote, GovernanceStake],
+      entities: [
+        GovernanceProposal,
+        GovernanceVote,
+        GovernanceStake,
+        GovernanceParameter,
+        PendingGovernanceParameterUpdate,
+      ],
       synchronize: true,
     };
 

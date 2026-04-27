@@ -67,7 +67,10 @@ export class KycController {
   /** Protected resource — requires verified KYC */
   @Get(':userId/profile')
   @UseGuards(KycGuard)
-  getProfile(@Param('userId', ParseIntPipe) userId: number) {
-    return this.kycService.getRecord(userId);
+  getProfile(
+    @Param('userId', ParseIntPipe) userId: number,
+    @Req() req: { user: { id: number; roles: string[] } },
+  ) {
+    return this.kycService.getRecord(userId, req.user);
   }
 }
