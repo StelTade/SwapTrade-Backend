@@ -11,6 +11,7 @@ import {
   WaitlistUser,
   WaitlistStatus,
   WaitlistType,
+  StakingTier,
 } from './entities/waitlist-user.entity';
 import { WaitlistVerificationToken } from './entities/waitlist-verification-token.entity';
 import { NotificationService, NotificationChannel } from '../notification/notification.service';
@@ -485,5 +486,120 @@ export class WaitlistService {
         this.logger.error(`Failed to notify ${entry.email} about ${pairSymbol} launch:`, err);
       }
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // #330 — Waitlist for Staking Rewards
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Join the staking rewards waitlist for a specific tier.
+   * Tiers: 'flexible', 'locked', 'liquidity'
+   * Priority is determined by join date (FIFO).
+   */
+  async joinStakingWaitlist(
+    email: string,
+    stakingTier: StakingTier,
+    name?: string,
+  ): Promise<{ success: boolean; message: string; position: number }> {
+    const targetId = `staking:${stakingTier}`;
+    const result = await this.signup(email, name, undefined, undefined, WaitlistType.STAKING, targetId);
+
+    const position = await this.waitlistRepo.count({
+      where: { type: WaitlistType.STAKING, targetId },
+    });
+
+    return { ...result, position };
+  }
+
+  /**
+   * Get a user's position in the staking waitlist for a tier.
+   */
+  async getStakingWaitlistPosition(
+    email: string,
+    stakingTier: StakingTier,
+  ): Promise<{ found: boolean; position?: number; status?: string; tier: StakingTier }> {
+    const targetId = `staking:${stakingTier}`;
+    const entry = await this.waitlistRepo.findOne({
+      where: { email, type: WaitlistType.STAKING, targetId },
+    });
+
+    if (!entry) {
+      return { found: false, tier: stakingTier };
+    }
+
+    const position = await this.waitlistRepo.count({
+      where: { type: WaitlistType.STAKING, targetId, status: WaitlistStatus.VERIFIED },
+    });
+
+    return { found: true, position, status: entry.status, tier: stakingTier };
+  }
+
+  /**
+   * Admin: grant staking access to a waitlist entry (sequential, FIFO).
+   */
+  async processStakingAccess(
+    waitlistEntryId: string,
+    adminId: string,
+  ): Promise<{ success: boolean }> {
+    const entry = await this.waitlistRepo.findOne({ where: { id: waitlistEntryId } });
+    if (!entry) throw new NotFoundException('Waitlist entry not found');
+    if (entry.type !== WaitlistType.STAKING) {
+      throw new BadRequestException('Entry is not for staking rewards');
+    }
+
+    entry.status = WaitlistStatus.INVITED;
+    entry.invitedAt = new Date();
+    await this.waitlistRepo.save(entry);
+
+    try {
+      await this.sendStakingAccessEmail(entry.email, entry.targetId ?? 'Staking Rewards', entry.name);
+    } catch (err) {
+      this.logger.error(`Failed to send staking access email to ${entry.email}:`, err);
+    }
+
+    this.logger.log(`Staking access granted for ${entry.email} (tier: ${entry.targetId}) by admin ${adminId}`);
+    return { success: true };
+  }
+
+  /**
+   * Admin: get staking waitlist stats grouped by tier.
+   */
+  async getStakingWaitlistStats(): Promise<{
+    total: number;
+    byTier: Record<StakingTier, number>;
+    byStatus: Record<string, number>;
+  }> {
+    const entries = await this.waitlistRepo.find({ where: { type: WaitlistType.STAKING } });
+
+    const byTier: Record<StakingTier, number> = {
+      [StakingTier.FLEXIBLE]: 0,
+      [StakingTier.LOCKED]: 0,
+      [StakingTier.LIQUIDITY]: 0,
+    };
+
+    const byStatus: Record<string, number> = {};
+
+    for (const entry of entries) {
+      const tier = (entry.targetId ?? '').replace('staking:', '') as StakingTier;
+      if (tier in byTier) byTier[tier]++;
+      byStatus[entry.status] = (byStatus[entry.status] ?? 0) + 1;
+    }
+
+    return { total: entries.length, byTier, byStatus };
+  }
+
+  private async sendStakingAccessEmail(email: string, targetId: string, name?: string): Promise<void> {
+    const tier = targetId.replace('staking:', '');
+    const greeting = name ? `Hi ${name}` : 'Hi there';
+    const stakingUrl = `${process.env.APP_URL || 'http://localhost:3000'}/staking/${tier}`;
+
+    await this.notificationService.send({
+      userId: 1,
+      type: 'STAKING_ACCESS_GRANTED',
+      channels: [NotificationChannel.Email],
+      subject: `Your ${tier} staking access is ready — SwapTrade`,
+      message: `${greeting},\n\nYour access to ${tier} staking rewards has been activated!\n\nStart staking now:\n${stakingUrl}\n\nHappy staking,\nThe SwapTrade Team`,
+    });
   }
 }

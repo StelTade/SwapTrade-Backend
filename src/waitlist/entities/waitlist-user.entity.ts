@@ -19,6 +19,13 @@ export enum WaitlistType {
   PLATFORM = 'platform',
   PREMIUM_FEATURE = 'premium_feature',
   ASSET_PAIR = 'asset_pair',
+  STAKING = 'staking',
+}
+
+export enum StakingTier {
+  FLEXIBLE = 'flexible',
+  LOCKED = 'locked',
+  LIQUIDITY = 'liquidity',
 }
 
 @Entity('waitlist_users')

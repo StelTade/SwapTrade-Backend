@@ -13,7 +13,7 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import { WaitlistService } from './waitlist.service';
 import { WaitlistSignupDto, WaitlistVerifyDto } from './dto/waitlist.dto';
-import { WaitlistType } from './entities/waitlist-user.entity';
+import { WaitlistType, StakingTier } from './entities/waitlist-user.entity';
 
 @Controller('api/waitlist')
 export class WaitlistController {
@@ -139,5 +139,43 @@ export class WaitlistController {
   @Get('leaderboard')
   async leaderboard(@Query('limit') limit?: number) {
     return this.waitlistService.getLeaderboard(limit ? +limit : 10);
+  }
+
+  // -----------------------------------------------------------------------
+  // #330 — Staking Rewards Waitlist
+  // -----------------------------------------------------------------------
+
+  // POST /api/waitlist/staking
+  @Post('staking')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  async joinStakingWaitlist(
+    @Body() body: { email: string; stakingTier: StakingTier; name?: string },
+  ) {
+    return this.waitlistService.joinStakingWaitlist(body.email, body.stakingTier, body.name);
+  }
+
+  // GET /api/waitlist/staking/position
+  @Get('staking/position')
+  async getStakingPosition(
+    @Query('email') email: string,
+    @Query('stakingTier') stakingTier: StakingTier,
+  ) {
+    return this.waitlistService.getStakingWaitlistPosition(email, stakingTier);
+  }
+
+  // PATCH /api/waitlist/staking/:id/grant
+  @Patch('staking/:id/grant')
+  @HttpCode(HttpStatus.OK)
+  async grantStakingAccess(
+    @Param('id') id: string,
+    @Body('adminId') adminId: string,
+  ) {
+    return this.waitlistService.processStakingAccess(id, adminId);
+  }
+
+  // GET /api/waitlist/staking/stats
+  @Get('staking/stats')
+  async getStakingStats() {
+    return this.waitlistService.getStakingWaitlistStats();
   }
 }
