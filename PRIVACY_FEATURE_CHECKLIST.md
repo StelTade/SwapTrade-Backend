@@ -285,3 +285,28 @@
 **Status**: COMPLETE AND PRODUCTION-READY ✅
 **Last Updated**: March 29, 2026
 **Implementation Time**: Full feature complete
+
+
+use std::time::Instant;
+use std::collections::HashMap;
+use std::fs::File;
+use std::io::Write;
+use serde_json::Value;
+
+mod performance_benchmark;
+use performance_benchmark::{run_benchmarks, BenchmarkRunner, BenchmarkResult};
+
+/// Configuration for the benchmark runner
+struct BenchmarkConfig {
+    iterations: usize,
+    warmup_runs: usize,
+    output_format: OutputFormat,
+}
+
+#[derive(Debug)]
+enum OutputFormat {
+    Console,
+    Json,
+    Csv,
+}
+
