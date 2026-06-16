@@ -250,6 +250,13 @@ export class QueueLoadBalancerService {
   }
 
   /**
+   * Get current configuration
+   */
+  getConfig(): HorizontalScalingConfig {
+    return this.config;
+  }
+
+  /**
    * Update configuration
    */
   updateConfig(newConfig: Partial<HorizontalScalingConfig>): void {

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { HealthCheckResult, HealthCheck, SLODefinition } from '../interfaces/monitoring.interfaces';
+import { HealthCheckResult, HealthCheck, SLODefinition, LogLevel } from '../interfaces/monitoring.interfaces';
 import { PrometheusService } from './prometheus.service';
 import { StructuredLoggerService } from './structured-logger.service';
 
@@ -49,7 +49,7 @@ export class HealthService {
 
       // Log health check result
       this.logger.logWithCorrelation(
-        status === 'healthy' ? 'info' : 'warn',
+        status === 'healthy' ? LogLevel.INFO : LogLevel.WARN,
         `Health check completed: ${status}`,
         result.timestamp,
         { healthCheck: true, status, duration, checks }
@@ -59,11 +59,11 @@ export class HealthService {
 
     } catch (error) {
       const duration = Date.now() - startTime;
-      this.logger.error('Health check failed', error, undefined, { healthCheck: true });
+      this.logger.error('Health check failed', error as Error, undefined, { healthCheck: true });
 
       return {
         status: 'unhealthy',
-        checks: { error: { status: 'fail', output: error.message } },
+        checks: { error: { status: 'fail', output: (error as Error).message } },
         timestamp: new Date().toISOString(),
         duration
       };
@@ -103,7 +103,7 @@ export class HealthService {
       this.prometheusService.recordHealthCheck('database', 'fail', duration);
       return {
         status: 'fail',
-        output: error.message,
+        output: (error as Error).message,
         observedValue: duration,
         observedUnit: 'ms',
         duration
@@ -143,7 +143,7 @@ export class HealthService {
       this.prometheusService.recordHealthCheck('cache', 'fail', duration);
       return {
         status: 'fail',
-        output: error.message,
+        output: (error as Error).message,
         observedValue: duration,
         observedUnit: 'ms',
         duration
@@ -202,7 +202,7 @@ export class HealthService {
       this.prometheusService.recordHealthCheck('external_services', 'fail', duration);
       return {
         status: 'fail',
-        output: error.message,
+        output: (error as Error).message,
         observedValue: 0,
         observedUnit: 'services',
         duration
@@ -266,7 +266,7 @@ export class HealthService {
       this.prometheusService.recordHealthCheck('queues', 'fail', duration);
       return {
         status: 'fail',
-        output: error.message,
+        output: (error as Error).message,
         observedValue: 0,
         observedUnit: 'queues',
         duration
@@ -331,7 +331,7 @@ export class HealthService {
       this.prometheusService.recordHealthCheck('system_resources', 'fail', duration);
       return {
         status: 'fail',
-        output: error.message,
+        output: (error as Error).message,
         observedValue: 0,
         observedUnit: 'percent',
         duration
@@ -396,7 +396,7 @@ export class HealthService {
       this.prometheusService.recordHealthCheck('business_logic', 'fail', duration);
       return {
         status: 'fail',
-        output: error.message,
+        output: (error as Error).message,
         observedValue: 0,
         observedUnit: 'trades/sec',
         duration

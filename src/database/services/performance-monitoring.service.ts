@@ -163,7 +163,7 @@ export class PerformanceMonitoringService implements OnModuleInit {
       const systemMetrics = await this.getSystemMetrics();
 
       // Get shard health if available
-      const shardHealth = await this.getShardHealthMetrics();
+      const shardHealth = await this.getShardHealth();
 
       const metrics: PerformanceMetrics = {
         timestamp: new Date(),
@@ -211,7 +211,7 @@ export class PerformanceMonitoringService implements OnModuleInit {
       if (cooldownEnd && now < cooldownEnd) continue;
 
       // Check if rule is triggered
-      const metricValue = metrics[rule.metric];
+      const metricValue = metrics[rule.metric] as number;
       const isTriggered = this.evaluateCondition(metricValue, rule.operator, rule.threshold);
 
       if (isTriggered) {
@@ -221,7 +221,7 @@ export class PerformanceMonitoringService implements OnModuleInit {
         );
 
         const allTriggered = recentMetrics.every(m => 
-          this.evaluateCondition(m[rule.metric], rule.operator, rule.threshold)
+          this.evaluateCondition(m[rule.metric] as number, rule.operator, rule.threshold)
         );
 
         if (allTriggered && recentMetrics.length > 0) {
@@ -438,7 +438,7 @@ export class PerformanceMonitoringService implements OnModuleInit {
   /**
    * Get shard health metrics
    */
-  private async getShardHealthMetrics(): Promise<any> {
+  async getShardHealth(): Promise<any> {
     try {
       const shardHealth = await this.shardingService.getShardHealth();
       const healthyShards = Object.values(shardHealth).filter((h: any) => h.status === 'healthy').length;

@@ -1,0 +1,70 @@
+{
+  "projects": {
+    "src/infrastructure": {
+      "projectType": "library",
+      "tags": ["scope:infrastructure", "type:infrastructure"]
+    },
+    "src/identity": {
+      "projectType": "library",
+      "tags": ["scope:identity", "type:domain"]
+    },
+    "src/accounts": {
+      "projectType": "library",
+      "tags": ["scope:accounts", "type:domain"]
+    },
+    "src/market": {
+      "projectType": "library",
+      "tags": ["scope:market", "type:domain"]
+    },
+    "src/exchange": {
+      "projectType": "library",
+      "tags": ["scope:exchange", "type:domain"]
+    },
+    "src/protection": {
+      "projectType": "library",
+      "tags": ["scope:protection", "type:domain"]
+    },
+    "src/settlement": {
+      "projectType": "library",
+      "tags": ["scope:settlement", "type:domain"]
+    },
+    "src/blockchain": {
+      "projectType": "library",
+      "tags": ["scope:blockchain", "type:domain"]
+    },
+    "src/communications": {
+      "projectType": "library",
+      "tags": ["scope:communications", "type:domain"]
+    },
+    "src/analytics": {
+      "projectType": "library",
+      "tags": ["scope:analytics", "type:domain"]
+    },
+    "src/intelligence": {
+      "projectType": "library",
+      "tags": ["scope:intelligence", "type:domain"]
+    },
+    "src/shared": {
+      "projectType": "library",
+      "tags": ["scope:shared", "type:shared"]
+    }
+  },
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*"],
+    "production": [
+      "!{projectRoot}/**/*.spec.ts",
+      "!{projectRoot}/**/*.test.ts"
+    ]
+  },
+  "targetDefaults": {
+    "build": {
+      "cache": true
+    },
+    "test": {
+      "cache": true
+    },
+    "lint": {
+      "cache": true
+    }
+  }
+}

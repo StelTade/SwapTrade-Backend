@@ -3,7 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import type { Queue } from 'bull';
+import { Queue } from 'bull';
 import {
   HorizontalScalingConfig,
   DEFAULT_HORIZONTAL_SCALING_CONFIG,

@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UserService } from './user.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { BadRequestException } from '@nestjs/common';
-import { UserBalance } from '../balance/entities/user-balance.entity';
+import { UserBalance } from '../database/entities/user-balance.entity';
 import { UserRole } from '../common/enums/user-role.enum';
 import { User } from './entities/user.entity';
 

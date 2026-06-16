@@ -1,4 +1,4 @@
-import { ERROR_CODES, ErrorCode } from './error-codes';
+import { ERROR_CODES, ErrorCode, ErrorDefinition } from './error-codes';
 
 /**
  * Error Code Registry
@@ -26,7 +26,7 @@ export class ErrorCodeRegistry {
     const result: Record<string, typeof ERROR_CODES[ErrorCode]> = {};
 
     for (const [key, value] of Object.entries(ERROR_CODES)) {
-      if (value.category === category) {
+      if ((value as ErrorDefinition).category === category) {
         result[key] = value;
       }
     }
@@ -40,7 +40,7 @@ export class ErrorCodeRegistry {
   static getCategories(): string[] {
     const categories = new Set<string>();
     for (const error of Object.values(ERROR_CODES)) {
-      categories.add(error.category);
+      categories.add((error as ErrorDefinition).category);
     }
     return Array.from(categories).sort();
   }
@@ -58,7 +58,8 @@ export class ErrorCodeRegistry {
   static getSortedErrorCodes(): Array<{ code: ErrorCode; definition: typeof ERROR_CODES[ErrorCode] }> {
     return Object.entries(ERROR_CODES)
       .map(([code, definition]) => ({ code: code as ErrorCode, definition }))
-      .sort((a, b) => {
+      .sort((a: { code: ErrorCode; definition: typeof ERROR_CODES[ErrorCode] }, 
+              b: { code: ErrorCode; definition: typeof ERROR_CODES[ErrorCode] }) => {
         // Sort by category first
         if (a.definition.category !== b.definition.category) {
           return a.definition.category.localeCompare(b.definition.category);

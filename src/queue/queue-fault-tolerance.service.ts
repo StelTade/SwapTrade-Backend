@@ -22,7 +22,7 @@ interface CircuitBreaker {
 /**
  * Failover target
  */
-interface FailoverTarget {
+export interface FailoverTarget {
   targetId: string;
   priority: number;
   isAvailable: boolean;

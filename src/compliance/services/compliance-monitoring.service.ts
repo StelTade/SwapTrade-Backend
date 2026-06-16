@@ -1,7 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ComplianceRuleEntity, RuleType, ActionType, RuleSeverity } from '../entities/compliance-rule.entity';
+import { ComplianceRuleEntity, RuleType, ActionType, RuleSeverity, RuleStatus } from '../entities/compliance-rule.entity';
 import { ComplianceAlertEntity, AlertStatus, AlertPriority } from '../entities/compliance-alert.entity';
 import { AuditTrailEntity, AuditAction, ResourceType, AuditStatus } from '../entities/audit-trail.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -86,7 +86,7 @@ export class ComplianceMonitoringService implements OnModuleInit {
 
   private async getApplicableRules(transactionData: TransactionData): Promise<ComplianceRuleEntity[]> {
     return this.complianceRuleRepository.find({
-      where: { status: 'active' },
+      where: { status: RuleStatus.ACTIVE },
       order: { severity: 'DESC' },
     });
   }

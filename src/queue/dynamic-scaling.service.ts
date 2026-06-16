@@ -2,7 +2,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import type { Queue } from 'bull';
+import { Queue } from 'bull';
 import {
   HorizontalScalingConfig,
   DEFAULT_HORIZONTAL_SCALING_CONFIG,
@@ -13,7 +13,7 @@ import { QueueWorkerManagerService } from './queue-worker-manager.service';
 /**
  * Queue metrics for scaling decisions
  */
-interface QueueMetrics {
+export interface QueueMetrics {
   queueName: string;
   waitingJobs: number;
   activeJobs: number;
@@ -28,7 +28,7 @@ interface QueueMetrics {
 /**
  * Scaling decision
  */
-interface ScalingDecision {
+export interface ScalingDecision {
   shouldScale: boolean;
   direction: 'up' | 'down' | null;
   reason: string;

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { AuditLog } from './audit-log.entity';
+import { Repository, DeepPartial } from 'typeorm';
+import { AuditLog, AuditEventType } from './audit-log.entity';
 
 @Injectable()
 export class AuditLogService {
@@ -10,14 +10,13 @@ export class AuditLogService {
     private readonly auditRepo: Repository<AuditLog>,
   ) {}
 
-  async log(userId: string, action: string, details: unknown | null, ip: string | null) {
+  async log(userId: string, eventType: AuditEventType, metadata: unknown | null, ipAddress: string | null) {
     const record = this.auditRepo.create({
       userId,
-      action,
-      details,
-      ip,
-    });
+      eventType,
+      metadata,
+      ipAddress,
+    } as DeepPartial<AuditLog>);
     await this.auditRepo.save(record);
   }
 }
-

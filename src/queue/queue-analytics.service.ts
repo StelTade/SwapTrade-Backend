@@ -1,6 +1,6 @@
 // src/queue/queue-analytics.service.ts
 import { Injectable, Logger } from '@nestjs/common';
-import type { Queue } from 'bull';
+import { Queue } from 'bull';
 import { QueueName } from './queue.constants';
 import {
   DEFAULT_HEALTH_THRESHOLDS,

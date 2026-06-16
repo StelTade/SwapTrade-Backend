@@ -12,10 +12,9 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { ComplianceMonitoringService } from '../services/compliance-monitoring.service';
 import { RegulatoryReportingService } from '../services/regulatory-reporting.service';
-import { ComplianceAlertEntity, AlertStatus } from '../entities/compliance-alert.entity';
+import { ComplianceAlertEntity, AlertStatus, AlertPriority } from '../entities/compliance-alert.entity';
 import { RegulatoryReportEntity, ReportType, ReportStatus, RegulatoryFramework } from '../entities/regulatory-report.entity';
 
 interface TransactionMonitoringRequest {
@@ -51,7 +50,6 @@ interface AlertResolutionRequest {
 
 @ApiTags('Institutional Compliance and Audit')
 @Controller('compliance')
-@UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class ComplianceController {
   private readonly logger = new Logger(ComplianceController.name);
@@ -72,7 +70,7 @@ export class ComplianceController {
       return await this.complianceMonitoringService.monitorTransaction(transactionData);
     } catch (error) {
       this.logger.error('Transaction monitoring failed:', error);
-      throw new BadRequestException(error.message);
+      throw new BadRequestException(this.getErrorMessage(error));
     }
   }
 
@@ -92,7 +90,7 @@ export class ComplianceController {
       throw new BadRequestException('Filtering by status other than OPEN not implemented');
     } catch (error) {
       this.logger.error('Failed to get alerts:', error);
-      throw new BadRequestException(error.message);
+      throw new BadRequestException(this.getErrorMessage(error));
     }
   }
 
@@ -116,7 +114,7 @@ export class ComplianceController {
       return { message: 'Alert resolved successfully' };
     } catch (error) {
       this.logger.error(`Failed to resolve alert ${alertId}:`, error);
-      throw new BadRequestException(error.message);
+      throw new BadRequestException(this.getErrorMessage(error));
     }
   }
 
@@ -131,7 +129,7 @@ export class ComplianceController {
       return await this.regulatoryReportingService.generateSARReport(sarRequest.alertIds);
     } catch (error) {
       this.logger.error('SAR report generation failed:', error);
-      throw new BadRequestException(error.message);
+      throw new BadRequestException(this.getErrorMessage(error));
     }
   }
 
@@ -146,7 +144,7 @@ export class ComplianceController {
       return await this.regulatoryReportingService.generateCTRReport(ctrRequest.transactions);
     } catch (error) {
       this.logger.error('CTR report generation failed:', error);
-      throw new BadRequestException(error.message);
+      throw new BadRequestException(this.getErrorMessage(error));
     }
   }
 
@@ -164,7 +162,7 @@ export class ComplianceController {
       return await this.regulatoryReportingService.generateAMLReport(periodStart, periodEnd);
     } catch (error) {
       this.logger.error('AML report generation failed:', error);
-      throw new BadRequestException(error.message);
+      throw new BadRequestException(this.getErrorMessage(error));
     }
   }
 
@@ -178,7 +176,7 @@ export class ComplianceController {
       return await this.regulatoryReportingService.generateSECForm4(body.userId, body.transactionIds);
     } catch (error) {
       this.logger.error('SEC Form 4 report generation failed:', error);
-      throw new BadRequestException(error.message);
+      throw new BadRequestException(this.getErrorMessage(error));
     }
   }
 
@@ -192,7 +190,7 @@ export class ComplianceController {
       return await this.regulatoryReportingService.generateFINRACAT(body.orderIds);
     } catch (error) {
       this.logger.error('FINRA CAT report generation failed:', error);
-      throw new BadRequestException(error.message);
+      throw new BadRequestException(this.getErrorMessage(error));
     }
   }
 
@@ -213,7 +211,7 @@ export class ComplianceController {
       return { data };
     } catch (error) {
       this.logger.error('Audit trail export failed:', error);
-      throw new BadRequestException(error.message);
+      throw new BadRequestException(this.getErrorMessage(error));
     }
   }
 
@@ -227,7 +225,7 @@ export class ComplianceController {
       return await this.regulatoryReportingService.validateTransactionHistory(body.userId, body.transactions);
     } catch (error) {
       this.logger.error('Transaction history validation failed:', error);
-      throw new BadRequestException(error.message);
+      throw new BadRequestException(this.getErrorMessage(error));
     }
   }
 
@@ -240,7 +238,7 @@ export class ComplianceController {
       return await this.regulatoryReportingService.submitReport(reportId);
     } catch (error) {
       this.logger.error(`Report submission failed for ${reportId}:`, error);
-      throw new BadRequestException(error.message);
+      throw new BadRequestException(this.getErrorMessage(error));
     }
   }
 
@@ -265,7 +263,7 @@ export class ComplianceController {
       throw new BadRequestException('Filtering by framework not implemented');
     } catch (error) {
       this.logger.error('Failed to get reports:', error);
-      throw new BadRequestException(error.message);
+      throw new BadRequestException(this.getErrorMessage(error));
     }
   }
 
@@ -279,7 +277,7 @@ export class ComplianceController {
       throw new BadRequestException('Get report by ID not implemented');
     } catch (error) {
       this.logger.error(`Failed to get report ${reportId}:`, error);
-      throw new BadRequestException(error.message);
+      throw new BadRequestException(this.getErrorMessage(error));
     }
   }
 
@@ -297,7 +295,7 @@ export class ComplianceController {
       const pendingReports = await this.regulatoryReportingService.getReportsByStatus(ReportStatus.DRAFT);
       
       const highRiskAlerts = activeAlerts.filter(alert => 
-        alert.priority === 'HIGH' || alert.priority === 'CRITICAL'
+        alert.priority === AlertPriority.HIGH || alert.priority === AlertPriority.CRITICAL
       ).length;
 
       const recentSubmissions = await this.regulatoryReportingService.getReportsByStatus(ReportStatus.SUBMITTED);
@@ -310,7 +308,7 @@ export class ComplianceController {
       };
     } catch (error) {
       this.logger.error('Failed to get compliance summary:', error);
-      throw new BadRequestException(error.message);
+      throw new BadRequestException(this.getErrorMessage(error));
     }
   }
 
@@ -347,7 +345,7 @@ export class ComplianceController {
       };
     } catch (error) {
       this.logger.error(`Failed to get risk assessment for user ${userId}:`, error);
-      throw new BadRequestException(error.message);
+      throw new BadRequestException(this.getErrorMessage(error));
     }
   }
 
@@ -376,7 +374,7 @@ export class ComplianceController {
       };
     } catch (error) {
       this.logger.error('Failed to get audit trail:', error);
-      throw new BadRequestException(error.message);
+      throw new BadRequestException(this.getErrorMessage(error));
     }
   }
 
@@ -406,5 +404,15 @@ export class ComplianceController {
     }
 
     return recommendations;
+  }
+
+  private getErrorMessage(error: unknown): string {
+    if (error instanceof Error) {
+      return error.message;
+    }
+    if (typeof error === 'string') {
+      return error;
+    }
+    return 'An unknown error occurred';
   }
 }

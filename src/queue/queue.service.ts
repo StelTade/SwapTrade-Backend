@@ -1,16 +1,46 @@
 // src/queue/queue.service.ts
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
-import type { Queue, Job, JobOptions } from 'bull';
+import type { Queue, Job } from 'bull';
+import { JobOptions } from 'bull';
 import { QueueName } from './queue.constants';
-import type {
-  SwapJobData,
-  SingleSwapJobData,
-  MultiLegSwapJobData,
-  BatchSwapJobData,
-} from '../swap/swap-batch.processor';
 
-// ── Existing job data interfaces (unchanged) ──────────────────────────────────
+// ── Existing job data interfaces ──────────────────────────────────────────────
+
+export interface SwapJobData {
+  swapId: string;
+  userId: string;
+  type: 'single' | 'multi_leg' | 'batch';
+  data: Record<string, any>;
+}
+
+export interface SingleSwapJobData extends SwapJobData {
+  swapId: string;
+  userId: string;
+  type: 'single';
+  fromAsset: string;
+  toAsset: string;
+  amount: number;
+}
+
+export interface MultiLegSwapJobData extends SwapJobData {
+  swapId: string;
+  userId: string;
+  type: 'multi_leg';
+  batchId?: string;
+  legs: Array<{ fromAsset: string; toAsset: string; amount: number }>;
+  data: Record<string, any>;
+}
+
+export interface BatchSwapJobData extends SwapJobData {
+  batchId: string;
+  swapIds: string[];
+  type: 'batch';
+  swaps: SingleSwapJobData[];
+  swapId: string;
+  userId: string;
+  data: Record<string, any>;
+}
 
 export interface NotificationJobData {
   userId: string;
@@ -393,11 +423,11 @@ export class QueueService {
     if (!queue) return [];
 
     switch (status) {
-      case 'active':    return queue.getActiveJobs();
-      case 'waiting':   return queue.getWaitingJobs();
-      case 'completed': return queue.getCompletedJobs();
-      case 'failed':    return queue.getFailedJobs();
-      case 'delayed':   return queue.getDelayedJobs();
+      case 'active':    return queue.getActive(_start, _end);
+      case 'waiting':   return queue.getWaiting(_start, _end);
+      case 'completed': return queue.getCompleted(_start, _end);
+      case 'failed':    return queue.getFailed(_start, _end);
+      case 'delayed':   return queue.getDelayed(_start, _end);
       default:          return [];
     }
   }

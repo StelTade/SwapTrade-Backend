@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
-import { Trade } from '../../trading/entities/trade.entity';
-import { UserBalance } from '../../balance/entities/user-balance.entity';
-import { VirtualAsset } from '../../trading/entities/virtual-asset.entity';
+import { Trade } from '../entities/trade.entity';
+import { UserBalance } from '../entities/user-balance.entity';
+import { VirtualAsset } from '../entities/virtual-asset.entity';
 import { OptimizedQueryService } from './optimized-query.service';
 import { MultiLevelCacheService } from './multi-level-cache.service';
 import { DatabaseLoadBalancerService } from './database-load-balancer.service';
@@ -98,7 +98,7 @@ export class DatabaseBenchmarkingService {
     this.isRunning = true;
     this.logger.log(`Starting benchmark: ${config.name}`);
 
-    const startTime = new Date();
+    const startTime = Date.now();
     const latencies: number[] = [];
     const scenarioMetrics = new Map<string, { latencies: number[]; errors: number; total: number }>();
 
@@ -119,7 +119,7 @@ export class DatabaseBenchmarkingService {
 
       const benchmarkResult: BenchmarkResult = {
         config,
-        startTime,
+        startTime: new Date(startTime),
         endTime: new Date(),
         duration: (Date.now() - startTime) / 1000,
         totalOperations: results.totalOperations,
@@ -326,7 +326,7 @@ export class DatabaseBenchmarkingService {
     const concurrency = Math.min(config.concurrency, 10); // Lower concurrency for warmup
 
     while (Date.now() < endTime) {
-      const promises = [];
+      const promises: Promise<any>[] = [];
       for (let i = 0; i < concurrency; i++) {
         const scenario = this.selectRandomScenario(config.scenarios);
         promises.push(this.executeScenario(scenario));
@@ -350,7 +350,7 @@ export class DatabaseBenchmarkingService {
     let failedOperations = 0;
 
     while (Date.now() < endTime) {
-      const promises = [];
+      const promises: Promise<any>[] = [];
       
       for (let i = 0; i < config.concurrency; i++) {
         const scenario = this.selectRandomScenario(config.scenarios);

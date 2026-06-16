@@ -1,0 +1,222 @@
+{
+  "extends": ["eslint:recommended"],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 2020,
+    "sourceType": "module",
+    "project": "./tsconfig.json"
+  },
+  "plugins": [
+    "@typescript-eslint",
+    "@nrwl/nx",
+    "import"
+  ],
+  "rules": {
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }
+    ],
+    "@typescript-eslint/explicit-function-return-types": [
+      "warn",
+      {
+        "allowExpressions": true,
+        "allowTypedFunctionExpressions": true
+      }
+    ],
+    "no-console": [
+      "warn",
+      {
+        "allow": ["warn", "error"]
+      }
+    ],
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          "src/infrastructure/**/!(index)",
+          "src/identity/**/!(index)",
+          "src/*/index"
+        ],
+        "message": "Please use the module index export instead"
+      }
+    ],
+    "import/order": [
+      "warn",
+      {
+        "groups": [
+          "builtin",
+          "external",
+          "internal",
+          "parent",
+          "sibling",
+          "index"
+        ],
+        "pathGroups": [
+          {
+            "pattern": "src/**",
+            "group": "internal"
+          }
+        ],
+        "alphabeticalOrder": true,
+        "caseInsensitive": true
+      }
+    ],
+    "@nrwl/nx/enforce-module-boundaries": [
+      "error",
+      {
+        "enforceBuildableLibraryImportRestrictions": true,
+        "allow": [],
+        "depConstraints": [
+          {
+            "sourceTag": "scope:shared",
+            "onlyDependOnLibsWithTags": ["scope:shared"]
+          },
+          {
+            "sourceTag": "scope:infrastructure",
+            "onlyDependOnLibsWithTags": [
+              "scope:shared",
+              "scope:infrastructure"
+            ]
+          },
+          {
+            "sourceTag": "scope:identity",
+            "onlyDependOnLibsWithTags": [
+              "scope:shared",
+              "scope:infrastructure",
+              "scope:identity"
+            ]
+          },
+          {
+            "sourceTag": "scope:accounts",
+            "onlyDependOnLibsWithTags": [
+              "scope:shared",
+              "scope:infrastructure",
+              "scope:identity",
+              "scope:accounts"
+            ]
+          },
+          {
+            "sourceTag": "scope:market",
+            "onlyDependOnLibsWithTags": [
+              "scope:shared",
+              "scope:infrastructure",
+              "scope:identity",
+              "scope:accounts",
+              "scope:market"
+            ]
+          },
+          {
+            "sourceTag": "scope:exchange",
+            "onlyDependOnLibsWithTags": [
+              "scope:shared",
+              "scope:infrastructure",
+              "scope:identity",
+              "scope:accounts",
+              "scope:market",
+              "scope:exchange"
+            ]
+          },
+          {
+            "sourceTag": "scope:protection",
+            "onlyDependOnLibsWithTags": [
+              "scope:shared",
+              "scope:infrastructure",
+              "scope:identity",
+              "scope:accounts",
+              "scope:market",
+              "scope:exchange",
+              "scope:protection"
+            ]
+          },
+          {
+            "sourceTag": "scope:settlement",
+            "onlyDependOnLibsWithTags": [
+              "scope:shared",
+              "scope:infrastructure",
+              "scope:identity",
+              "scope:accounts",
+              "scope:market",
+              "scope:exchange",
+              "scope:protection",
+              "scope:settlement"
+            ]
+          },
+          {
+            "sourceTag": "scope:blockchain",
+            "onlyDependOnLibsWithTags": [
+              "scope:shared",
+              "scope:infrastructure",
+              "scope:identity",
+              "scope:accounts",
+              "scope:market",
+              "scope:exchange",
+              "scope:protection",
+              "scope:settlement",
+              "scope:blockchain"
+            ]
+          },
+          {
+            "sourceTag": "scope:communications",
+            "onlyDependOnLibsWithTags": [
+              "scope:shared",
+              "scope:infrastructure",
+              "scope:identity",
+              "scope:accounts",
+              "scope:market",
+              "scope:exchange",
+              "scope:protection",
+              "scope:settlement",
+              "scope:blockchain",
+              "scope:communications"
+            ]
+          },
+          {
+            "sourceTag": "scope:analytics",
+            "onlyDependOnLibsWithTags": [
+              "scope:shared",
+              "scope:infrastructure",
+              "scope:identity",
+              "scope:accounts",
+              "scope:market",
+              "scope:exchange",
+              "scope:protection",
+              "scope:settlement",
+              "scope:blockchain",
+              "scope:communications",
+              "scope:analytics"
+            ]
+          },
+          {
+            "sourceTag": "scope:intelligence",
+            "onlyDependOnLibsWithTags": [
+              "scope:shared",
+              "scope:infrastructure",
+              "scope:identity",
+              "scope:accounts",
+              "scope:market",
+              "scope:exchange",
+              "scope:protection",
+              "scope:settlement",
+              "scope:blockchain",
+              "scope:communications",
+              "scope:analytics",
+              "scope:intelligence"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["*.ts"],
+      "excludedFiles": ["*.spec.ts"],
+      "rules": {
+        "@typescript-eslint/explicit-function-return-types": "error"
+      }
+    }
+  ]
+}

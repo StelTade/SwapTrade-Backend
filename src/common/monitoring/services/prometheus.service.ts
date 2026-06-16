@@ -407,8 +407,8 @@ export class PrometheusService implements OnModuleInit, OnModuleDestroy {
   }
 
   // Get metrics for monitoring
-  getMetrics(): string {
-    return this.registry.metrics();
+  async getMetrics(): Promise<string> {
+    return await this.registry.metrics();
   }
 
   getBusinessMetrics(): BusinessMetrics {

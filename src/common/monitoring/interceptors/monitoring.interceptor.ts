@@ -4,7 +4,7 @@ import { tap, catchError } from 'rxjs/operators';
 import { PrometheusService } from '../services/prometheus.service';
 import { OpenTelemetryService } from '../services/opentelemetry.service';
 import { StructuredLoggerService } from '../services/structured-logger.service';
-import { CorrelationContext } from '../interfaces/monitoring.interfaces';
+import { CorrelationContext, LogLevel } from '../interfaces/monitoring.interfaces';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
@@ -51,7 +51,7 @@ export class MonitoringInterceptor implements NestInterceptor {
 
     // Log request start
     this.logger.logWithCorrelation(
-      'info',
+      LogLevel.INFO,
       `Request started: ${request.method} ${request.url}`,
       correlationId,
       {
@@ -87,7 +87,7 @@ export class MonitoringInterceptor implements NestInterceptor {
 
         // Log request completion
         this.logger.logWithCorrelation(
-          'info',
+          LogLevel.INFO,
           `Request completed: ${request.method} ${request.url} - ${statusCode}`,
           correlationId,
           {
@@ -125,7 +125,7 @@ export class MonitoringInterceptor implements NestInterceptor {
 
         // Log error
         this.logger.logWithCorrelation(
-          'error',
+          LogLevel.ERROR,
           `Request failed: ${request.method} ${request.url} - ${statusCode}`,
           correlationId,
           {

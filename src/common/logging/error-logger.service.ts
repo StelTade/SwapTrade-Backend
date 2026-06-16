@@ -3,7 +3,8 @@ import { Request } from 'express';
 import { LoggerService } from './logger_service';
 import { categorizeError, getErrorDetails, ErrorCategory } from '../exceptions/error-codes';
 import { ConfigService } from '../../config/config.service';
-import { AuditLoggerService } from './audit-logger.service';
+import { AuditLogService } from '../security/audit-log.service';
+import { AuditSeverity, AuditEventType } from '../security/audit-log.entity';
 
 export interface ErrorLog {
   timestamp: string;
@@ -34,7 +35,7 @@ export class ErrorLoggerService {
     @Optional() @Inject('LoggerService')
     private readonly logger?: LoggerService,
     private readonly configService?: ConfigService,
-    @Optional() private readonly auditLogger?: AuditLoggerService,
+    @Optional() private readonly auditLogger?: AuditLogService,
   ) {}
 
   /**
@@ -86,14 +87,15 @@ export class ErrorLoggerService {
 
       // Audit critical security errors
       if (this.auditLogger && (statusCode === 401 || statusCode === 403 || statusCode >= 500)) {
-        this.auditLogger.log({
-          action: 'SYSTEM_ERROR',
-          resource: 'SYSTEM',
-          status: 'FAILURE',
+        this.auditLogger.log(
+          {
+          eventType: AuditEventType.SUSPICIOUS_ACTIVITY,
+          severity: statusCode >= 500 ? AuditSeverity.CRITICAL : AuditSeverity.WARNING,
           metadata: { errorCode, statusCode, message: errorLog.message },
           userId: errorLog.userId,
-          ip: (request as any)?.ip
-        }).catch(e => console.error('Failed to audit error', e));
+          ipAddress: (request as any)?.ip,
+        } as any).catch((e: any) => console.error('Failed to audit error', e));
+
       }
     } catch (loggingError) {
       console.error('Error while logging error:', loggingError);

@@ -18,7 +18,7 @@ export class DidDocument {
   nonce: string; // For authentication challenges
 
   @Column({ type: 'timestamp', nullable: true })
-  nonceExpiry: Date;
+  nonceExpiry: Date | null;
 
   @CreateDateColumn()
   createdAt: Date;

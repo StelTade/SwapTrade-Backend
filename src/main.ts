@@ -20,12 +20,10 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('SwapTrade Backend')
-    .setDescription('Governance, options trading, liquidity mining, and mobile APIs')
-    .setVersion('1.0')
-    .addTag('governance')
-    .addTag('options')
-    .addTag('liquidity-mining')
-    .addTag('mobile')
+    .setDescription('Identity & Infrastructure domain services')
+    .setVersion('2.0')
+    .addTag('identity')
+    .addTag('infrastructure')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

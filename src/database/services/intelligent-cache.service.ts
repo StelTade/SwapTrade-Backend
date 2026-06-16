@@ -1,6 +1,5 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { MultiLevelCacheService } from './multi-level-cache.service';
-import { MLInferenceService } from '../../market-surveillance/services/ml-inference.service';
 
 @Injectable()
 export class IntelligentCacheService implements OnModuleInit {
@@ -12,7 +11,6 @@ export class IntelligentCacheService implements OnModuleInit {
 
   constructor(
     private readonly multiLevelCache: MultiLevelCacheService,
-    private readonly mlInference: MLInferenceService,
   ) {}
 
   async onModuleInit() {
@@ -55,7 +53,7 @@ export class IntelligentCacheService implements OnModuleInit {
       this.accessHistory.set(key, []);
     }
     
-    const history = this.accessHistory.get(key);
+    const history = this.accessHistory.get(key)!;
     history.push(Date.now());
     
     if (history.length > this.HISTORY_WINDOW) {

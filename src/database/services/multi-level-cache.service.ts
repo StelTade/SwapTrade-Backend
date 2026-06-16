@@ -1,7 +1,8 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, Inject } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { Redis } from 'ioredis';
-import { Cache } from 'cache-manager';
+import type { Cache } from 'cache-manager';
 
 export interface CacheLevel {
   name: string;
@@ -46,7 +47,7 @@ export class MultiLevelCacheService implements OnModuleInit {
     @InjectRedis('l1') private readonly l1Redis: Redis,
     @InjectRedis('l2') private readonly l2Redis: Redis,
     @InjectRedis('l3') private readonly l3Redis: Redis,
-    private readonly cacheManager: Cache,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
 
   async onModuleInit() {

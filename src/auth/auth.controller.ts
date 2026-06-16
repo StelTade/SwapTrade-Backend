@@ -1,16 +1,4 @@
-@Post('sessions/list')
-@ApiOperation({ summary: 'List user sessions', description: 'List all active sessions/devices for the user.' })
-listSessions(@Req() req) {
-  return this.authService.listSessions(req.user);
-}
-
-@Post('sessions/revoke')
-@ApiOperation({ summary: 'Revoke a session', description: 'Revoke a specific session/device.' })
-revokeSession(@Body('sessionId') sessionId: number, @Req() req) {
-  return this.authService.revokeSession(req.user, sessionId);
-}
-
-import { Body, Controller, Post, UseGuards, Req } from '@nestjs/common';
+import { Body, Controller, Post, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -20,7 +8,6 @@ import { ApiAuthErrorResponses } from '../common/decorators/swagger-error-respon
 
 @ApiTags('auth')
 @Controller('auth')
-@ApiVersion('1')
 export class AuthController {
 
   constructor(private readonly authService: AuthService) { }
@@ -64,6 +51,6 @@ export class AuthController {
   @ApiResponse({ status: 201, description: 'Registration successful', schema: { example: { id: 1, email: 'user@example.com' } } })
   @ApiAuthErrorResponses()
   register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto);
+    return this.authService.login(dto);
   }
 }

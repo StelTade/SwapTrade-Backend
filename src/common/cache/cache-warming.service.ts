@@ -4,12 +4,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CacheService } from '../services/cache.service';
 import { CacheWarmingConfig, CacheWarmingMetrics, WarmingStrategyResult } from './interfaces/cache-warming.interface';
-import { Balance } from '../../balance/balance.entity';
-import { MarketData } from '../../trading/entities/market-data.entity';
-import { VirtualAsset } from '../../trading/entities/virtual-asset.entity';
-import { PortfolioService } from '../../portfolio/portfolio.service';
+// import { Balance } from '../../balance/balance.entity';
+// import { MarketData } from '../../trading/entities/market-data.entity';
+// import { VirtualAsset } from '../../trading/entities/virtual-asset.entity';
+// import { PortfolioService } from '../../portfolio/portfolio.service';
 import { ConfigService as AppConfigService } from '../../config/config.service';
-import { MetricsService } from '../../metrics/metrics.service';
+// import { MetricsService } from '../../metrics/metrics.service';
 
 @Injectable()
 export class CacheWarmingService implements OnApplicationBootstrap {
@@ -27,19 +27,19 @@ export class CacheWarmingService implements OnApplicationBootstrap {
     private readonly configService: ConfigService,
     private readonly cacheService: CacheService,
     private readonly appConfigService: AppConfigService,
-    @InjectRepository(Balance)
+    // @InjectRepository(Balance)
     @Optional()
-    private readonly balanceRepository?: Repository<Balance>,
-    @InjectRepository(MarketData)
+    private readonly balanceRepository?: Repository<any>,
+    // @InjectRepository(MarketData)
     @Optional()
-    private readonly marketDataRepository?: Repository<MarketData>,
-    @InjectRepository(VirtualAsset)
+    private readonly marketDataRepository?: Repository<any>,
+    // @InjectRepository(VirtualAsset)
     @Optional()
-    private readonly virtualAssetRepository?: Repository<VirtualAsset>,
+    private readonly virtualAssetRepository?: Repository<any>,
     @Optional()
-    private readonly portfolioService?: PortfolioService,
+    private readonly portfolioService?: any,
     @Optional()
-    private readonly metricsService?: MetricsService,
+    private readonly metricsService?: any,
   ) {}
 
   async onApplicationBootstrap() {

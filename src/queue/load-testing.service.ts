@@ -1,7 +1,7 @@
 // src/queue/load-testing.service.ts
 import { Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import type { Queue } from 'bull';
+import { Queue } from 'bull';
 
 /**
  * Load test configuration

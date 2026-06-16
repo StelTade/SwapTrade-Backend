@@ -13,28 +13,29 @@ import {
   Request,
   Inject,
   forwardRef,
+  NotFoundException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { PrivacyProfileService } from '../services/privacy-profile.service';
-import { EncryptedOrderService } from '../services/encrypted-order.service';
-import { PrivacyComplianceService } from '../services/privacy-compliance.service';
-import { PrivacyEncryptionService } from '../services/privacy-encryption.service';
-import { PrivacyZKPService } from '../services/privacy-zkp.service';
+import { PrivacyProfileService } from './services/privacy-profile.service';
+import { EncryptedOrderService } from './services/encrypted-order.service';
+import { PrivacyComplianceService } from './services/privacy-compliance.service';
+import { PrivacyEncryptionService } from './services/privacy-encryption.service';
+import { PrivacyZKPService } from './services/privacy-zkp.service';
 import {
   CreatePrivacyProfileDto,
   UpdatePrivacyProfileDto,
   PrivacyProfileResponseDto,
-} from '../dto/privacy-profile.dto';
+} from './dto/privacy-profile.dto';
 import {
   CreateEncryptedOrderDto,
   EncryptedOrderResponseDto,
   DecryptedOrderDto,
-} from '../dto/encrypted-order.dto';
+} from './dto/encrypted-order.dto';
 import {
   CreatePrivacyAuditLogDto,
   PrivacyAuditLogResponseDto,
   RequestAuditDecryptionDto,
-} from '../dto/privacy-audit-log.dto';
+} from './dto/privacy-audit-log.dto';
 
 @ApiTags('Privacy-Preserving Trading')
 @Controller('api/v1/privacy')
@@ -78,6 +79,9 @@ export class PrivacyController {
   async getMyProfile(@Request() req): Promise<PrivacyProfileResponseDto> {
     const userId = req.user?.id;
     const profile = await this.privacyProfileService.getProfileByUserId(userId);
+    if (!profile) {
+      throw new NotFoundException('Privacy profile not found');
+    }
     return this.privacyProfileService.toResponseDto(profile);
   }
 
@@ -178,6 +182,9 @@ export class PrivacyController {
   })
   async getOrder(@Param('orderId') orderId: string): Promise<EncryptedOrderResponseDto> {
     const order = await this.encryptedOrderService.getOrderById(orderId);
+    if (!order) {
+      throw new NotFoundException('Encrypted order not found');
+    }
     return this.encryptedOrderService.toResponseDto(order);
   }
 
@@ -363,6 +370,9 @@ export class PrivacyController {
   })
   async getAuditLog(@Param('auditId') auditId: string): Promise<PrivacyAuditLogResponseDto> {
     const auditLog = await this.complianceService.getAuditLogById(auditId);
+    if (!auditLog) {
+      throw new NotFoundException('Privacy audit log not found');
+    }
     return this.complianceService.toResponseDto(auditLog);
   }
 

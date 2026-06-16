@@ -168,7 +168,7 @@ export class MetricsService {
 
   private checkErrorRates(): void {
     const now = Date.now();
-
+    
     for (const [key] of this.requestCounts.entries()) {
       const route = key.replace('request:', '');
       const errorRate = this.getErrorRate(route);
@@ -190,6 +190,19 @@ export class MetricsService {
         }
       }
     }
+  }
+
+  // Cache metrics methods
+  recordCacheHit(): void {
+    this.logger.metric('cache.hit', 1, {});
+  }
+
+  recordCacheMiss(): void {
+    this.logger.metric('cache.miss', 1, {});
+  }
+
+  recordCacheEviction(): void {
+    this.logger.metric('cache.eviction', 1, {});
   }
 
   reset(): void {

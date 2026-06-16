@@ -9,7 +9,7 @@ import { tap, map } from 'rxjs/operators';
 import { Reflector } from '@nestjs/core';
 import { Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import type { Cache } from 'cache-manager';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class CacheInterceptor implements NestInterceptor {

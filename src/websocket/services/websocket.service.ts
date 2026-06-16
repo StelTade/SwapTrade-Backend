@@ -1,22 +1,24 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { WebSocketGateway, WebSocketServer, SubscribeMessage, OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { 
+import type { 
   WebSocketClient, 
-  WebSocketMessage, 
-  WebSocketMessageType, 
+  WebSocketAuthData,
   SubscriptionRequest,
   OrderBookUpdate,
   TradeExecuted,
   OrderUpdate,
   BalanceUpdate,
   PortfolioUpdate,
-  MarketDataUpdate
+  MarketDataUpdate,
+  WebSocketMessage
 } from '../interfaces/websocket.interfaces';
+import { WebSocketMessageType } from '../interfaces/websocket.interfaces';
 import { v4 as uuidv4 } from 'uuid';
 import { JwtService } from '@nestjs/jwt';
-import { PrometheusService } from '../common/monitoring/services/prometheus.service';
-import { StructuredLoggerService } from '../common/monitoring/services/structured-logger.service';
+import { StructuredLoggerService } from '../../common/monitoring/services/structured-logger.service';
+import { PrometheusService } from '../../common/monitoring/services/prometheus.service';
+import { LogLevel } from 'src/common/monitoring/interfaces/monitoring.interfaces';
 
 @Injectable()
 @WebSocketGateway({
@@ -29,7 +31,7 @@ import { StructuredLoggerService } from '../common/monitoring/services/structure
   pingInterval: 25000
 })
 export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
-  @WebSocketServer() server: Server;
+  @WebSocketServer() server!: Server;
   private readonly logger = new Logger(WebSocketService.name);
   private clients: Map<string, WebSocketClient> = new Map();
   private subscriptions: Map<string, Set<string>> = new Map(); // channel -> client IDs
@@ -37,13 +39,12 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
 
   constructor(
     private readonly jwtService: JwtService,
-    private readonly prometheusService: PrometheusService,
-    private readonly structuredLogger: StructuredLoggerService
+    private readonly structuredLogger: StructuredLoggerService,
+    private readonly prometheusService: PrometheusService
   ) {}
 
   afterInit(server: Server) {
     this.logger.log('WebSocket Gateway initialized');
-    this.prometheusService.setGauge('websocket_connections_total', 0);
     
     // Set up heartbeat interval
     setInterval(() => {
@@ -70,22 +71,10 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
     };
 
     this.clients.set(clientId, wsClient);
-    client.clientId = clientId;
+    (client as any).clientId = clientId;
 
-    // Update metrics
-    this.prometheusService.incrementCounter('websocket_connections_total');
-    this.prometheusService.setGauge('websocket_active_connections', this.clients.size);
-
-    this.structuredLogger.logWithCorrelation(
-      'info',
-      `WebSocket client connected: ${clientId}`,
-      sessionId,
-      {
-        clientId,
-        ip: client.handshake.address,
-        userAgent: client.handshake.headers['user-agent']
-      }
-    );
+    // Update connections log
+    this.logger.log(`WebSocket client connected: ${clientId}`);
 
     // Send welcome message
     this.sendToClient(clientId, {
@@ -96,7 +85,7 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
   }
 
   async handleDisconnect(client: Socket) {
-    const clientId = client.clientId;
+    const clientId = (client as any).clientId;
     const wsClient = this.clients.get(clientId);
 
     if (wsClient) {
@@ -111,25 +100,12 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
       }
 
       this.clients.delete(clientId);
-
-      // Update metrics
-      this.prometheusService.setGauge('websocket_active_connections', this.clients.size);
-
-      this.structuredLogger.logWithCorrelation(
-        'info',
-        `WebSocket client disconnected: ${clientId}`,
-      wsClient.sessionId,
-      {
-        clientId,
-        userId: wsClient.userId,
-        sessionDuration: Date.now() - wsClient.metadata.connectedAt
-      }
-      );
+      this.logger.log(`WebSocket client disconnected: ${clientId}`);
     }
   }
 
   @SubscribeMessage('authenticate')
-  async handleAuthenticate(client: Socket, data: WebSocketAuthData) {
+  async handleAuthenticate(client: Socket & { clientId: string }, data: WebSocketAuthData) {
     const clientId = client.clientId;
     const wsClient = this.clients.get(clientId);
 
@@ -150,18 +126,11 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
       wsClient.lastActivity = new Date();
 
       // Restore user subscriptions if any
-      this.restoreUserSubscriptions(wsClient.userId, clientId);
+      if (wsClient.userId) {
+        this.restoreUserSubscriptions(wsClient.userId, clientId);
+      }
 
-      this.structuredLogger.logWithCorrelation(
-        'info',
-        `WebSocket client authenticated: ${clientId}`,
-        wsClient.sessionId,
-        {
-          clientId,
-          userId: wsClient.userId,
-          role: wsClient.userRole
-        }
-      );
+      this.logger.log(`Client authenticated: ${clientId}`);
 
       this.sendToClient(clientId, {
         type: WebSocketMessageType.AUTH_SUCCESS,
@@ -169,28 +138,19 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
         timestamp: new Date().toISOString()
       });
 
-      this.prometheusService.incrementCounter('websocket_authentications_total', { status: 'success' });
-
-    } catch (error) {
-      this.structuredLogger.logWithCorrelation(
-        'warn',
-        `WebSocket authentication failed: ${clientId}`,
-        wsClient.sessionId,
-        { clientId, error: error.message }
-      );
+    } catch (error: any) {
+      this.logger.warn(`WebSocket authentication failed: ${clientId}, error: ${error.message}`);
 
       this.sendToClient(clientId, {
         type: WebSocketMessageType.AUTH_FAILED,
         data: { error: 'Invalid token' },
         timestamp: new Date().toISOString()
       });
-
-      this.prometheusService.incrementCounter('websocket_authentications_total', { status: 'failed' });
     }
   }
 
   @SubscribeMessage('subscribe')
-  async handleSubscribe(client: Socket, data: SubscriptionRequest) {
+  async handleSubscribe(client: Socket & { clientId: string }, data: SubscriptionRequest) {
     const clientId = client.clientId;
     const wsClient = this.clients.get(clientId);
 
@@ -221,7 +181,7 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
   }
 
   @SubscribeMessage('unsubscribe')
-  async handleUnsubscribe(client: Socket, data: { channels: string[] }) {
+  async handleUnsubscribe(client: Socket & { clientId: string }, data: SubscriptionRequest) {
     const clientId = client.clientId;
     const wsClient = this.clients.get(clientId);
 
@@ -244,7 +204,7 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
   }
 
   @SubscribeMessage('ping')
-  async handlePing(client: Socket) {
+  async handlePing(client: Socket & { clientId: string }) {
     const clientId = client.clientId;
     const wsClient = this.clients.get(clientId);
 
@@ -419,7 +379,7 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
     }
 
     this.structuredLogger.logWithCorrelation(
-      'info',
+      LogLevel.INFO,
       `Client subscribed to channel: ${channel}`,
       client.sessionId,
       {
@@ -450,7 +410,7 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
 
   private validateSubscription(client: WebSocketClient, channel: string): boolean {
     // Check if user has permission to subscribe to this channel
-    if (channel.startsWith('admin:') && client.userRole !== 'admin') {
+    if (channel.startsWith('admin:') && client?.userRole !== 'admin') {
       return false;
     }
 

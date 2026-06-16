@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, FindManyOptions } from 'typeorm';
 import { createHash } from 'crypto';
-import { NotificationService } from '../notification/notification.service';
 import {
   AuditEventType,
   AuditLog,
@@ -31,7 +30,6 @@ export class AuditLogService {
   constructor(
     @InjectRepository(AuditLog)
     private readonly auditLogRepo: Repository<AuditLog>,
-    private readonly notificationService: NotificationService,
   ) {}
 
   async log(dto: CreateAuditLogDto): Promise<AuditLog> {
@@ -65,18 +63,6 @@ export class AuditLogService {
     });
 
     const saved = await this.auditLogRepo.save(entry);
-
-    // Notify on suspicious activity or critical events
-    if (
-      dto.severity === AuditSeverity.CRITICAL ||
-      dto.eventType === AuditEventType.SUSPICIOUS_ACTIVITY
-    ) {
-      await this.notificationService.notifyAdmins({
-        title: `🚨 ${dto.eventType}`,
-        body: `User ${dto.userId} triggered a ${dto.severity} event.`,
-        metadata: dto.metadata,
-      });
-    }
 
     return saved;
   }

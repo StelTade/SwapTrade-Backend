@@ -5,8 +5,10 @@ import { WebSocketAuthGuard } from '../guards/websocket-auth.guard';
 import { WebSocketService } from '../services/websocket.service';
 import { 
   WebSocketMessage, 
-  WebSocketMessageType,
-  SubscriptionRequest 
+  WebSocketMessageType
+} from '../interfaces/websocket.interfaces';
+import type {
+  SubscriptionRequest
 } from '../interfaces/websocket.interfaces';
 
 @WebSocketGateway({
@@ -25,7 +27,7 @@ export class TradingGateway {
   @SubscribeMessage('subscribe_trading')
   async handleTradingSubscribe(
     @MessageBody() data: SubscriptionRequest,
-    @ConnectedSocket() client: Socket
+    @ConnectedSocket() client: Socket & { clientId: string; userId: string }
   ) {
     const clientId = client.clientId;
     
@@ -95,7 +97,7 @@ export class TradingGateway {
   @SubscribeMessage('get_market_data')
   async handleGetMarketData(
     @MessageBody() data: { asset: string },
-    @ConnectedSocket() client: Socket
+    @ConnectedSocket() client: Socket & { clientId: string; userId: string }
   ) {
     // This would fetch market data from market service
     return {
@@ -116,7 +118,7 @@ export class TradingGateway {
   @SubscribeMessage('get_user_trades')
   async handleGetUserTrades(
     @MessageBody() data: { limit?: number },
-    @ConnectedSocket() client: Socket
+    @ConnectedSocket() client: Socket & { clientId: string; userId: string }
   ) {
     const userId = client.userId;
     
@@ -143,7 +145,7 @@ export class TradingGateway {
   @SubscribeMessage('get_user_orders')
   async handleGetUserOrders(
     @MessageBody() data: { status?: string; limit?: number },
-    @ConnectedSocket() client: Socket
+    @ConnectedSocket() client: Socket & { clientId: string; userId: string }
   ) {
     const userId = client.userId;
     

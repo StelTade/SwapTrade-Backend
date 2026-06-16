@@ -1,7 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { Exception } from '@opentelemetry/api';
 import { PrometheusService } from './prometheus.service';
 import { StructuredLoggerService } from './structured-logger.service';
+import { LogLevel } from '../interfaces/monitoring.interfaces';
 import { OpenTelemetryService } from './opentelemetry.service';
 import { HttpService } from '@nestjs/axios';
 import { AxiosResponse } from 'axios';
@@ -37,7 +39,7 @@ export class SyntheticMonitoringService {
     this.prometheusService.setGauge('synthetic_checks_total', total);
 
     this.structuredLogger.logWithCorrelation(
-      'info',
+      LogLevel.INFO,
       `Synthetic monitoring completed: ${passed}/${total} checks passed`,
       'synthetic-monitoring',
       { passed, total, results }
@@ -60,7 +62,7 @@ export class SyntheticMonitoringService {
 
       this.prometheusService.recordHistogram('synthetic_api_health_check_duration', duration / 1000);
       
-      if (response.status === 200) {
+      if (response?.status === 200) {
         this.prometheusService.incrementCounter('synthetic_api_health_checks_total', { status: 'success' });
         return true;
       } else {
@@ -72,7 +74,7 @@ export class SyntheticMonitoringService {
       this.prometheusService.recordHistogram('synthetic_api_health_check_duration', duration / 1000);
       this.prometheusService.incrementCounter('synthetic_api_health_checks_total', { status: 'error' });
       
-      this.structuredLogger.error('API health check failed', error, { correlationId: 'synthetic-monitoring' });
+      this.structuredLogger.error('API health check failed', error as Error, { correlationId: 'synthetic-monitoring' });
       return false;
     }
   }
@@ -87,7 +89,7 @@ export class SyntheticMonitoringService {
 
       this.prometheusService.recordHistogram('synthetic_trading_check_duration', duration / 1000);
       
-      if (response.status === 200) {
+      if (response?.status === 200) {
         this.prometheusService.incrementCounter('synthetic_trading_checks_total', { status: 'success' });
         return true;
       } else {
@@ -99,7 +101,7 @@ export class SyntheticMonitoringService {
       this.prometheusService.recordHistogram('synthetic_trading_check_duration', duration / 1000);
       this.prometheusService.incrementCounter('synthetic_trading_checks_total', { status: 'error' });
       
-      this.structuredLogger.error('Trading functionality check failed', error, { correlationId: 'synthetic-monitoring' });
+      this.structuredLogger.error('Trading functionality check failed', error as Error, { correlationId: 'synthetic-monitoring' });
       return false;
     }
   }
@@ -116,7 +118,7 @@ export class SyntheticMonitoringService {
       const duration = Date.now() - startTime;
       this.prometheusService.recordHistogram('synthetic_auth_check_duration', duration / 1000);
       
-      if (response.status === 200) {
+      if (response?.status === 200) {
         this.prometheusService.incrementCounter('synthetic_auth_checks_total', { status: 'success' });
         return true;
       } else {
@@ -128,7 +130,7 @@ export class SyntheticMonitoringService {
       this.prometheusService.recordHistogram('synthetic_auth_check_duration', duration / 1000);
       this.prometheusService.incrementCounter('synthetic_auth_checks_total', { status: 'error' });
       
-      this.structuredLogger.error('Authentication check failed', error, { correlationId: 'synthetic-monitoring' });
+      this.structuredLogger.error('Authentication check failed', error as Error, { correlationId: 'synthetic-monitoring' });
       return false;
     }
   }
@@ -143,7 +145,7 @@ export class SyntheticMonitoringService {
 
       this.prometheusService.recordHistogram('synthetic_fee_progression_check_duration', duration / 1000);
       
-      if (response.status === 200) {
+      if (response?.status === 200) {
         this.prometheusService.incrementCounter('synthetic_fee_progression_checks_total', { status: 'success' });
         return true;
       } else {
@@ -155,7 +157,7 @@ export class SyntheticMonitoringService {
       this.prometheusService.recordHistogram('synthetic_fee_progression_check_duration', duration / 1000);
       this.prometheusService.incrementCounter('synthetic_fee_progression_checks_total', { status: 'error' });
       
-      this.structuredLogger.error('Fee progression check failed', error, { correlationId: 'synthetic-monitoring' });
+      this.structuredLogger.error('Fee progression check failed', error as Error, { correlationId: 'synthetic-monitoring' });
       return false;
     }
   }
@@ -170,7 +172,7 @@ export class SyntheticMonitoringService {
 
       this.prometheusService.recordHistogram('synthetic_referral_check_duration', duration / 1000);
       
-      if (response.status === 200) {
+      if (response?.status === 200) {
         this.prometheusService.incrementCounter('synthetic_referral_checks_total', { status: 'success' });
         return true;
       } else {
@@ -182,7 +184,7 @@ export class SyntheticMonitoringService {
       this.prometheusService.recordHistogram('synthetic_referral_check_duration', duration / 1000);
       this.prometheusService.incrementCounter('synthetic_referral_checks_total', { status: 'error' });
       
-      this.structuredLogger.error('Referral system check failed', error, { correlationId: 'synthetic-monitoring' });
+      this.structuredLogger.error('Referral system check failed', error as Error, { correlationId: 'synthetic-monitoring' });
       return false;
     }
   }
@@ -215,7 +217,7 @@ export class SyntheticMonitoringService {
       this.prometheusService.recordHistogram('synthetic_rate_limit_check_duration', duration / 1000);
       this.prometheusService.incrementCounter('synthetic_rate_limit_checks_total', { status: 'error' });
       
-      this.structuredLogger.error('Rate limiting check failed', error, { correlationId: 'synthetic-monitoring' });
+      this.structuredLogger.error('Rate limiting check failed', error as Error, { correlationId: 'synthetic-monitoring' });
       return false;
     }
   }
@@ -252,8 +254,8 @@ export class SyntheticMonitoringService {
       
     } catch (error) {
       this.prometheusService.incrementCounter('synthetic_trading_flows_total', { status: 'failure' });
-      this.structuredLogger.error('Synthetic trading flow test failed', error, { correlationId: 'synthetic-monitoring' });
-      span.recordException(error);
+      this.structuredLogger.error('Synthetic trading flow test failed', error as Error, { correlationId: 'synthetic-monitoring' });
+      span.recordException(error as Exception);
     } finally {
       span.end();
     }
@@ -291,8 +293,8 @@ export class SyntheticMonitoringService {
       
     } catch (error) {
       this.prometheusService.incrementCounter('synthetic_user_journeys_total', { status: 'failure' });
-      this.structuredLogger.error('Synthetic user journey test failed', error, { correlationId: 'synthetic-monitoring' });
-      span.recordException(error);
+      this.structuredLogger.error('Synthetic user journey test failed', error as Error, { correlationId: 'synthetic-monitoring' });
+      span.recordException(error as Exception);
     } finally {
       span.end();
     }
@@ -328,8 +330,8 @@ export class SyntheticMonitoringService {
       
     } catch (error) {
       this.prometheusService.incrementCounter('synthetic_achievement_tests_total', { status: 'failure' });
-      this.structuredLogger.error('Synthetic achievement test failed', error, { correlationId: 'synthetic-monitoring' });
-      span.recordException(error);
+      this.structuredLogger.error('Synthetic achievement test failed', error as Error, { correlationId: 'synthetic-monitoring' });
+      span.recordException(error as Exception);
     } finally {
       span.end();
     }
@@ -338,7 +340,7 @@ export class SyntheticMonitoringService {
   // Manual trigger for immediate testing
   async runAllTests(): Promise<{ passed: number; total: number; results: any[] }> {
     this.structuredLogger.logWithCorrelation(
-      'info',
+      LogLevel.INFO,
       'Running manual synthetic monitoring tests',
       'synthetic-monitoring'
     );
@@ -360,7 +362,11 @@ export class SyntheticMonitoringService {
   private async getMetricValue(metricName: string): Promise<number> {
     try {
       const response = await this.httpService.get(`${this.baseUrl}/metrics`).toPromise();
-      const metrics = response.data;
+      const metrics = response?.data;
+      
+      if (!metrics) {
+        return 0;
+      }
       
       const lines = metrics.split('\n');
       for (const line of lines) {
@@ -371,7 +377,7 @@ export class SyntheticMonitoringService {
       
       return 0;
     } catch (error) {
-      this.structuredLogger.error(`Failed to get metric ${metricName}`, error, { correlationId: 'synthetic-monitoring' });
+      this.structuredLogger.error(`Failed to get metric ${metricName}`, error as Error, { correlationId: 'synthetic-monitoring' });
       return 0;
     }
   }

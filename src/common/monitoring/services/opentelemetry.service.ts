@@ -3,7 +3,8 @@ import { NodeSDK } from '@opentelemetry/sdk-node';
 import { Resource } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { trace, Span, SpanStatusCode, SpanKind } from '@opentelemetry/api';
-import { TraceConfig, CorrelationContext } from '../interfaces/monitoring.interfaces';
+import type { TraceConfig } from '../interfaces/monitoring.interfaces';
+import { CorrelationContext } from '../interfaces/monitoring.interfaces';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()

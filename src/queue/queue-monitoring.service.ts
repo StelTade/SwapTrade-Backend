@@ -1,7 +1,8 @@
 // src/queue/queue-monitoring.service.ts
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
-import type { Queue, JobCounts } from 'bull';
+import type { Queue } from 'bull';
+import { JobCounts } from 'bull';
 import { QueueName } from './queue.constants';
 import { Cron, CronExpression } from '@nestjs/schedule';
 

@@ -325,4 +325,4 @@ export class AbuseDetectionService {
   }
 }
 
-export { AbusePattern, AbuseScore };
+export type { AbusePattern, AbuseScore };

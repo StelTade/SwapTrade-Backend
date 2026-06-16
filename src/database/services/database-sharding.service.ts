@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
-import { Trade } from '../../trading/entities/trade.entity';
-import { UserBalance } from '../../balance/entities/user-balance.entity';
+import { DataSource, Repository, ObjectLiteral } from 'typeorm';
+import { Trade } from '../entities/trade.entity';
+import { UserBalance } from '../entities/user-balance.entity';
 
 export interface ShardConfig {
   id: string;
@@ -123,7 +123,7 @@ export class DatabaseShardingService {
   /**
    * Get repository for a specific entity on the appropriate shard
    */
-  async getRepository<T>(
+  async getRepository<T extends ObjectLiteral>(
     entityClass: any,
     data: any,
     strategy: string = 'user',
@@ -147,7 +147,7 @@ export class DatabaseShardingService {
   /**
    * Execute query across multiple shards
    */
-  async executeQueryAcrossShards<T>(
+  async executeQueryAcrossShards<T extends ObjectLiteral>(
     queryPlan: QueryPlan,
     queryBuilder: (repository: Repository<T>) => Promise<T[]>,
   ): Promise<T[]> {
@@ -164,7 +164,7 @@ export class DatabaseShardingService {
 
         try {
           const repository = shard.getRepository(Trade); // Adjust entity type as needed
-          return await queryBuilder(repository as Repository<T>);
+          return await queryBuilder(repository as unknown as Repository<T>);
         } catch (error) {
           this.logger.error(`Query failed on shard '${shardId}':`, error);
           return [];
@@ -184,7 +184,7 @@ export class DatabaseShardingService {
 
         try {
           const repository = shard.getRepository(Trade); // Adjust entity type as needed
-          const shardResult = await queryBuilder(repository as Repository<T>);
+          const shardResult = await queryBuilder(repository as unknown as Repository<T>);
           results.push(...shardResult);
         } catch (error) {
           this.logger.error(`Query failed on shard '${shardId}':`, error);
@@ -243,7 +243,7 @@ export class DatabaseShardingService {
   /**
    * Insert data into appropriate shard
    */
-  async insert<T>(entityClass: any, data: any, strategy: string = 'user'): Promise<T> {
+  async insert<T extends ObjectLiteral>(entityClass: any, data: any, strategy: string = 'user'): Promise<T> {
     const repository = await this.getRepository<T>(entityClass, data, strategy);
     return await repository.save(data);
   }
