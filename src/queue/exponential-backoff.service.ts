@@ -1,6 +1,6 @@
 // src/queue/exponential-backoff.service.ts
 import { Injectable, Logger } from '@nestjs/common';
-import type { Job } from 'bull';
+import { Job } from 'bull';
 import {
   calculateBackoffDelay,
   RETRY_POLICIES,

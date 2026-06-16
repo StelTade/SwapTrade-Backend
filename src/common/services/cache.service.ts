@@ -1,9 +1,9 @@
 import { Injectable, Inject, Optional, Logger } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
-import type { Redis } from 'ioredis';
+import { Redis } from 'ioredis';
 import { CacheHitMissMetrics } from '../cache/interfaces/cache-warming.interface';
-import { MetricsService } from '../../metrics/metrics.service';
+import { MetricsService } from '../logging/metrics_service';
 import { CacheDependencyGraphService } from '../cache/cache-dependency-graph.service';
 
 @Injectable()

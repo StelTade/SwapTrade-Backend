@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { authenticator } from 'otplib';
+import * as speakeasy from 'speakeasy';
 import * as qrcode from 'qrcode';
 import { Auth } from './entities/auth.entity';
 
@@ -13,18 +13,18 @@ export class MFAService {
   ) {}
 
   async generateSecret(auth: Auth) {
-    const secret = authenticator.generateSecret();
-    const otpauthUrl = authenticator.keyuri(auth.staffId, 'SwapTrade', secret);
-    const qrCodeDataUrl = await qrcode.toDataURL(otpauthUrl);
+    const secret = speakeasy.generateSecret({ length: 20 });
+    const otpauthUrl = secret.otpauth_url;
+    const qrCodeDataUrl = await qrcode.toDataURL(otpauthUrl!);
 
     return {
-      secret,
+      secret: secret.base32,
       qrCodeDataUrl,
     };
   }
 
   async verifyAndEnable(authId: number, secret: string, token: string) {
-    const isValid = authenticator.verify({ token, secret });
+    const isValid = speakeasy.totp.verify({ token, secret, encoding: 'base32' });
     if (!isValid) {
       throw new BadRequestException('Invalid TOTP token');
     }
@@ -51,7 +51,7 @@ export class MFAService {
       return true; // MFA not enabled
     }
 
-    return authenticator.verify({ token, secret: auth.totpSecret });
+    return speakeasy.totp.verify({ token, secret: auth.totpSecret, encoding: 'base32' });
   }
 
   async disable(authId: number, token: string) {
@@ -64,7 +64,7 @@ export class MFAService {
       throw new BadRequestException('MFA not enabled');
     }
 
-    const isValid = authenticator.verify({ token, secret: auth.totpSecret });
+    const isValid = speakeasy.totp.verify({ token, secret: auth.totpSecret, encoding: 'base32' });
     if (!isValid) {
       throw new BadRequestException('Invalid TOTP token');
     }

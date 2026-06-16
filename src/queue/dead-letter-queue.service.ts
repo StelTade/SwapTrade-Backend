@@ -1,6 +1,6 @@
 // src/queue/dead-letter-queue.service.ts
 import { Injectable, Logger } from '@nestjs/common';
-import type { Job } from 'bull';
+import { Job } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
 import type { Queue } from 'bull';
 import { QueueName } from './queue.constants';

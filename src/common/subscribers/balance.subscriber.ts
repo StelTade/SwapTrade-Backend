@@ -7,7 +7,7 @@ import {
 } from 'typeorm';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
-import { UserBalance } from '../../balance/user-balance.entity';
+import { UserBalance } from '../../database/entities/user-balance.entity';
 import { CacheInvalidationService } from '../cache/cache-invalidation.service';
 
 /**

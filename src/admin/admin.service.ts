@@ -1,20 +1,22 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource }  from 'typeorm';
+import { AuditLog } from '../common/security/audit-log.entity';
 import { AdjustPointsDto }         from './dto/adjust-points.dto';
 import { ReferralQueryDto }        from './dto/referral-query.dto';
 
 @Injectable()
 export class AdminService {
   constructor(
-    @InjectRepository('waitlist_referral_points')
-    private readonly pointsRepo: Repository<any>,
-    @InjectRepository('waitlist_referrals')
-    private readonly referralRepo: Repository<any>,
-    @InjectRepository('audit_log')
-    private readonly auditRepo: Repository<any>,
+    // @InjectRepository('waitlist_referral_points')
+    // private readonly pointsRepo: Repository<any>,
+    // @InjectRepository('waitlist_referrals')
+    // private readonly referralRepo: Repository<any>,
+    @InjectRepository(AuditLog)
+    private readonly auditRepo: Repository<AuditLog>,
   ) {}
 
+  /* TODO: Implement when referral entities are available
   // #201 — referrals list with filters
   async getReferrals(query: ReferralQueryDto) {
     const { status, suspect, page, limit } = query;
@@ -46,6 +48,7 @@ export class AdminService {
     await this.auditEntry(adminId, 'adjust_points', 'referral', referralId, dto);
     return { success: true };
   }
+  */
 
   // #201 — shared audit logger
   async auditEntry(
@@ -56,27 +59,27 @@ export class AdminService {
     payload?: object,
   ): Promise<void> {
     await this.auditRepo.save(
-      this.auditRepo.create({ admin_id: adminId, action, target_type: targetType, target_id: targetId, payload }),
+      this.auditRepo.create({ userId: adminId, eventType: action as any, entityType: targetType, entityId: targetId, metadata: payload }),
     );
   }
 
   // #203 — referral stats
-  async getReferralStats(): Promise<any> {
-    const totalReferrals = await this.referralRepo.count();
-    const verifiedReferrals = await this.referralRepo.count({ where: { status: 'verified' } });
+  // async getReferralStats(): Promise<any> {
+  //   const totalReferrals = await this.referralRepo.count();
+  //   const verifiedReferrals = await this.referralRepo.count({ where: { status: 'verified' } });
     
-    const topReferrers = await this.referralRepo.createQueryBuilder('r')
-      .select('r.referrer_id', 'referrerId')
-      .addSelect('COUNT(r.id)', 'count')
-      .groupBy('r.referrer_id')
-      .orderBy('count', 'DESC')
-      .limit(10)
-      .getRawMany();
+  //   const topReferrers = await this.referralRepo.createQueryBuilder('r')
+  //     .select('r.referrer_id', 'referrerId')
+  //     .addSelect('COUNT(r.id)', 'count')
+  //     .groupBy('r.referrer_id')
+  //     .orderBy('count', 'DESC')
+  //     .limit(10)
+  //     .getRawMany();
 
-    return {
-      totalReferrals,
-      verifiedReferrals,
-      topReferrers,
-    };
-  }
+  //   return {
+  //     totalReferrals,
+  //     verifiedReferrals,
+  //     topReferrers,
+  //   };
+  // }
 }

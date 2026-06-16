@@ -73,7 +73,12 @@ export class PrivacyEncryptionService {
       const usedNonce = nonce || this.generateNonce();
       const cipher = crypto.createCipheriv(this.algorithm, key, usedNonce);
       
-      let encrypted = cipher.update(plaintext, 'utf8', 'hex');
+      let encrypted: string;
+      if (typeof plaintext === 'string') {
+        encrypted = cipher.update(plaintext, 'utf8', 'hex');
+      } else {
+        encrypted = cipher.update(plaintext, undefined, 'hex');
+      }
       encrypted += cipher.final('hex');
       
       const tag = cipher.getAuthTag();

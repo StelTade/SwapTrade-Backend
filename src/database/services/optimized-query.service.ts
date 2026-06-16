@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, SelectQueryBuilder } from 'typeorm';
-import { Trade } from '../../trading/entities/trade.entity';
-import { UserBalance } from '../../balance/entities/user-balance.entity';
-import { VirtualAsset } from '../../trading/entities/virtual-asset.entity';
-import { CacheService } from '../services/cache.service';
+import { Trade } from '../entities/trade.entity';
+import { UserBalance } from '../entities/user-balance.entity';
+import { VirtualAsset } from '../entities/virtual-asset.entity';
+import { CacheService } from '../../common/services/cache.service';
 
 export interface QueryPerformanceMetrics {
   executionTime: number;
@@ -335,8 +335,8 @@ export class OptimizedQueryService {
     this.logger.debug(`Batch insert of ${trades.length} trades executed in ${executionTime}ms`);
 
     // Invalidate relevant caches
-    const affectedUsers = [...new Set(trades.map(t => t.userId))];
-    const affectedAssets = [...new Set(trades.map(t => t.asset))];
+    const affectedUsers = [...new Set(trades.map(t => t.userId).filter((id): id is number => id !== undefined))];
+    const affectedAssets = [...new Set(trades.map(t => t.asset).filter((asset): asset is string => asset !== undefined))];
 
     await Promise.all([
       this.cacheService.invalidate('trading_stats:*'),

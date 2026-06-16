@@ -1,4 +1,4 @@
-import type Redis from 'ioredis';
+import Redis from 'ioredis';
 import CircuitBreaker from 'opossum';
 import { RedisPoolService } from './redis-pool.service';
 import { RedisMetricsService } from './redis-metrics.service';

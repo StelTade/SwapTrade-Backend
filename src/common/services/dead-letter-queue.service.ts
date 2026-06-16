@@ -1,6 +1,6 @@
 import { Injectable, Logger, Inject, Optional } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
-import type { Queue, Job } from 'bull';
+import { Queue, Job } from 'bull';
 import { CorrelationIdService } from './correlation-id.service';
 
 /**

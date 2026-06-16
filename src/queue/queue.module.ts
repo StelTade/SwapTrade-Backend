@@ -16,9 +16,8 @@ import { DeadLetterQueueService } from './dead-letter-queue.service';
 import { QueueAnalyticsService } from './queue-analytics.service';
 import { QueueController } from './queue.controller';
 import { QueueAdminController } from './queue-admin.controller';
-import { NotificationModule } from '../notification/notification.module';
 import { UserModule } from '../user/user.module';
-import { TradingModule } from '../trading/trading.module';
+import { CustomCacheModule } from '../common/cache/cache.module';
 import { QueueName } from './queue.constants';
 
 @Module({
@@ -31,8 +30,6 @@ import { QueueName } from './queue.constants';
           port: configService.get('REDIS_PORT', 6379),
           password: configService.get('REDIS_PASSWORD'),
           db: configService.get('REDIS_DB', 0),
-          maxRetriesPerRequest: 3,
-          enableReadyCheck: true,
           retryStrategy: (times: number) => {
             const delay = Math.min(times * 50, 2000);
             return delay;
@@ -104,9 +101,19 @@ import { QueueName } from './queue.constants';
       },
     }),
 
-    forwardRef(() => NotificationModule),
+    BullModule.registerQueue({
+      name: QueueName.SWAPS,
+      defaultJobOptions: {
+        priority: 1,
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 2000 },
+        timeout: 120000,
+      },
+      limiter: { max: 50, duration: 1000 },
+    }),
+
+    CustomCacheModule,
     UserModule,
-    forwardRef(() => TradingModule),
   ],
   controllers: [QueueController, QueueAdminController, SchedulerController],
   providers: [

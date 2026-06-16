@@ -1,5 +1,5 @@
 import { Controller, Get, Res, HttpStatus } from '@nestjs/common';
-import { Response } from 'express';
+import type { Response } from 'express';
 import { HealthService } from '../services/health.service';
 import { PrometheusService } from '../services/prometheus.service';
 import { OpenTelemetryService } from '../services/opentelemetry.service';

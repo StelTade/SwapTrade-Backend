@@ -25,6 +25,9 @@ import {
   HorizontalScalingConfig,
   LoadBalancingStrategy,
 } from './horizontal-scaling.config';
+import { FailoverTarget } from './queue-fault-tolerance.service';
+import { ScalingDecision, QueueMetrics } from './dynamic-scaling.service';
+import { PersistedMessage } from './zero-loss-message.service';
 
 /**
  * Horizontal Scaling Controller

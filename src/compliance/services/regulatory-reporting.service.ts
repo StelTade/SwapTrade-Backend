@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In, LessThanOrEqual } from 'typeorm';
 import { RegulatoryReportEntity, ReportType, ReportStatus, RegulatoryFramework, SubmissionMethod } from '../entities/regulatory-report.entity';
 import { ComplianceAlertEntity } from '../entities/compliance-alert.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -198,7 +198,7 @@ export class RegulatoryReportingService {
 
     // Get related alerts
     const alerts = await this.alertRepository.find({
-      where: { id: { $in: alertIds } },
+      where: { id: In(alertIds) },
       relations: ['user', 'rule'],
     });
 
@@ -370,7 +370,7 @@ export class RegulatoryReportingService {
     this.logger.log(`Validating transaction history for user ${userId}`);
 
     const validations = transactions.map(tx => {
-      const issues = [];
+      const issues: string[] = [];
       if (!tx.timestamp) issues.push('Missing timestamp');
       if (!tx.amount || tx.amount <= 0) issues.push('Invalid amount');
       if (!tx.asset) issues.push('Missing asset');
@@ -591,7 +591,7 @@ export class RegulatoryReportingService {
   private async linkAlertsToReport(alertIds: string[], reportId: string): Promise<void> {
     // Update alerts to link them to the report
     await this.alertRepository.update(
-      { id: { $in: alertIds } },
+      { id: In(alertIds) },
       { regulatoryReportRequired: true, regulatoryReportStatus: 'submitted' }
     );
   }
@@ -607,8 +607,8 @@ export class RegulatoryReportingService {
     const today = new Date();
     const dueReports = await this.reportRepository.find({
       where: {
-        dueDate: { $lte: today },
-        status: { $in: [ReportStatus.DRAFT, ReportStatus.PENDING_REVIEW] },
+        dueDate: LessThanOrEqual(today),
+        status: In([ReportStatus.DRAFT, ReportStatus.PENDING_REVIEW]),
       },
     });
 

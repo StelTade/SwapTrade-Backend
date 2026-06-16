@@ -1,6 +1,25 @@
 // src/queue/horizontal-scaling.config.ts
 
 /**
+ * Load balancing strategies
+ */
+export enum LoadBalancingStrategy {
+  ROUND_ROBIN = 'round-robin',
+  LEAST_CONNECTIONS = 'least-connections',
+  WEIGHTED = 'weighted',
+  ADAPTIVE = 'adaptive',
+}
+
+/**
+ * Circuit breaker states
+ */
+export enum CircuitBreakerState {
+  CLOSED = 'closed', // Normal operation
+  OPEN = 'open', // Failing, reject requests
+  HALF_OPEN = 'half-open', // Testing if service recovered
+}
+
+/**
  * Horizontal Scaling Configuration for Queue Processing System
  * Supports millions of messages per second with automatic load balancing
  */
@@ -19,7 +38,7 @@ export interface HorizontalScalingConfig {
 
   // Load Balancing
   loadBalancing: {
-    strategy: 'round-robin' | 'least-connections' | 'weighted' | 'adaptive';
+    strategy: LoadBalancingStrategy;
     healthCheckIntervalMs: number;
     unhealthyThreshold: number; // Consecutive failures before marking unhealthy
     healthyThreshold: number; // Consecutive successes before marking healthy
@@ -102,7 +121,7 @@ export const DEFAULT_HORIZONTAL_SCALING_CONFIG: HorizontalScalingConfig = {
   },
 
   loadBalancing: {
-    strategy: 'adaptive',
+    strategy: LoadBalancingStrategy.ADAPTIVE,
     healthCheckIntervalMs: 5000,
     unhealthyThreshold: 3,
     healthyThreshold: 2,
@@ -218,25 +237,6 @@ export interface ScalingEvent {
     processingTimeMs: number;
     failureRate: number;
   };
-}
-
-/**
- * Load balancing strategies
- */
-export enum LoadBalancingStrategy {
-  ROUND_ROBIN = 'round-robin',
-  LEAST_CONNECTIONS = 'least-connections',
-  WEIGHTED = 'weighted',
-  ADAPTIVE = 'adaptive',
-}
-
-/**
- * Circuit breaker states
- */
-export enum CircuitBreakerState {
-  CLOSED = 'closed', // Normal operation
-  OPEN = 'open', // Failing, reject requests
-  HALF_OPEN = 'half-open', // Testing if service recovered
 }
 
 /**

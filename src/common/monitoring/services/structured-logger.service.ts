@@ -1,10 +1,11 @@
-import { Injectable, LoggerService, LogLevel } from '@nestjs/common';
+import { Injectable, LoggerService, Inject, Optional } from '@nestjs/common';
 import { 
   StructuredLogEntry, 
   CorrelationContext, 
   LogConfig,
-  MonitoringConfig 
+  type MonitoringConfig
 } from '../interfaces/monitoring.interfaces';
+import { LogLevel } from '../interfaces/monitoring.interfaces';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
@@ -14,7 +15,7 @@ export class StructuredLoggerService implements LoggerService {
   private readonly environment = process.env.NODE_ENV || 'development';
   private config: LogConfig;
 
-  constructor(config?: MonitoringConfig) {
+  constructor(@Optional() @Inject('MONITORING_CONFIG') config?: MonitoringConfig) {
     this.config = config?.logging || this.getDefaultConfig();
   }
 
@@ -83,7 +84,7 @@ export class StructuredLoggerService implements LoggerService {
     return context;
   }
 
-  private log(entry: StructuredLogEntry): void {
+  private writeLog(entry: StructuredLogEntry): void {
     const formattedLog = this.formatLog(entry);
     
     if (this.config.console) {
@@ -197,27 +198,27 @@ export class StructuredLoggerService implements LoggerService {
   // LoggerService interface methods
   log(message: string, context?: CorrelationContext, metadata?: Record<string, any>): void {
     const entry = this.createLogEntry(LogLevel.INFO, message, context, metadata);
-    this.log(entry);
+    this.writeLog(entry);
   }
 
   error(message: string, error?: Error, context?: CorrelationContext, metadata?: Record<string, any>): void {
     const entry = this.createLogEntry(LogLevel.ERROR, message, context, metadata, error);
-    this.log(entry);
+    this.writeLog(entry);
   }
 
   warn(message: string, context?: CorrelationContext, metadata?: Record<string, any>): void {
     const entry = this.createLogEntry(LogLevel.WARN, message, context, metadata);
-    this.log(entry);
+    this.writeLog(entry);
   }
 
   debug(message: string, context?: CorrelationContext, metadata?: Record<string, any>): void {
     const entry = this.createLogEntry(LogLevel.DEBUG, message, context, metadata);
-    this.log(entry);
+    this.writeLog(entry);
   }
 
   verbose(message: string, context?: CorrelationContext, metadata?: Record<string, any>): void {
     const entry = this.createLogEntry(LogLevel.TRACE, message, context, metadata);
-    this.log(entry);
+    this.writeLog(entry);
   }
 
   // Additional methods for structured logging
@@ -231,7 +232,7 @@ export class StructuredLoggerService implements LoggerService {
   ): void {
     const context: CorrelationContext = { correlationId };
     const entry = this.createLogEntry(level, message, context, metadata, error, duration);
-    this.log(entry);
+    this.writeLog(entry);
   }
 
   logWithTrace(
@@ -249,7 +250,7 @@ export class StructuredLoggerService implements LoggerService {
       spanId 
     };
     const entry = this.createLogEntry(level, message, context, metadata, error, duration);
-    this.log(entry);
+    this.writeLog(entry);
   }
 
   // Performance logging
@@ -274,7 +275,7 @@ export class StructuredLoggerService implements LoggerService {
       undefined,
       duration
     );
-    this.log(entry);
+    this.writeLog(entry);
   }
 
   // Business event logging
@@ -303,7 +304,7 @@ export class StructuredLoggerService implements LoggerService {
       enhancedContext,
       enhancedMetadata
     );
-    this.log(entry);
+    this.writeLog(entry);
   }
 
   // Security event logging
@@ -336,6 +337,6 @@ export class StructuredLoggerService implements LoggerService {
       enhancedContext,
       enhancedMetadata
     );
-    this.log(entry);
+    this.writeLog(entry);
   }
 }

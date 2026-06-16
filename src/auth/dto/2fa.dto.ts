@@ -14,6 +14,6 @@ export class Enable2FADto {
 
   @ApiProperty({ example: '+1234567890', description: 'Phone number for SMS 2FA', required: false })
   @IsOptional()
-  @IsPhoneNumber(null)
+  @IsPhoneNumber()
   phoneNumber?: string;
 }

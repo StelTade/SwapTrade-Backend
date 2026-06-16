@@ -1,8 +1,9 @@
 /**
  * Identity Permissions Module
  * Permission definitions, permission checks, authorization
+ *
+ * Currently composed from src/common/guards/ and src/common/security/.
+ * Will be consolidated into a dedicated PermissionsModule in a future iteration.
  */
 
-export const PERMISSIONS_EXPORTS = {
-  // To be populated during implementation
-};
+export { AdminGuard } from '../../common/guards/admin.guard';

@@ -273,13 +273,11 @@ export class RateLimitConfig {
   @IsOptional()
   maxRequests?: number = 100;
 
-  @IsNumber()
-  @Min(1)
+  @IsBoolean()
   @IsOptional()
   skipSuccessfulRequests?: boolean = false;
 
-  @IsNumber()
-  @Min(1)
+  @IsBoolean()
   @IsOptional()
   skipFailedRequests?: boolean = false;
 

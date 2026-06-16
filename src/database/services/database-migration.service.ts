@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { MigrationInterface, QueryRunner } from 'typeorm';
-import { Trade } from '../../trading/entities/trade.entity';
-import { UserBalance } from '../../balance/entities/user-balance.entity';
-import { VirtualAsset } from '../../trading/entities/virtual-asset.entity';
+import { Trade } from '../entities/trade.entity';
+import { UserBalance } from '../entities/user-balance.entity';
+import { VirtualAsset } from '../entities/virtual-asset.entity';
 
 export interface MigrationPlan {
   id: string;

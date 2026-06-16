@@ -1,8 +1,9 @@
 /**
  * Infrastructure GraphQL Module
  * Apollo server, schema composition, resolvers, dataloader
+ *
+ * Facade over src/graphql/ — original implementation location
  */
 
-export const GRAPHQL_EXPORTS = {
-  // To be populated during implementation
-};
+export { InfrastructureGraphQLModule } from './graphql.module';
+export { GqlAppModule } from '../../graphql/graphql.module';

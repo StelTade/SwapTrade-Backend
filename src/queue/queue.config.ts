@@ -1,5 +1,5 @@
 // src/queue/queue.config.ts
-import type { JobOptions } from 'bull';
+import { JobOptions } from 'bull';
 
 /**
  * Retry policies for different job types

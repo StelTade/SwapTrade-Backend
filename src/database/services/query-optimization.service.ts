@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { DataSource, Repository, SelectQueryBuilder } from 'typeorm';
-import { Trade } from '../../trading/entities/trade.entity';
-import { UserBalance } from '../../balance/entities/user-balance.entity';
-import { VirtualAsset } from '../../trading/entities/virtual-asset.entity';
+import { Trade } from '../entities/trade.entity';
+import { UserBalance } from '../entities/user-balance.entity';
+import { VirtualAsset } from '../entities/virtual-asset.entity';
 
 export interface QueryExecutionPlan {
   id: string;
@@ -275,7 +275,7 @@ export class QueryOptimizationService {
     // Analyze execution
     const query = queryBuilder.getQuery();
     const parameters = queryBuilder.getParameters();
-    const executionPlan = await this.analyzeQueryExecution(query, parameters);
+    const executionPlan = await this.analyzeQueryExecution(query, Object.values(parameters) || []);
 
     return { trades, total, executionPlan };
   }
@@ -323,7 +323,7 @@ export class QueryOptimizationService {
   async executeBatchQueries<T>(
     queries: Array<{ query: string; parameters?: any[] }>,
   ): Promise<Array<{ result: T; executionPlan: QueryExecutionPlan }>> {
-    const results = [];
+    const results: Array<{ result: T; executionPlan: QueryExecutionPlan }> = [];
 
     for (const { query, parameters = [] } of queries) {
       const executionPlan = await this.analyzeQueryExecution(query, parameters);
@@ -423,7 +423,7 @@ export class QueryOptimizationService {
   }
 
   private parseIndexUsage(explainResult: any[]): string[] {
-    const indexes = [];
+    const indexes: string[] = [];
     
     for (const row of explainResult) {
       if (row.detail && row.detail.includes('USING INDEX')) {
@@ -448,7 +448,7 @@ export class QueryOptimizationService {
   }
 
   private compareIndexUsage(original: string[], optimized: string[]): string[] {
-    const improvements = [];
+    const improvements = [] as string[];
     
     for (const index of optimized) {
       if (!original.includes(index)) {

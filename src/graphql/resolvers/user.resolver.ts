@@ -8,7 +8,10 @@ export class UserResolver {
 
   @Query(() => PortfolioStatsDto)
   userPortfolio(@Args('userId') userId: string) {
-    return this.userService.getPortfolioStats(userId);
+    const numericUserId = parseInt(userId, 10);
+    if (isNaN(numericUserId)) {
+      throw new Error('Invalid user ID: must be a numeric string');
+    }
+    return this.userService.getPortfolioStats(numericUserId);
   }
 }
-

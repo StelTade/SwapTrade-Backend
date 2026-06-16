@@ -123,4 +123,4 @@ return {allowed, tostring(remaining), tostring(reset)}
   }
 }
 
-export { CheckResult };
+export type { CheckResult };

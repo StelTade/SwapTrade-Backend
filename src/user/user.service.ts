@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { UserBalance } from '../balance/entities/user-balance.entity';
+import { UserBalance } from '../database/entities/user-balance.entity';
 import { UserRole } from '../common/enums/user-role.enum';
 import {
     RoleSeparationViolation,

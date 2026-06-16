@@ -9,7 +9,7 @@ import {
 /**
  * Message persistence entry
  */
-interface PersistedMessage {
+export interface PersistedMessage {
   messageId: string;
   queueName: string;
   data: any;

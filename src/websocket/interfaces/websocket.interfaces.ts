@@ -51,6 +51,7 @@ export enum WebSocketMessageType {
 export interface WebSocketClient {
   id: string;
   userId?: string;
+  userRole?: string;
   sessionId: string;
   socket: any;
   subscriptions: Set<string>;

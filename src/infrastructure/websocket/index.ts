@@ -1,8 +1,9 @@
 /**
  * Infrastructure WebSocket Module
  * Socket.io integration, real-time updates, gateway pattern
+ *
+ * Facade over src/websocket/ — original implementation location
  */
 
-export const WEBSOCKET_EXPORTS = {
-  // To be populated during implementation
-};
+export { InfrastructureWebSocketModule } from './websocket.module';
+export { WebSocketModule } from '../../websocket/websocket.module';
