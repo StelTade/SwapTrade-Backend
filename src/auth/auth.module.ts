@@ -11,6 +11,8 @@ import { Auth } from './entities/auth.entity';
 import { Session } from './entities/session.entity';
 import { User } from '../user/entities/user.entity';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { AuthAuditListener } from './listeners/auth-audit.listener';
+import { AuditLogModule } from '../audit-log/audit-log.module';
 
 @Module({
   imports: [
@@ -25,9 +27,10 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
         },
       }),
     }),
+    AuditLogModule,
   ],
   controllers: [AuthController, MFAController],
-  providers: [AuthService, MFAService, JwtAuthGuard],
+  providers: [AuthService, MFAService, JwtAuthGuard, AuthAuditListener],
   exports: [AuthService, MFAService, JwtAuthGuard, JwtModule],
 })
 export class AuthModule {}

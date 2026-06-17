@@ -20,8 +20,7 @@ import { ErrorModule } from './error/error.module';
 // ── Identity Domain Entities (Phase 2) ──
 import { User } from './user/entities/user.entity';
 import { Auth } from './auth/entities/auth.entity';
-import { Session } from './auth/entities/session.entity';
-import { KycRecord } from './kyc/entities/kyc-records.entity';
+import { Session } from './auth/entities/session.entity';import { KycRecord } from './kyc/entities/kyc-records.entity';
 import { DidDocument } from './did/entities/did-document.entity';
 import { VerifiableCredential } from './did/entities/verifiable-credential.entity';
 import { PrivacyProfile } from './privacy/entities/privacy-profile.entity';

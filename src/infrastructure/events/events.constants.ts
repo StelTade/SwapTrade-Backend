@@ -4,7 +4,20 @@
  */
 
 export const EVENTS = {
-  // User events
+  // Identity — Auth events
+  IDENTITY: {
+    USER_REGISTERED: 'identity.user.registered',
+    USER_LOGGED_IN: 'identity.user.loggedIn',
+    USER_LOGGED_OUT: 'identity.user.loggedOut',
+    PASSWORD_CHANGED: 'identity.password.changed',
+    PASSWORD_RESET_REQUESTED: 'identity.password.resetRequested',
+    ACCOUNT_LOCKED: 'identity.account.locked',
+    USER_PROFILE_CREATED: 'identity.user.profile.created',
+    USER_PROFILE_UPDATED: 'identity.user.profile.updated',
+    USER_STATUS_CHANGED: 'identity.user.status.changed',
+  },
+
+  // User events (legacy — prefer IDENTITY namespace)
   USER: {
     CREATED: 'user.created',
     UPDATED: 'user.updated',
