@@ -58,6 +58,15 @@ export class User {
   @Column('simple-array', { nullable: true, select: false })
   mfaRecoveryCodes: string[];
 
+  @Column({ default: false })
+  isSuspended: boolean;
+
+  @Column({ nullable: true })
+  suspensionReason: string | null;
+
+  @Column({ nullable: true })
+  suspendedAt: Date | null;
+
   @UpdateDateColumn()
   lastTradeDate: Date;
 

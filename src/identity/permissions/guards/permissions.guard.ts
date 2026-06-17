@@ -6,9 +6,18 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import type { Request } from 'express';
 import { RoleService } from '../../roles/services/role.service';
 import { UserRole } from '../../roles/enums/user-role.enum';
 import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';
+
+interface AuthenticatedRequest extends Request {
+  user: {
+    id: number;
+    roles: UserRole[];
+    role?: UserRole;
+  };
+}
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
@@ -27,14 +36,14 @@ export class PermissionsGuard implements CanActivate {
       return true;
     }
 
-    const req = context.switchToHttp().getRequest();
+    const req = context.switchToHttp().getRequest<AuthenticatedRequest>();
     const user = req.user;
 
     if (!user) {
       throw new UnauthorizedException('User not authenticated');
     }
 
-    const userRoles: UserRole[] = user.roles || [user.role];
+    const userRoles: UserRole[] = user.roles || (user.role ? [user.role] : []);
 
     for (const permission of requiredPermissions) {
       if (!this.roleService.hasPermission(userRoles, permission)) {

@@ -6,7 +6,6 @@
  */
 
 import { UserRole } from '../enums/user-role.enum';
-import { getInheritedRoles } from '../constants/role-hierarchy';
 
 /**
  * Metadata for a specific role

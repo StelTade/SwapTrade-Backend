@@ -143,10 +143,9 @@ export class RoleManagementService {
       throw new ForbiddenException('Insufficient permissions to suspend users');
     }
 
-    // Add isSuspended flag if not exists (would typically be in user entity)
-    (user as any).isSuspended = true;
-    (user as any).suspensionReason = reason;
-    (user as any).suspendedAt = new Date();
+    user.isSuspended = true;
+    user.suspensionReason = reason;
+    user.suspendedAt = new Date();
     await this.userRepo.save(user);
 
     await this.auditService.createEntry({
@@ -164,29 +163,29 @@ export class RoleManagementService {
    * Activate a previously suspended user
    * Publishes UserActivated event
    */
-  async activateUser(
+  async unsuspendUser(
     userId: number,
-    activatedBy: { id: number; roles: UserRole[] },
+    unsuspendedBy: { id: number; roles: UserRole[] },
   ): Promise<User> {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    if (!this.roleService.hasPermission(activatedBy.roles, 'users.write')) {
+    if (!this.roleService.hasPermission(unsuspendedBy.roles, 'users.write')) {
       throw new ForbiddenException(
-        'Insufficient permissions to activate users',
+        'Insufficient permissions to unsuspend users',
       );
     }
 
-    (user as any).isSuspended = false;
-    (user as any).suspensionReason = null;
-    (user as any).suspendedAt = null;
+    user.isSuspended = false;
+    user.suspensionReason = null;
+    user.suspendedAt = null;
     await this.userRepo.save(user);
 
     await this.auditService.createEntry({
-      userId: activatedBy.id,
-      eventType: 'UserActivated',
+      userId: unsuspendedBy.id,
+      eventType: 'UserUnsuspended',
       entityType: 'user',
       entityId: userId.toString(),
       metadata: {},
