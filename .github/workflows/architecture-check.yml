@@ -11,10 +11,10 @@ on:
       - develop
 
 jobs:
-  # architecture-checks:
-    # name: Validate Architecture Rules
-    # runs-on: ubuntu-latest
-    # timeout-minutes: 30
+  architecture-checks:
+    name: Validate Architecture Rules
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - name: Checkout code
