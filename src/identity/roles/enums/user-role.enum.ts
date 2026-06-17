@@ -11,10 +11,20 @@
  * Roles form a hierarchy for permission inheritance
  */
 export enum UserRole {
-  // Platform-wide roles
+  // Platform-wide administrative roles
+  SUPER_ADMIN = 'SUPER_ADMIN',
   ADMIN = 'ADMIN',
-  USER = 'USER',
+
+  // Compliance & oversight roles
+  COMPLIANCE_OFFICER = 'COMPLIANCE_OFFICER',
+
+  // Support roles
+  SUPPORT_AGENT = 'SUPPORT_AGENT',
   STAFF = 'STAFF',
+
+  // Trading roles
+  TRADER = 'TRADER',
+  USER = 'USER',
 
   // Specialized governance roles
   GOVERNANCE_OPERATOR = 'GOVERNANCE_OPERATOR',
@@ -29,11 +39,14 @@ export enum UserRole {
  * Used for UI display and documentation
  */
 export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
+  [UserRole.SUPER_ADMIN]: 'Super Administrator - Unrestricted platform access',
   [UserRole.ADMIN]: 'Administrator - Full system access',
-  [UserRole.USER]: 'Standard user - Trading and account access',
+  [UserRole.COMPLIANCE_OFFICER]: 'Compliance Officer - Regulatory and compliance oversight',
+  [UserRole.SUPPORT_AGENT]: 'Support Agent - Customer support operations',
   [UserRole.STAFF]: 'Staff member - Support and monitoring',
-  [UserRole.GOVERNANCE_OPERATOR]:
-    'Governance operator - Policy enforcement',
+  [UserRole.TRADER]: 'Trader - Trading and account operations',
+  [UserRole.USER]: 'Standard user - Basic trading and account access',
+  [UserRole.GOVERNANCE_OPERATOR]: 'Governance operator - Policy enforcement',
   [UserRole.KYC_OPERATOR]: 'KYC operator - Document review',
   [UserRole.KYC_GOVERNANCE]: 'KYC governance - Process oversight',
 };

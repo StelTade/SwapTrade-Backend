@@ -61,6 +61,18 @@ export interface RoleContext {
  * Defines what each role can do
  */
 export const ROLE_METADATA: Record<UserRole, RoleMetadata> = {
+  [UserRole.SUPER_ADMIN]: {
+    name: UserRole.SUPER_ADMIN,
+    description: 'Super Administrator - Unrestricted platform access',
+    priority: 110,
+    permissions: ['*'],
+    constraints: {
+      maxUsers: 2,
+      maxDailyActions: undefined,
+      timeRestrictions: '24/7',
+    },
+  },
+
   [UserRole.ADMIN]: {
     name: UserRole.ADMIN,
     description: 'Administrator - Full system access',
@@ -68,8 +80,33 @@ export const ROLE_METADATA: Record<UserRole, RoleMetadata> = {
     permissions: ['*'],
     constraints: {
       maxUsers: 5,
-      maxDailyActions: undefined, // Unlimited
+      maxDailyActions: undefined,
       timeRestrictions: '24/7',
+    },
+  },
+
+  [UserRole.COMPLIANCE_OFFICER]: {
+    name: UserRole.COMPLIANCE_OFFICER,
+    description: 'Compliance Officer - Regulatory and compliance oversight',
+    priority: 85,
+    permissions: [
+      'users.read',
+      'accounts.read',
+      'trades.read',
+      'admin.access',
+      'COMPLIANCE_READ',
+      'COMPLIANCE_WRITE',
+      'AUDIT_READ',
+      'POLICY_READ',
+      'POLICY_WRITE',
+      'USER_SUSPENSION_REQUEST',
+      'REGULATORY_REPORT_MANAGE',
+      'KYC_READ',
+      'KYC_REVIEW',
+    ],
+    constraints: {
+      maxUsers: 10,
+      maxDailyActions: 500,
     },
   },
 
@@ -78,6 +115,9 @@ export const ROLE_METADATA: Record<UserRole, RoleMetadata> = {
     description: 'Governance operator - Policy enforcement',
     priority: 80,
     permissions: [
+      'users.read',
+      'accounts.read',
+      'admin.access',
       'POLICY_READ',
       'POLICY_WRITE',
       'AUDIT_READ',
@@ -91,11 +131,54 @@ export const ROLE_METADATA: Record<UserRole, RoleMetadata> = {
     },
   },
 
+  [UserRole.KYC_GOVERNANCE]: {
+    name: UserRole.KYC_GOVERNANCE,
+    description: 'KYC governance - Process oversight',
+    priority: 70,
+    permissions: [
+      'KYC_POLICY_READ',
+      'KYC_POLICY_WRITE',
+      'KYC_AUDIT_READ',
+      'KYC_ESCALATE',
+      'KYC_OPERATOR_MANAGE',
+      'COMPLIANCE_ESCALATE',
+      'DOCUMENT_STORAGE_MANAGE',
+    ],
+    constraints: {
+      maxUsers: 5,
+      maxDailyActions: 500,
+    },
+  },
+
+  [UserRole.SUPPORT_AGENT]: {
+    name: UserRole.SUPPORT_AGENT,
+    description: 'Support Agent - Customer support operations',
+    priority: 65,
+    permissions: [
+      'users.read',
+      'accounts.read',
+      'trades.read',
+      'admin.access',
+      'USER_READ',
+      'USER_SUPPORT_TICKET_MANAGE',
+      'TRANSACTION_VIEW',
+      'ALERT_READ',
+      'BALANCE_HISTORY_VIEW',
+      'USER_KYC_STATUS_VIEW',
+    ],
+    constraints: {
+      maxUsers: 100,
+      maxDailyActions: 2000,
+    },
+  },
+
   [UserRole.STAFF]: {
     name: UserRole.STAFF,
     description: 'Staff member - Support and monitoring',
     priority: 60,
     permissions: [
+      'users.read',
+      'accounts.read',
       'USER_READ',
       'USER_SUPPORT_TICKET_MANAGE',
       'COMPLIANCE_READ',
@@ -106,27 +189,6 @@ export const ROLE_METADATA: Record<UserRole, RoleMetadata> = {
     constraints: {
       maxUsers: 50,
       maxDailyActions: 1000,
-    },
-  },
-
-  [UserRole.USER]: {
-    name: UserRole.USER,
-    description: 'Standard platform user - Trading and account access',
-    priority: 20,
-    permissions: [
-      'TRADING_READ',
-      'TRADING_WRITE',
-      'PORTFOLIO_READ',
-      'PORTFOLIO_WRITE',
-      'PROFILE_EDIT',
-      'PROFILE_READ',
-      'BALANCE_READ',
-      'TRANSACTION_VIEW_OWN',
-      'SETTINGS_MANAGE',
-    ],
-    constraints: {
-      maxUsers: undefined, // Unlimited
-      maxDailyActions: 5000,
     },
   },
 
@@ -149,22 +211,54 @@ export const ROLE_METADATA: Record<UserRole, RoleMetadata> = {
     },
   },
 
-  [UserRole.KYC_GOVERNANCE]: {
-    name: UserRole.KYC_GOVERNANCE,
-    description: 'KYC governance - Process oversight',
-    priority: 70,
+  [UserRole.TRADER]: {
+    name: UserRole.TRADER,
+    description: 'Trader - Enhanced trading and account operations',
+    priority: 30,
     permissions: [
-      'KYC_POLICY_READ',
-      'KYC_POLICY_WRITE',
-      'KYC_AUDIT_READ',
-      'KYC_ESCALATE',
-      'KYC_OPERATOR_MANAGE',
-      'COMPLIANCE_ESCALATE',
-      'DOCUMENT_STORAGE_MANAGE',
+      'trades.read',
+      'trades.write',
+      'accounts.read',
+      'accounts.write',
+      'TRADING_READ',
+      'TRADING_WRITE',
+      'PORTFOLIO_READ',
+      'PORTFOLIO_WRITE',
+      'PROFILE_EDIT',
+      'PROFILE_READ',
+      'BALANCE_READ',
+      'TRANSACTION_VIEW_OWN',
+      'SETTINGS_MANAGE',
+      'ADVANCED_TRADING',
+      'MARGIN_TRADING',
     ],
     constraints: {
-      maxUsers: 5,
-      maxDailyActions: 500,
+      maxUsers: undefined,
+      maxDailyActions: 10000,
+    },
+  },
+
+  [UserRole.USER]: {
+    name: UserRole.USER,
+    description: 'Standard platform user - Trading and account access',
+    priority: 20,
+    permissions: [
+      'trades.read',
+      'trades.write',
+      'accounts.read',
+      'TRADING_READ',
+      'TRADING_WRITE',
+      'PORTFOLIO_READ',
+      'PORTFOLIO_WRITE',
+      'PROFILE_EDIT',
+      'PROFILE_READ',
+      'BALANCE_READ',
+      'TRANSACTION_VIEW_OWN',
+      'SETTINGS_MANAGE',
+    ],
+    constraints: {
+      maxUsers: undefined,
+      maxDailyActions: 5000,
     },
   },
 };

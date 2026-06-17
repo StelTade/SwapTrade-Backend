@@ -10,27 +10,54 @@ import { UserRole } from '../enums/user-role.enum';
 /**
  * Role hierarchy definition
  * Each role inherits from its parents in the hierarchy
- * ADMIN is at the top with no parents
+ * SUPER_ADMIN is at the top with no parents
  *
  * Hierarchy:
- * ADMIN (highest)
- *   ├─ GOVERNANCE_OPERATOR
- *   │   └─ STAFF
- *   │       └─ USER (base)
- *   └─ KYC_GOVERNANCE
- *       ├─ KYC_OPERATOR
- *       └─ STAFF
- *           └─ USER
+ * SUPER_ADMIN (highest — unrestricted)
+ *   └─ ADMIN
+ *       ├─ COMPLIANCE_OFFICER
+ *       ├─ SUPPORT_AGENT
+ *       │   └─ STAFF
+ *       │       └─ USER (base)
+ *       ├─ GOVERNANCE_OPERATOR
+ *       │   └─ STAFF
+ *       │       └─ USER
+ *       └─ KYC_GOVERNANCE
+ *           ├─ KYC_OPERATOR
+ *           └─ STAFF
+ *               └─ USER
+ * TRADER inherits USER
  *
  * USER is the base role from which others inherit
  */
 export const ROLE_HIERARCHY: Record<UserRole, UserRole[]> = {
+  [UserRole.SUPER_ADMIN]: [],
   [UserRole.ADMIN]: [],
+  [UserRole.COMPLIANCE_OFFICER]: [UserRole.STAFF],
+  [UserRole.SUPPORT_AGENT]: [UserRole.STAFF],
   [UserRole.GOVERNANCE_OPERATOR]: [UserRole.STAFF],
   [UserRole.STAFF]: [UserRole.USER],
+  [UserRole.TRADER]: [UserRole.USER],
   [UserRole.USER]: [],
   [UserRole.KYC_OPERATOR]: [UserRole.USER],
   [UserRole.KYC_GOVERNANCE]: [UserRole.STAFF, UserRole.KYC_OPERATOR],
+};
+
+/**
+ * Role priority levels (higher = more privileged)
+ * Used for access control comparisons
+ */
+export const ROLE_PRIORITY: Record<UserRole, number> = {
+  [UserRole.SUPER_ADMIN]: 110,
+  [UserRole.ADMIN]: 100,
+  [UserRole.COMPLIANCE_OFFICER]: 85,
+  [UserRole.GOVERNANCE_OPERATOR]: 80,
+  [UserRole.KYC_GOVERNANCE]: 70,
+  [UserRole.SUPPORT_AGENT]: 65,
+  [UserRole.STAFF]: 60,
+  [UserRole.KYC_OPERATOR]: 40,
+  [UserRole.TRADER]: 30,
+  [UserRole.USER]: 20,
 };
 
 /**
