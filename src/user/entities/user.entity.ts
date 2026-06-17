@@ -50,6 +50,18 @@ export class User {
   isPremium: boolean;
 
   @Column({ default: false })
+  isSuspended: boolean;
+
+  @Column({ nullable: true, type: 'timestamp' })
+  suspendedAt: Date;
+
+  @Column({ nullable: true })
+  suspensionReason: string;
+
+  @Column({ nullable: true, type: 'timestamp' })
+  suspensionExpiresAt: Date;
+
+  @Column({ default: false })
   mfaEnabled: boolean;
 
   @Column({ nullable: true, select: false })
