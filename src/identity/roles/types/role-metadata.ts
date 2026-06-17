@@ -61,18 +61,70 @@ export interface RoleContext {
  * Defines what each role can do
  */
 export const ROLE_METADATA: Record<UserRole, RoleMetadata> = {
+  [UserRole.SUPER_ADMIN]: {
+    name: UserRole.SUPER_ADMIN,
+    description: 'Super Administrator - Complete system root access',
+    priority: 200,
+    permissions: ['*'],
+    constraints: {
+      maxUsers: 1,
+      maxDailyActions: undefined, // Unlimited
+      timeRestrictions: '24/7',
+    },
+  },
   [UserRole.ADMIN]: {
     name: UserRole.ADMIN,
     description: 'Administrator - Full system access',
-    priority: 100,
-    permissions: ['*'],
+    priority: 150,
+    permissions: ['admin.access', 'users.read', 'users.write', 'accounts.read', 'accounts.write', 'trades.read', 'trades.write', '*'],
     constraints: {
       maxUsers: 5,
       maxDailyActions: undefined, // Unlimited
       timeRestrictions: '24/7',
     },
   },
-
+  [UserRole.COMPLIANCE_OFFICER]: {
+    name: UserRole.COMPLIANCE_OFFICER,
+    description: 'Compliance Officer - Regulatory monitoring and enforcement',
+    priority: 120,
+    permissions: ['admin.access', 'users.read', 'accounts.read', 'trades.read', 'compliance.read', 'compliance.write', 'audit.read'],
+    constraints: {
+      maxUsers: 10,
+      maxDailyActions: 1000,
+      timeRestrictions: '24/7',
+    },
+  },
+  [UserRole.SUPPORT_AGENT]: {
+    name: UserRole.SUPPORT_AGENT,
+    description: 'Support Agent - User assistance and account troubleshooting',
+    priority: 100,
+    permissions: ['admin.access', 'users.read', 'accounts.read', 'support.tickets.manage'],
+    constraints: {
+      maxUsers: 50,
+      maxDailyActions: 5000,
+      timeRestrictions: '9-17 weekdays',
+    },
+  },
+  [UserRole.TRADER]: {
+    name: UserRole.TRADER,
+    description: 'Trader - Advanced trading capabilities and portfolio management',
+    priority: 40,
+    permissions: ['trades.read', 'trades.write', 'accounts.read', 'accounts.write', 'portfolio.read', 'portfolio.write'],
+    constraints: {
+      maxUsers: undefined, // Unlimited
+      maxDailyActions: 10000,
+    },
+  },
+  [UserRole.USER]: {
+    name: UserRole.USER,
+    description: 'Standard platform user - Trading and account access',
+    priority: 20,
+    permissions: ['trades.read', 'trades.write', 'accounts.read', 'accounts.write', 'profile.read', 'profile.write'],
+    constraints: {
+      maxUsers: undefined, // Unlimited
+      maxDailyActions: 5000,
+    },
+  },
   [UserRole.GOVERNANCE_OPERATOR]: {
     name: UserRole.GOVERNANCE_OPERATOR,
     description: 'Governance operator - Policy enforcement',
@@ -90,7 +142,6 @@ export const ROLE_METADATA: Record<UserRole, RoleMetadata> = {
       maxDailyActions: 500,
     },
   },
-
   [UserRole.STAFF]: {
     name: UserRole.STAFF,
     description: 'Staff member - Support and monitoring',
@@ -108,28 +159,6 @@ export const ROLE_METADATA: Record<UserRole, RoleMetadata> = {
       maxDailyActions: 1000,
     },
   },
-
-  [UserRole.USER]: {
-    name: UserRole.USER,
-    description: 'Standard platform user - Trading and account access',
-    priority: 20,
-    permissions: [
-      'TRADING_READ',
-      'TRADING_WRITE',
-      'PORTFOLIO_READ',
-      'PORTFOLIO_WRITE',
-      'PROFILE_EDIT',
-      'PROFILE_READ',
-      'BALANCE_READ',
-      'TRANSACTION_VIEW_OWN',
-      'SETTINGS_MANAGE',
-    ],
-    constraints: {
-      maxUsers: undefined, // Unlimited
-      maxDailyActions: 5000,
-    },
-  },
-
   [UserRole.KYC_OPERATOR]: {
     name: UserRole.KYC_OPERATOR,
     description: 'KYC operator - Document reviewer',
@@ -148,7 +177,6 @@ export const ROLE_METADATA: Record<UserRole, RoleMetadata> = {
       timeRestrictions: '9-17 weekdays',
     },
   },
-
   [UserRole.KYC_GOVERNANCE]: {
     name: UserRole.KYC_GOVERNANCE,
     description: 'KYC governance - Process oversight',
