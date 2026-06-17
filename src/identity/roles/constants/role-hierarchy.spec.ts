@@ -28,10 +28,17 @@ describe('Role Hierarchy', () => {
       expect(inherited).toContain(UserRole.USER);
     });
 
-    it('should return ADMIN with only itself (no parents)', () => {
+    it('should return SUPER_ADMIN with only itself (no parents)', () => {
+      const inherited = getInheritedRoles(UserRole.SUPER_ADMIN);
+      expect(inherited).toContain(UserRole.SUPER_ADMIN);
+      expect(inherited.length).toBe(1);
+    });
+
+    it('should return ADMIN with inherited SUPER_ADMIN role', () => {
       const inherited = getInheritedRoles(UserRole.ADMIN);
       expect(inherited).toContain(UserRole.ADMIN);
-      expect(inherited.length).toBe(1);
+      expect(inherited).toContain(UserRole.SUPER_ADMIN);
+      expect(inherited.length).toBe(2);
     });
 
     it('should return KYC_OPERATOR with inherited USER role', () => {
@@ -63,16 +70,16 @@ describe('Role Hierarchy', () => {
 
     it('should return false when roles are incompatible', () => {
       expect(
+        areRolesCompatible(UserRole.GOVERNANCE_OPERATOR, UserRole.KYC_OPERATOR),
+      ).toBe(false);
+      expect(
+        areRolesCompatible(UserRole.KYC_OPERATOR, UserRole.GOVERNANCE_OPERATOR),
+      ).toBe(false);
+      expect(
         areRolesCompatible(
           UserRole.GOVERNANCE_OPERATOR,
-          UserRole.KYC_OPERATOR
-        )
-      ).toBe(false);
-      expect(
-        areRolesCompatible(UserRole.KYC_OPERATOR, UserRole.GOVERNANCE_OPERATOR)
-      ).toBe(false);
-      expect(
-        areRolesCompatible(UserRole.GOVERNANCE_OPERATOR, UserRole.KYC_GOVERNANCE)
+          UserRole.KYC_GOVERNANCE,
+        ),
       ).toBe(false);
     });
 
@@ -80,7 +87,7 @@ describe('Role Hierarchy', () => {
       expect(areRolesCompatible(UserRole.ADMIN, UserRole.USER)).toBe(true);
       expect(areRolesCompatible(UserRole.STAFF, UserRole.USER)).toBe(true);
       expect(areRolesCompatible(UserRole.KYC_OPERATOR, UserRole.USER)).toBe(
-        true
+        true,
       );
     });
 
@@ -88,7 +95,7 @@ describe('Role Hierarchy', () => {
       const role1 = UserRole.GOVERNANCE_OPERATOR;
       const role2 = UserRole.KYC_OPERATOR;
       expect(areRolesCompatible(role1, role2)).toBe(
-        areRolesCompatible(role2, role1)
+        areRolesCompatible(role2, role1),
       );
     });
   });
@@ -119,8 +126,12 @@ describe('Role Hierarchy', () => {
       });
     });
 
-    it('should have ADMIN with no parents', () => {
-      expect(ROLE_HIERARCHY[UserRole.ADMIN]).toEqual([]);
+    it('should have SUPER_ADMIN with no parents', () => {
+      expect(ROLE_HIERARCHY[UserRole.SUPER_ADMIN]).toEqual([]);
+    });
+
+    it('should have ADMIN with SUPER_ADMIN as parent', () => {
+      expect(ROLE_HIERARCHY[UserRole.ADMIN]).toEqual([UserRole.SUPER_ADMIN]);
     });
 
     it('should have USER with no parents (base role)', () => {
@@ -129,6 +140,8 @@ describe('Role Hierarchy', () => {
 
     it('should have valid parent roles in hierarchy', () => {
       Object.entries(ROLE_HIERARCHY).forEach(([role, parents]) => {
+        // Verify the role itself is a valid UserRole value
+        expect(Object.values(UserRole)).toContain(role);
         parents.forEach((parent) => {
           expect(Object.values(UserRole)).toContain(parent);
         });

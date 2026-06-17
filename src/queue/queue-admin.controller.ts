@@ -50,7 +50,8 @@ export class QueueAdminController {
   @Get('dashboard')
   @ApiOperation({
     summary: 'Get queue dashboard summary',
-    description: 'Returns comprehensive summary of all queues for dashboard display',
+    description:
+      'Returns comprehensive summary of all queues for dashboard display',
   })
   @ApiResponse({
     status: 200,
@@ -128,7 +129,8 @@ export class QueueAdminController {
   @Post('analytics/report')
   @ApiOperation({
     summary: 'Generate analytics report',
-    description: 'Generates comprehensive analytics report for specified period',
+    description:
+      'Generates comprehensive analytics report for specified period',
   })
   async getAnalyticsReport(
     @Body() body: { startTime: string; endTime: string },
@@ -147,7 +149,8 @@ export class QueueAdminController {
   @Get('health/all')
   @ApiOperation({
     summary: 'Get health status for all queues',
-    description: 'Returns health status (healthy/warning/critical) for all queues',
+    description:
+      'Returns health status (healthy/warning/critical) for all queues',
   })
   async getAllQueueHealth() {
     const health: Record<string, any> = {};
@@ -340,7 +343,8 @@ export class QueueAdminController {
   @Get('retry-policies')
   @ApiOperation({
     summary: 'Get all retry policies',
-    description: 'Returns all available retry policies and their configurations',
+    description:
+      'Returns all available retry policies and their configurations',
   })
   async getRetryPolicies() {
     return this.backoffService.getAllPolicies();
@@ -501,18 +505,15 @@ export class QueueAdminController {
   @Get('jobs/:queueName/status/:status')
   @ApiOperation({
     summary: 'Get jobs by status',
-    description: 'Returns jobs with specific status (active/waiting/failed/completed)',
+    description:
+      'Returns jobs with specific status (active/waiting/failed/completed)',
   })
   async getJobsByStatus(
     @Param('queueName') queueName: QueueName,
     @Param('status') status: string,
     @Query('limit') limit: number = 100,
   ) {
-    return await this.queueService.getJobsByStatus(
-      queueName,
-      status,
-      limit,
-    );
+    return await this.queueService.getJobsByStatus(queueName, status, limit);
   }
 
   // ==================== System Health & Diagnostics ====================
@@ -543,9 +544,11 @@ export class QueueAdminController {
     return {
       timestamp: new Date(),
       overallStatus:
-        criticalQueues.length > 0 ? 'critical'
-          : warningQueues.length > 0 ? 'warning'
-          : 'healthy',
+        criticalQueues.length > 0
+          ? 'critical'
+          : warningQueues.length > 0
+            ? 'warning'
+            : 'healthy',
       queueHealth: allHealth,
       summary: {
         critical: criticalQueues.length,

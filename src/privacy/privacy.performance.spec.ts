@@ -33,7 +33,9 @@ describe('Privacy Performance Benchmarks', () => {
       console.log(`\nEncryption Benchmark:`);
       console.log(`  Total time for 100 orders: ${totalTime.toFixed(2)}ms`);
       console.log(`  Average per order: ${averageTime.toFixed(2)}ms`);
-      console.log(`  Throughput: ${(100 / (totalTime / 1000)).toFixed(0)} orders/sec`);
+      console.log(
+        `  Throughput: ${(100 / (totalTime / 1000)).toFixed(0)} orders/sec`,
+      );
 
       // Target: < 10ms per order, > 100 orders/sec
       expect(averageTime).toBeLessThan(10);
@@ -49,7 +51,12 @@ describe('Privacy Performance Benchmarks', () => {
       const startTime = performance.now();
 
       for (let i = 0; i < 100; i++) {
-        encryptionService.decrypt(encrypted.ciphertext, key, encrypted.nonce, encrypted.tag);
+        encryptionService.decrypt(
+          encrypted.ciphertext,
+          key,
+          encrypted.nonce,
+          encrypted.tag,
+        );
       }
 
       const endTime = performance.now();
@@ -78,7 +85,9 @@ describe('Privacy Performance Benchmarks', () => {
       const averageTime = totalTime / iterations;
 
       console.log(`\nKey Derivation Benchmark:`);
-      console.log(`  Total time for ${iterations} derivations: ${totalTime.toFixed(2)}ms`);
+      console.log(
+        `  Total time for ${iterations} derivations: ${totalTime.toFixed(2)}ms`,
+      );
       console.log(`  Average per derivation: ${averageTime.toFixed(2)}ms`);
 
       // Key derivation should be relatively slow for security
@@ -137,7 +146,12 @@ describe('Privacy Performance Benchmarks', () => {
 
       for (let i = 0; i < 20; i++) {
         const challenge = zkpService.generateServerChallenge();
-        zkpService.generateBalanceProof(balance, coefficient, minAmount, challenge);
+        zkpService.generateBalanceProof(
+          balance,
+          coefficient,
+          minAmount,
+          challenge,
+        );
       }
 
       const endTime = performance.now();
@@ -162,7 +176,12 @@ describe('Privacy Performance Benchmarks', () => {
       for (let i = 0; i < 100; i++) {
         const challenge = zkpService.generateServerChallenge();
         proofs.push(
-          zkpService.generateBalanceProof(balance, coefficient, minAmount, challenge),
+          zkpService.generateBalanceProof(
+            balance,
+            coefficient,
+            minAmount,
+            challenge,
+          ),
         );
       }
 
@@ -189,9 +208,13 @@ describe('Privacy Performance Benchmarks', () => {
       const averageTime = totalTime / 100;
 
       console.log(`\nBalance Proof Verification Benchmark:`);
-      console.log(`  Total time for 100 verifications: ${totalTime.toFixed(2)}ms`);
+      console.log(
+        `  Total time for 100 verifications: ${totalTime.toFixed(2)}ms`,
+      );
       console.log(`  Average per verification: ${averageTime.toFixed(3)}ms`);
-      console.log(`  Verification rate: ${(100 / (totalTime / 1000)).toFixed(0)} proofs/sec`);
+      console.log(
+        `  Verification rate: ${(100 / (totalTime / 1000)).toFixed(0)} proofs/sec`,
+      );
 
       expect(averageTime).toBeLessThan(100);
     });
@@ -233,13 +256,18 @@ describe('Privacy Performance Benchmarks', () => {
       const startTime = performance.now();
 
       // 1. Encrypt order
-      const { ciphertext, nonce, tag } = encryptionService.encrypt(orderData, key);
+      const { ciphertext, nonce, tag } = encryptionService.encrypt(
+        orderData,
+        key,
+      );
 
       // 2. Generate HMAC
       const hmac = encryptionService.generateHMAC(ciphertext, key);
 
       // 3. Create balance commitment
-      const commitment = encryptionService.createBalanceCommitment('1000000000000000000');
+      const commitment = encryptionService.createBalanceCommitment(
+        '1000000000000000000',
+      );
 
       // 4. Generate balance proof
       const challenge = zkpService.generateServerChallenge();
@@ -258,7 +286,9 @@ describe('Privacy Performance Benchmarks', () => {
 
       console.log(`\nEnd-to-end Order Processing Benchmark:`);
       console.log(`  Total time: ${totalTime.toFixed(2)}ms`);
-      console.log(`  Operations completed: Encrypt, HMAC, Commitment, Proof, Decrypt`);
+      console.log(
+        `  Operations completed: Encrypt, HMAC, Commitment, Proof, Decrypt`,
+      );
 
       expect(totalTime).toBeLessThan(1000); // < 1 second for full workflow
       expect(decrypted).toBe(orderData);
@@ -282,7 +312,9 @@ describe('Privacy Performance Benchmarks', () => {
       console.log(`\nMemory Usage Benchmark:`);
       console.log(`  Keys generated: ${iterations}`);
       console.log(`  Memory used: ${memoryUsed.toFixed(2)}MB`);
-      console.log(`  Average per key: ${((memoryUsed * 1024) / iterations).toFixed(2)}KB`);
+      console.log(
+        `  Average per key: ${((memoryUsed * 1024) / iterations).toFixed(2)}KB`,
+      );
 
       // Should not use excessive memory
       expect(memoryUsed).toBeLessThan(50); // Reasonable upper limit
@@ -314,7 +346,9 @@ describe('Privacy Performance Benchmarks', () => {
       console.log(`\nConcurrent Encryption Stress Test:`);
       console.log(`  Orders processed: ${orderCount}`);
       console.log(`  Total time: ${totalTime.toFixed(2)}ms`);
-      console.log(`  Throughput: ${(orderCount / (totalTime / 1000)).toFixed(0)} orders/sec`);
+      console.log(
+        `  Throughput: ${(orderCount / (totalTime / 1000)).toFixed(0)} orders/sec`,
+      );
 
       expect(totalTime).toBeLessThan(5000); // Should complete in < 5 seconds
     });

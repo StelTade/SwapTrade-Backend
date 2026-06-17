@@ -43,13 +43,15 @@ export class ConnectionPoolService {
       lastActivity: new Date(),
       subscriptions: new Set(),
       roomCount: 0,
-      messageCount: 0
+      messageCount: 0,
     };
 
     this.connections.set(socket.id, connectionInfo);
-    
-    this.logger.log(`Connection added: ${socket.id} (total: ${this.connections.size})`);
-    
+
+    this.logger.log(
+      `Connection added: ${socket.id} (total: ${this.connections.size})`,
+    );
+
     return connectionInfo;
   }
 
@@ -60,12 +62,14 @@ export class ConnectionPoolService {
     const connection = this.connections.get(socketId);
     if (connection) {
       // Leave all rooms
-      connection.subscriptions.forEach(room => {
+      connection.subscriptions.forEach((room) => {
         this.leaveRoom(socketId, room);
       });
 
       this.connections.delete(socketId);
-      this.logger.log(`Connection removed: ${socketId} (total: ${this.connections.size})`);
+      this.logger.log(
+        `Connection removed: ${socketId} (total: ${this.connections.size})`,
+      );
     }
   }
 
@@ -79,7 +83,9 @@ export class ConnectionPoolService {
     // Check user connection limit
     const userConnections = this.getUserConnectionCount(userId);
     if (userConnections >= this.MAX_CONNECTIONS_PER_USER) {
-      this.logger.warn(`User ${userId} exceeded connection limit (${userConnections})`);
+      this.logger.warn(
+        `User ${userId} exceeded connection limit (${userConnections})`,
+      );
       return false;
     }
 
@@ -108,7 +114,7 @@ export class ConnectionPoolService {
         clients: new Set(),
         createdAt: new Date(),
         lastMessage: new Date(),
-        messageCount: 0
+        messageCount: 0,
       };
       this.rooms.set(roomName, room);
     }
@@ -154,7 +160,7 @@ export class ConnectionPoolService {
     const startTime = Date.now();
     let sentCount = 0;
 
-    room.clients.forEach(socketId => {
+    room.clients.forEach((socketId) => {
       const connection = this.connections.get(socketId);
       if (connection && connection.socket.connected) {
         connection.socket.emit(event, data);
@@ -167,7 +173,9 @@ export class ConnectionPoolService {
     room.messageCount++;
 
     const duration = Date.now() - startTime;
-    this.logger.debug(`Broadcast to room ${roomName}: ${sentCount} clients in ${duration}ms`);
+    this.logger.debug(
+      `Broadcast to room ${roomName}: ${sentCount} clients in ${duration}ms`,
+    );
   }
 
   /**
@@ -177,7 +185,7 @@ export class ConnectionPoolService {
     const heartbeatData = {
       type: 'heartbeat',
       timestamp: new Date().toISOString(),
-      serverTime: Date.now()
+      serverTime: Date.now(),
     };
 
     let activeCount = 0;
@@ -203,32 +211,36 @@ export class ConnectionPoolService {
     topActiveRooms: Array<{ name: string; clients: number; messages: number }>;
     userConnectionCounts: Array<{ userId: string; connections: number }>;
   } {
-    const activeConnections = Array.from(this.connections.values())
-      .filter(conn => conn.socket.connected).length;
+    const activeConnections = Array.from(this.connections.values()).filter(
+      (conn) => conn.socket.connected,
+    ).length;
 
     const totalRooms = this.rooms.size;
-    const averageRoomsPerConnection = this.connections.size > 0 
-      ? Array.from(this.connections.values())
-          .reduce((sum, conn) => sum + conn.roomCount, 0) / this.connections.size
-      : 0;
+    const averageRoomsPerConnection =
+      this.connections.size > 0
+        ? Array.from(this.connections.values()).reduce(
+            (sum, conn) => sum + conn.roomCount,
+            0,
+          ) / this.connections.size
+        : 0;
 
     // Top active rooms
     const topActiveRooms = Array.from(this.rooms.values())
       .sort((a, b) => b.clients.size - a.clients.size)
       .slice(0, 10)
-      .map(room => ({
+      .map((room) => ({
         name: room.name,
         clients: room.clients.size,
-        messages: room.messageCount
+        messages: room.messageCount,
       }));
 
     // User connection counts
     const userConnectionMap = new Map<string, number>();
-    this.connections.forEach(connection => {
+    this.connections.forEach((connection) => {
       if (connection.userId) {
         userConnectionMap.set(
           connection.userId,
-          (userConnectionMap.get(connection.userId) || 0) + 1
+          (userConnectionMap.get(connection.userId) || 0) + 1,
         );
       }
     });
@@ -244,7 +256,7 @@ export class ConnectionPoolService {
       totalRooms,
       averageRoomsPerConnection,
       topActiveRooms,
-      userConnectionCounts
+      userConnectionCounts,
     };
   }
 
@@ -256,11 +268,12 @@ export class ConnectionPoolService {
     let cleanedCount = 0;
 
     this.connections.forEach((connection, socketId) => {
-      if (!connection.socket.connected || 
-          now - connection.lastActivity.getTime() > this.CONNECTION_TIMEOUT) {
-        
+      if (
+        !connection.socket.connected ||
+        now - connection.lastActivity.getTime() > this.CONNECTION_TIMEOUT
+      ) {
         // Leave all rooms
-        connection.subscriptions.forEach(room => {
+        connection.subscriptions.forEach((room) => {
           this.leaveRoom(socketId, room);
         });
 
@@ -284,7 +297,7 @@ export class ConnectionPoolService {
    */
   private getUserConnectionCount(userId: string): number {
     let count = 0;
-    this.connections.forEach(connection => {
+    this.connections.forEach((connection) => {
       if (connection.userId === userId && connection.socket.connected) {
         count++;
       }
@@ -310,7 +323,8 @@ export class ConnectionPoolService {
    * Get all connections for user
    */
   getUserConnections(userId: string): ConnectionInfo[] {
-    return Array.from(this.connections.values())
-      .filter(conn => conn.userId === userId && conn.socket.connected);
+    return Array.from(this.connections.values()).filter(
+      (conn) => conn.userId === userId && conn.socket.connected,
+    );
   }
 }

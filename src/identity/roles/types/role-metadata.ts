@@ -76,7 +76,16 @@ export const ROLE_METADATA: Record<UserRole, RoleMetadata> = {
     name: UserRole.ADMIN,
     description: 'Administrator - Full system access',
     priority: 150,
-    permissions: ['admin.access', 'users.read', 'users.write', 'accounts.read', 'accounts.write', 'trades.read', 'trades.write', '*'],
+    permissions: [
+      'admin.access',
+      'users.read',
+      'users.write',
+      'accounts.read',
+      'accounts.write',
+      'trades.read',
+      'trades.write',
+      '*',
+    ],
     constraints: {
       maxUsers: 5,
       maxDailyActions: undefined, // Unlimited
@@ -87,7 +96,15 @@ export const ROLE_METADATA: Record<UserRole, RoleMetadata> = {
     name: UserRole.COMPLIANCE_OFFICER,
     description: 'Compliance Officer - Regulatory monitoring and enforcement',
     priority: 120,
-    permissions: ['admin.access', 'users.read', 'accounts.read', 'trades.read', 'compliance.read', 'compliance.write', 'audit.read'],
+    permissions: [
+      'admin.access',
+      'users.read',
+      'accounts.read',
+      'trades.read',
+      'compliance.read',
+      'compliance.write',
+      'audit.read',
+    ],
     constraints: {
       maxUsers: 10,
       maxDailyActions: 1000,
@@ -98,7 +115,12 @@ export const ROLE_METADATA: Record<UserRole, RoleMetadata> = {
     name: UserRole.SUPPORT_AGENT,
     description: 'Support Agent - User assistance and account troubleshooting',
     priority: 100,
-    permissions: ['admin.access', 'users.read', 'accounts.read', 'support.tickets.manage'],
+    permissions: [
+      'admin.access',
+      'users.read',
+      'accounts.read',
+      'support.tickets.manage',
+    ],
     constraints: {
       maxUsers: 50,
       maxDailyActions: 5000,
@@ -107,9 +129,17 @@ export const ROLE_METADATA: Record<UserRole, RoleMetadata> = {
   },
   [UserRole.TRADER]: {
     name: UserRole.TRADER,
-    description: 'Trader - Advanced trading capabilities and portfolio management',
+    description:
+      'Trader - Advanced trading capabilities and portfolio management',
     priority: 40,
-    permissions: ['trades.read', 'trades.write', 'accounts.read', 'accounts.write', 'portfolio.read', 'portfolio.write'],
+    permissions: [
+      'trades.read',
+      'trades.write',
+      'accounts.read',
+      'accounts.write',
+      'portfolio.read',
+      'portfolio.write',
+    ],
     constraints: {
       maxUsers: undefined, // Unlimited
       maxDailyActions: 10000,
@@ -119,7 +149,14 @@ export const ROLE_METADATA: Record<UserRole, RoleMetadata> = {
     name: UserRole.USER,
     description: 'Standard platform user - Trading and account access',
     priority: 20,
-    permissions: ['trades.read', 'trades.write', 'accounts.read', 'accounts.write', 'profile.read', 'profile.write'],
+    permissions: [
+      'trades.read',
+      'trades.write',
+      'accounts.read',
+      'accounts.write',
+      'profile.read',
+      'profile.write',
+    ],
     constraints: {
       maxUsers: undefined, // Unlimited
       maxDailyActions: 5000,
@@ -226,7 +263,7 @@ export function roleHasPermission(role: UserRole, permission: string): boolean {
  */
 export function getAllRolePermissions(
   role: UserRole,
-  inheritedRoles: UserRole[]
+  inheritedRoles: UserRole[],
 ): Set<string> {
   const permissions = new Set<string>();
 

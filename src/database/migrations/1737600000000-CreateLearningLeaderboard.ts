@@ -126,8 +126,14 @@ export class CreateLearningLeaderboard1737600000000 implements MigrationInterfac
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Drop indexes
-    await queryRunner.dropIndex('learning_profiles', 'IDX_learning_profiles_user_id');
-    await queryRunner.dropIndex('learning_profiles', 'IDX_learning_profiles_total_points');
+    await queryRunner.dropIndex(
+      'learning_profiles',
+      'IDX_learning_profiles_user_id',
+    );
+    await queryRunner.dropIndex(
+      'learning_profiles',
+      'IDX_learning_profiles_total_points',
+    );
 
     // Drop learning_profiles table
     await queryRunner.dropTable('learning_profiles');

@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { LoginDto } from './dto/login.dto';
@@ -17,7 +21,7 @@ export class AuthService {
     private readonly sessionRepo: Repository<Session>,
   ) {}
 
-  async login(body: LoginDto & { code?: string, deviceInfo?: string }) {
+  async login(body: LoginDto & { code?: string; deviceInfo?: string }) {
     const user = await this.authRepo.findOne({
       where: { staffId: body.email },
     });
@@ -42,7 +46,11 @@ export class AuthService {
         if (!verified) {
           throw new UnauthorizedException('Invalid 2FA code');
         }
-      } else if (user.smsCode && user.smsCodeExpiry && user.smsCodeExpiry > new Date()) {
+      } else if (
+        user.smsCode &&
+        user.smsCodeExpiry &&
+        user.smsCodeExpiry > new Date()
+      ) {
         if (body.code !== user.smsCode) {
           throw new UnauthorizedException('Invalid SMS code');
         }
@@ -51,7 +59,8 @@ export class AuthService {
       }
     }
     // Create session
-    const sessionToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
+    const sessionToken =
+      Math.random().toString(36).substring(2) + Date.now().toString(36);
     const session = this.sessionRepo.create({
       user,
       deviceInfo: body.deviceInfo || 'unknown',
@@ -62,16 +71,31 @@ export class AuthService {
   }
 
   async listSessions(user: any) {
-    const auth = await this.authRepo.findOne({ where: { staffId: user.staffId } });
+    const auth = await this.authRepo.findOne({
+      where: { staffId: user.staffId },
+    });
     if (!auth) throw new UnauthorizedException();
-    const sessions = await this.sessionRepo.find({ where: { user: auth }, order: { lastActive: 'DESC' } });
-    return sessions.map(s => ({ id: s.id, deviceInfo: s.deviceInfo, createdAt: s.createdAt, lastActive: s.lastActive, revoked: s.revoked }));
+    const sessions = await this.sessionRepo.find({
+      where: { user: auth },
+      order: { lastActive: 'DESC' },
+    });
+    return sessions.map((s) => ({
+      id: s.id,
+      deviceInfo: s.deviceInfo,
+      createdAt: s.createdAt,
+      lastActive: s.lastActive,
+      revoked: s.revoked,
+    }));
   }
 
   async revokeSession(user: any, sessionId: number) {
-    const auth = await this.authRepo.findOne({ where: { staffId: user.staffId } });
+    const auth = await this.authRepo.findOne({
+      where: { staffId: user.staffId },
+    });
     if (!auth) throw new UnauthorizedException();
-    const session = await this.sessionRepo.findOne({ where: { id: sessionId, user: auth } });
+    const session = await this.sessionRepo.findOne({
+      where: { id: sessionId, user: auth },
+    });
     if (!session) throw new BadRequestException('Session not found');
     session.revoked = true;
     await this.sessionRepo.save(session);
@@ -80,7 +104,9 @@ export class AuthService {
 
   async setup2FA(dto: Enable2FADto, user: any) {
     // Find user
-    const auth = await this.authRepo.findOne({ where: { staffId: user.staffId } });
+    const auth = await this.authRepo.findOne({
+      where: { staffId: user.staffId },
+    });
     if (!auth) throw new UnauthorizedException();
     if (dto.method === 'totp') {
       const secret = speakeasy.generateSecret();
@@ -88,7 +114,8 @@ export class AuthService {
       await this.authRepo.save(auth);
       return { otpauth_url: secret.otpauth_url, secret: secret.base32 };
     } else if (dto.method === 'sms') {
-      if (!dto.phoneNumber) throw new BadRequestException('Phone number required');
+      if (!dto.phoneNumber)
+        throw new BadRequestException('Phone number required');
       // Generate code and set expiry
       const code = Math.floor(100000 + Math.random() * 900000).toString();
       auth.smsCode = code;
@@ -102,7 +129,9 @@ export class AuthService {
   }
 
   async verify2FA(dto: TwoFADto, user: any) {
-    const auth = await this.authRepo.findOne({ where: { staffId: user.staffId } });
+    const auth = await this.authRepo.findOne({
+      where: { staffId: user.staffId },
+    });
     if (!auth) throw new UnauthorizedException();
     if (auth.totpSecret) {
       const verified = speakeasy.totp.verify({
@@ -112,15 +141,22 @@ export class AuthService {
       });
       if (!verified) throw new UnauthorizedException('Invalid TOTP code');
       return { valid: true };
-    } else if (auth.smsCode && auth.smsCodeExpiry && auth.smsCodeExpiry > new Date()) {
-      if (dto.code !== auth.smsCode) throw new UnauthorizedException('Invalid SMS code');
+    } else if (
+      auth.smsCode &&
+      auth.smsCodeExpiry &&
+      auth.smsCodeExpiry > new Date()
+    ) {
+      if (dto.code !== auth.smsCode)
+        throw new UnauthorizedException('Invalid SMS code');
       return { valid: true };
     }
     throw new UnauthorizedException('2FA not configured');
   }
 
   async enable2FA(user: any) {
-    const auth = await this.authRepo.findOne({ where: { staffId: user.staffId } });
+    const auth = await this.authRepo.findOne({
+      where: { staffId: user.staffId },
+    });
     if (!auth) throw new UnauthorizedException();
     auth.is2FAEnabled = true;
     await this.authRepo.save(auth);
@@ -128,7 +164,9 @@ export class AuthService {
   }
 
   async disable2FA(user: any) {
-    const auth = await this.authRepo.findOne({ where: { staffId: user.staffId } });
+    const auth = await this.authRepo.findOne({
+      where: { staffId: user.staffId },
+    });
     if (!auth) throw new UnauthorizedException();
     auth.is2FAEnabled = false;
     auth.totpSecret = undefined;

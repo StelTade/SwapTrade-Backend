@@ -19,7 +19,13 @@ export interface MigrationPlan {
 export interface MigrationStep {
   id: string;
   name: string;
-  operation: 'create_index' | 'drop_index' | 'add_column' | 'drop_column' | 'migrate_data' | 'validate';
+  operation:
+    | 'create_index'
+    | 'drop_index'
+    | 'add_column'
+    | 'drop_column'
+    | 'migrate_data'
+    | 'validate';
   sql: string;
   rollbackSql: string;
   estimatedDuration: number; // seconds
@@ -40,7 +46,12 @@ export interface MigrationProgress {
 export interface DataValidationResult {
   tableName: string;
   recordCount: number;
-  validationQueries: Array<{ query: string; expected: any; actual: any; passed: boolean }>;
+  validationQueries: Array<{
+    query: string;
+    expected: any;
+    actual: any;
+    passed: boolean;
+  }>;
   overallStatus: 'passed' | 'failed' | 'warning';
 }
 
@@ -62,7 +73,8 @@ export class DatabaseMigrationService {
     const indexingPlan: MigrationPlan = {
       id: 'advanced_indexing_v1',
       name: 'Advanced Indexing Strategy',
-      description: 'Implement optimized composite indexes for high-frequency trading queries',
+      description:
+        'Implement optimized composite indexes for high-frequency trading queries',
       estimatedDuration: 30,
       batchSize: 1000,
       dependencies: [],
@@ -77,7 +89,8 @@ export class DatabaseMigrationService {
     const structurePlan: MigrationPlan = {
       id: 'table_structure_v1',
       name: 'Table Structure Optimization',
-      description: 'Optimize table structure for better performance and partitioning',
+      description:
+        'Optimize table structure for better performance and partitioning',
       estimatedDuration: 45,
       batchSize: 500,
       dependencies: ['advanced_indexing_v1'],
@@ -113,11 +126,14 @@ export class DatabaseMigrationService {
   /**
    * Execute migration plan
    */
-  async executeMigrationPlan(planId: string, options: {
-    dryRun?: boolean;
-    skipValidation?: boolean;
-    batchSize?: number;
-  } = {}): Promise<MigrationProgress> {
+  async executeMigrationPlan(
+    planId: string,
+    options: {
+      dryRun?: boolean;
+      skipValidation?: boolean;
+      batchSize?: number;
+    } = {},
+  ): Promise<MigrationProgress> {
     const plan = this.migrationPlans.get(planId);
     if (!plan) {
       throw new Error(`Migration plan ${planId} not found`);
@@ -125,7 +141,7 @@ export class DatabaseMigrationService {
 
     // Check dependencies
     for (const dependency of plan.dependencies) {
-      if (!await this.isMigrationCompleted(dependency)) {
+      if (!(await this.isMigrationCompleted(dependency))) {
         throw new Error(`Dependency ${dependency} not completed`);
       }
     }
@@ -146,7 +162,9 @@ export class DatabaseMigrationService {
       const steps = await this.generateMigrationSteps(plan);
       progress.totalSteps = steps.length;
 
-      this.logger.log(`Starting migration plan: ${plan.name} (${steps.length} steps)`);
+      this.logger.log(
+        `Starting migration plan: ${plan.name} (${steps.length} steps)`,
+      );
 
       if (options.dryRun) {
         this.logger.log('DRY RUN: Would execute the following steps:');
@@ -161,14 +179,19 @@ export class DatabaseMigrationService {
         const step = steps[i];
         progress.currentStep = step.name;
         progress.estimatedCompletion = new Date(
-          progress.startTime.getTime() + 
-          ((i + 1) / steps.length) * plan.estimatedDuration * 60 * 1000
+          progress.startTime.getTime() +
+            ((i + 1) / steps.length) * plan.estimatedDuration * 60 * 1000,
         );
 
         try {
-          await this.executeMigrationStep(step, options.batchSize || plan.batchSize);
+          await this.executeMigrationStep(
+            step,
+            options.batchSize || plan.batchSize,
+          );
           progress.completedSteps++;
-          this.logger.log(`Step ${i + 1}/${steps.length} completed: ${step.name}`);
+          this.logger.log(
+            `Step ${i + 1}/${steps.length} completed: ${step.name}`,
+          );
         } catch (error) {
           const errorMsg = `Step ${step.name} failed: ${error.message}`;
           progress.errors.push(errorMsg);
@@ -186,12 +209,14 @@ export class DatabaseMigrationService {
       if (!options.skipValidation) {
         progress.currentStep = 'Validating migration';
         const validationResult = await this.validateMigration(plan);
-        
+
         if (validationResult.overallStatus === 'failed') {
           progress.errors.push('Migration validation failed');
           throw new Error('Migration validation failed');
         } else if (validationResult.overallStatus === 'warning') {
-          progress.warnings.push('Migration validation completed with warnings');
+          progress.warnings.push(
+            'Migration validation completed with warnings',
+          );
         }
       }
 
@@ -210,7 +235,9 @@ export class DatabaseMigrationService {
   /**
    * Generate migration steps for a plan
    */
-  private async generateMigrationSteps(plan: MigrationPlan): Promise<MigrationStep[]> {
+  private async generateMigrationSteps(
+    plan: MigrationPlan,
+  ): Promise<MigrationStep[]> {
     const steps: MigrationStep[] = [];
 
     switch (plan.id) {
@@ -221,7 +248,8 @@ export class DatabaseMigrationService {
             name: 'Drop redundant indexes',
             operation: 'drop_index',
             sql: 'DROP INDEX IF EXISTS "IDX_trades_userId"',
-            rollbackSql: 'CREATE INDEX "IDX_trades_userId" ON "trades" ("userId")',
+            rollbackSql:
+              'CREATE INDEX "IDX_trades_userId" ON "trades" ("userId")',
             estimatedDuration: 5,
             critical: false,
           },
@@ -248,10 +276,11 @@ export class DatabaseMigrationService {
             name: 'Create optimized balance indexes',
             operation: 'create_index',
             sql: 'CREATE INDEX "IDX_balance_user_asset_composite" ON "Balance" ("userId", "assetId", "updatedAt" DESC)',
-            rollbackSql: 'DROP INDEX IF EXISTS "IDX_balance_user_asset_composite"',
+            rollbackSql:
+              'DROP INDEX IF EXISTS "IDX_balance_user_asset_composite"',
             estimatedDuration: 6,
             critical: true,
-          }
+          },
         );
         break;
 
@@ -274,7 +303,7 @@ export class DatabaseMigrationService {
             rollbackSql: 'ALTER TABLE trades DROP COLUMN "partition_month"',
             estimatedDuration: 10,
             critical: true,
-          }
+          },
         );
         break;
 
@@ -297,7 +326,7 @@ export class DatabaseMigrationService {
             rollbackSql: 'DELETE FROM trades_partitioned',
             estimatedDuration: 30,
             critical: true,
-          }
+          },
         );
         break;
     }
@@ -308,7 +337,10 @@ export class DatabaseMigrationService {
   /**
    * Execute a single migration step
    */
-  private async executeMigrationStep(step: MigrationStep, batchSize: number): Promise<void> {
+  private async executeMigrationStep(
+    step: MigrationStep,
+    batchSize: number,
+  ): Promise<void> {
     const queryRunner = this.dataSource.createQueryRunner();
 
     try {
@@ -335,7 +367,11 @@ export class DatabaseMigrationService {
   /**
    * Execute batch migration for large data sets
    */
-  private async executeBatchMigration(queryRunner: QueryRunner, sql: string, batchSize: number): Promise<void> {
+  private async executeBatchMigration(
+    queryRunner: QueryRunner,
+    sql: string,
+    batchSize: number,
+  ): Promise<void> {
     // This is a simplified implementation
     // In practice, you'd need to parse the SQL and execute in batches
     await queryRunner.query(sql);
@@ -383,36 +419,43 @@ export class DatabaseMigrationService {
         results.push({
           tableName: 'validation',
           recordCount: Array.isArray(actual) ? actual.length : 0,
-          validationQueries: [{
-            query,
-            expected: 'any', // Would be defined in practice
-            actual,
-            passed: true,
-          }],
+          validationQueries: [
+            {
+              query,
+              expected: 'any', // Would be defined in practice
+              actual,
+              passed: true,
+            },
+          ],
           overallStatus: 'passed',
         });
       } catch (error) {
         results.push({
           tableName: 'validation',
           recordCount: 0,
-          validationQueries: [{
-            query,
-            expected: 'any',
-            actual: error.message,
-            passed: false,
-          }],
+          validationQueries: [
+            {
+              query,
+              expected: 'any',
+              actual: error.message,
+              passed: false,
+            },
+          ],
           overallStatus: 'failed',
         });
       }
     }
 
-    const overallStatus = results.every(r => r.overallStatus === 'passed') ? 'passed' :
-                         results.some(r => r.overallStatus === 'failed') ? 'failed' : 'warning';
+    const overallStatus = results.every((r) => r.overallStatus === 'passed')
+      ? 'passed'
+      : results.some((r) => r.overallStatus === 'failed')
+        ? 'failed'
+        : 'warning';
 
     return {
       tableName: 'migration_validation',
       recordCount: results.length,
-      validationQueries: results.flatMap(r => r.validationQueries),
+      validationQueries: results.flatMap((r) => r.validationQueries),
       overallStatus,
     };
   }
@@ -420,23 +463,26 @@ export class DatabaseMigrationService {
   /**
    * Rollback migration
    */
-  async rollbackMigration(planId: string, executedSteps: MigrationStep[]): Promise<void> {
+  async rollbackMigration(
+    planId: string,
+    executedSteps: MigrationStep[],
+  ): Promise<void> {
     this.logger.log(`Rolling back migration plan: ${planId}`);
 
     // Rollback in reverse order
     for (let i = executedSteps.length - 1; i >= 0; i--) {
       const step = executedSteps[i];
-      
+
       try {
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
         await queryRunner.startTransaction();
-        
+
         await queryRunner.query(step.rollbackSql);
-        
+
         await queryRunner.commitTransaction();
         await queryRunner.release();
-        
+
         this.logger.log(`Rolled back step: ${step.name}`);
       } catch (error) {
         this.logger.error(`Failed to rollback step ${step.name}:`, error);
@@ -512,11 +558,13 @@ export class DatabaseMigrationService {
 
     // Get current data size to adjust estimate
     const tradeCount = await this.dataSource.getRepository(Trade).count();
-    const balanceCount = await this.dataSource.getRepository(UserBalance).count();
+    const balanceCount = await this.dataSource
+      .getRepository(UserBalance)
+      .count();
 
     // Adjust duration based on data size (simplified)
     const sizeMultiplier = Math.max(1, (tradeCount + balanceCount) / 100000);
-    
+
     return Math.ceil(plan.estimatedDuration * sizeMultiplier);
   }
 
@@ -539,11 +587,16 @@ export class DatabaseMigrationService {
     };
   }
 
-  private generateMigrationRecommendations(plan: MigrationPlan, progress: MigrationProgress | null): string[] {
+  private generateMigrationRecommendations(
+    plan: MigrationPlan,
+    progress: MigrationProgress | null,
+  ): string[] {
     const recommendations: string[] = [];
 
     if (!progress) {
-      recommendations.push('Consider running this migration during off-peak hours');
+      recommendations.push(
+        'Consider running this migration during off-peak hours',
+      );
       recommendations.push('Ensure you have a recent backup before starting');
     } else if (progress.errors.length > 0) {
       recommendations.push('Review and fix errors before proceeding');
@@ -558,9 +611,13 @@ export class DatabaseMigrationService {
   private getNextMigrationSteps(planId: string): string[] {
     const availablePlans = Array.from(this.migrationPlans.values());
     const completedPlans = ['advanced_indexing_v1']; // In practice, track completed migrations
-    
+
     return availablePlans
-      .filter(plan => !completedPlans.includes(plan.id) && plan.dependencies.includes(planId))
-      .map(plan => plan.id);
+      .filter(
+        (plan) =>
+          !completedPlans.includes(plan.id) &&
+          plan.dependencies.includes(planId),
+      )
+      .map((plan) => plan.id);
   }
 }

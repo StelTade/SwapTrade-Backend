@@ -3,7 +3,9 @@ import { AdvancedAnalyticsService } from '../../advanced-analytics/advanced-anal
 
 @Resolver()
 export class AdvancedAnalyticsResolver {
-  constructor(private readonly advancedAnalyticsService: AdvancedAnalyticsService) {}
+  constructor(
+    private readonly advancedAnalyticsService: AdvancedAnalyticsService,
+  ) {}
 
   @Query(() => Object)
   async advancedRiskMetrics(@Args('userId') userId: string): Promise<any> {

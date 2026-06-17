@@ -44,7 +44,10 @@ export class DeadLetterQueueService {
   private readonly logger = new Logger(DeadLetterQueueService.name);
   private readonly dlqConfigs = new Map<string, DLQConfig>();
   private readonly dlqMessages = new Map<string, DeadLetterMessage[]>();
-  private readonly dlqCallbacks = new Map<string, Set<(msg: DeadLetterMessage) => void>>();
+  private readonly dlqCallbacks = new Map<
+    string,
+    Set<(msg: DeadLetterMessage) => void>
+  >();
 
   constructor(
     @Optional()
@@ -109,13 +112,18 @@ export class DeadLetterQueueService {
     messages.push(dlqMessage);
     this.dlqMessages.set(queueName, messages);
 
-    this.logger.warn(`Message sent to DLQ: ${queueName} - ${functionName} (${dlqMessage.id})`);
+    this.logger.warn(
+      `Message sent to DLQ: ${queueName} - ${functionName} (${dlqMessage.id})`,
+    );
 
     // Trigger callbacks
     this.triggerCallbacks(queueName, dlqMessage);
 
     // Check threshold
-    if (config.notifyOnThreshold && messages.length >= config.notifyOnThreshold) {
+    if (
+      config.notifyOnThreshold &&
+      messages.length >= config.notifyOnThreshold
+    ) {
       this.logger.error(
         `DLQ threshold reached for ${queueName}: ${messages.length} messages in queue`,
       );
@@ -136,7 +144,10 @@ export class DeadLetterQueueService {
   /**
    * Get DLQ message by ID
    */
-  getDLQMessage(queueName: string, messageId: string): DeadLetterMessage | undefined {
+  getDLQMessage(
+    queueName: string,
+    messageId: string,
+  ): DeadLetterMessage | undefined {
     const messages = this.dlqMessages.get(queueName) || [];
     return messages.find((m) => m.id === messageId);
   }
@@ -159,7 +170,8 @@ export class DeadLetterQueueService {
         totalMessages: messages.length,
         config: this.dlqConfigs.get(queueName),
         oldestMessage: messages.length > 0 ? messages[0].failedAt : null,
-        newestMessage: messages.length > 0 ? messages[messages.length - 1].failedAt : null,
+        newestMessage:
+          messages.length > 0 ? messages[messages.length - 1].failedAt : null,
         errors: this.groupErrorsByCode(messages),
       };
     }
@@ -195,7 +207,9 @@ export class DeadLetterQueueService {
 
       // Remove from DLQ on success
       messages.splice(messageIndex, 1);
-      this.logger.log(`DLQ message successfully retried and removed: ${messageId}`);
+      this.logger.log(
+        `DLQ message successfully retried and removed: ${messageId}`,
+      );
 
       return true;
     } catch (error) {
@@ -226,7 +240,9 @@ export class DeadLetterQueueService {
       const retentionMs = config.retentionDays * 24 * 60 * 60 * 1000;
       const cutoffTime = Date.now() - retentionMs;
 
-      const filtered = messages.filter((m) => m.failedAt.getTime() > cutoffTime);
+      const filtered = messages.filter(
+        (m) => m.failedAt.getTime() > cutoffTime,
+      );
       const removed = messages.length - filtered.length;
 
       this.dlqMessages.set(queue, filtered);
@@ -286,7 +302,9 @@ export class DeadLetterQueueService {
   /**
    * Group errors by code
    */
-  private groupErrorsByCode(messages: DeadLetterMessage[]): Record<string, number> {
+  private groupErrorsByCode(
+    messages: DeadLetterMessage[],
+  ): Record<string, number> {
     const grouped: Record<string, number> = {};
 
     for (const message of messages) {
@@ -300,16 +318,21 @@ export class DeadLetterQueueService {
   /**
    * Trigger callbacks for DLQ message
    */
-  private triggerCallbacks(queueName: string, message: DeadLetterMessage): void {
+  private triggerCallbacks(
+    queueName: string,
+    message: DeadLetterMessage,
+  ): void {
     const callbacks = this.dlqCallbacks.get(queueName);
     if (callbacks) {
       for (const callback of callbacks) {
         try {
           callback(message);
         } catch (error) {
-          this.logger.error(`Error in DLQ callback: ${
-            error instanceof Error ? error.message : error
-          }`);
+          this.logger.error(
+            `Error in DLQ callback: ${
+              error instanceof Error ? error.message : error
+            }`,
+          );
         }
       }
     }

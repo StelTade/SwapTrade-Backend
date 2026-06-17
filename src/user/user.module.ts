@@ -11,4 +11,4 @@ import { UserBalance } from '../database/entities/user-balance.entity';
   providers: [UserService],
   exports: [UserService],
 })
-export class UserModule { }
+export class UserModule {}

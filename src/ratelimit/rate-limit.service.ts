@@ -61,14 +61,27 @@ return {allowed, tostring(remaining), tostring(reset)}
     private readonly metrics: MetricsService,
   ) {}
 
-  private async runTokenBucket(key: string, capacity: number, refillPerSecond: number, requested = 1): Promise<CheckResult> {
+  private async runTokenBucket(
+    key: string,
+    capacity: number,
+    refillPerSecond: number,
+    requested = 1,
+  ): Promise<CheckResult> {
     const refillPerMs = refillPerSecond / 1000;
     const now = Date.now();
 
     try {
       const res = await this.pool.withClient(async (client) => {
         // EVAL with 1 key
-        const raw = await client.eval(this.tokenBucketLua, 1, key, capacity, refillPerMs, now, requested);
+        const raw = await client.eval(
+          this.tokenBucketLua,
+          1,
+          key,
+          capacity,
+          refillPerMs,
+          now,
+          requested,
+        );
         return raw as any;
       });
 
@@ -78,13 +91,26 @@ return {allowed, tostring(remaining), tostring(reset)}
 
       return { allowed, remaining, reset };
     } catch (err) {
-      this.logger.warn('Token bucket Lua script failed, falling back to sliding window', (err as Error).message);
+      this.logger.warn(
+        'Token bucket Lua script failed, falling back to sliding window',
+        (err as Error).message,
+      );
       // Fallback to sliding window
-      return this.runSlidingWindowFallback(key, capacity + 0, this.config.rateLimit?.windowMs ?? 60000, requested);
+      return this.runSlidingWindowFallback(
+        key,
+        capacity + 0,
+        this.config.rateLimit?.windowMs ?? 60000,
+        requested,
+      );
     }
   }
 
-  private async runSlidingWindowFallback(key: string, maxRequests: number, windowMs: number, _requested = 1): Promise<CheckResult> {
+  private async runSlidingWindowFallback(
+    key: string,
+    maxRequests: number,
+    windowMs: number,
+    _requested = 1,
+  ): Promise<CheckResult> {
     // Use sorted set with timestamps
     const zkey = `${key}:sw`;
     const now = Date.now();
@@ -97,7 +123,7 @@ return {allowed, tostring(remaining), tostring(reset)}
       const count = await client.zcount(zkey, windowStart, now);
       const allowed = count <= maxRequests;
       const remaining = Math.max(0, maxRequests - count);
-      const reset = Math.ceil((windowMs) / 1000);
+      const reset = Math.ceil(windowMs / 1000);
       return { allowed, remaining, reset };
     });
   }
@@ -105,10 +131,16 @@ return {allowed, tostring(remaining), tostring(reset)}
   /**
    * Check rate limit for an identifier and endpoint
    */
-  async check(identifier: string, endpoint: string, opts?: { points?: number; refillPerSecond?: number; burst?: number; }): Promise<CheckResult> {
+  async check(
+    identifier: string,
+    endpoint: string,
+    opts?: { points?: number; refillPerSecond?: number; burst?: number },
+  ): Promise<CheckResult> {
     const cfg = this.config.rateLimit;
     const points = opts?.points ?? cfg?.maxRequests ?? 100;
-    const refillPerSecond = opts?.refillPerSecond ?? Math.max(1, Math.floor(points / ((cfg?.windowMs ?? 60000) / 1000)));
+    const refillPerSecond =
+      opts?.refillPerSecond ??
+      Math.max(1, Math.floor(points / ((cfg?.windowMs ?? 60000) / 1000)));
     const burst = opts?.burst ?? Math.max(points, 1);
 
     const key = `ratelimit:${endpoint}:${identifier}`;
@@ -116,7 +148,9 @@ return {allowed, tostring(remaining), tostring(reset)}
 
     if (!result.allowed) {
       // record metric for violation
-      try { this.metrics.recordError(endpoint, 429); } catch {}
+      try {
+        this.metrics.recordError(endpoint, 429);
+      } catch {}
     }
 
     return result;

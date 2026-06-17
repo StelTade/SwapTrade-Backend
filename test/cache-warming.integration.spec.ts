@@ -52,13 +52,13 @@ describe('CacheWarmingService Integration', () => {
     const initialMetrics = cacheService.getCacheMetrics();
     expect(initialMetrics.hits).toBe(0);
     expect(initialMetrics.misses).toBe(0);
-    
+
     // Try to get a non-existent key (should be a miss)
     await cacheService.get('test-key-nonexistent');
     const afterMissMetrics = cacheService.getCacheMetrics();
     expect(afterMissMetrics.misses).toBe(1);
     expect(afterMissMetrics.hits).toBe(0);
-    
+
     // Set and get a key (should be a hit)
     await cacheService.set('test-key', 'test-value');
     await cacheService.get('test-key');

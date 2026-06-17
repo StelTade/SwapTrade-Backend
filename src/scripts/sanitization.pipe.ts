@@ -23,8 +23,8 @@ export class SanitizationPipe implements PipeTransform {
   private sanitize(str: string): string {
     // Basic sanitization to remove script tags and potential XSS vectors
     return str
-      .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, "")
-      .replace(/<[^>]+>/g, "") // Remove HTML tags
+      .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, '')
+      .replace(/<[^>]+>/g, '') // Remove HTML tags
       .trim();
   }
 }

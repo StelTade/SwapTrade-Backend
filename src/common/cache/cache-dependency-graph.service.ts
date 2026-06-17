@@ -47,7 +47,10 @@ export class CacheDependencyGraphService {
 
       // Check exact match and wildcard matches
       for (const [key, deps] of this.dependencyGraph) {
-        if (this.patternMatches(current, key) || this.patternMatches(key, current)) {
+        if (
+          this.patternMatches(current, key) ||
+          this.patternMatches(key, current)
+        ) {
           for (const dep of deps) {
             if (!result.has(dep)) {
               result.add(dep);

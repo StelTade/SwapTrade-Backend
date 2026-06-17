@@ -39,21 +39,22 @@ interface OrderBookUpdate {
   pingInterval: 25000,
 })
 export class OptimizedTradingGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer() server: Server;
   private readonly logger = new Logger(OptimizedTradingGateway.name);
 
   constructor(
     private readonly connectionPool: ConnectionPoolService,
     private readonly messageQueue: MessageQueueService,
-    private readonly cacheService: EnhancedCacheService
+    private readonly cacheService: EnhancedCacheService,
   ) {
     this.setupMessageQueueListener();
   }
 
   afterInit(server: Server): void {
     this.logger.log('WebSocket Gateway initialized');
-    
+
     // Start heartbeat
     setInterval(() => {
       this.connectionPool.sendHeartbeat();
@@ -74,7 +75,7 @@ export class OptimizedTradingGateway
 
   handleConnection(client: Socket): void {
     const connectionInfo = this.connectionPool.addConnection(client);
-    
+
     this.logger.log(`Client connected: ${client.id}`);
 
     // Send welcome message
@@ -101,8 +102,11 @@ export class OptimizedTradingGateway
     try {
       // Validate token (simplified for demo)
       if (data.token && data.userId) {
-        const success = this.connectionPool.associateUser(client.id, data.userId);
-        
+        const success = this.connectionPool.associateUser(
+          client.id,
+          data.userId,
+        );
+
         if (success) {
           client.emit('authenticated', {
             success: true,
@@ -112,8 +116,10 @@ export class OptimizedTradingGateway
 
           // Join user-specific room
           this.connectionPool.joinRoom(client.id, `user:${data.userId}`);
-          
-          this.logger.log(`User ${data.userId} authenticated on connection ${client.id}`);
+
+          this.logger.log(
+            `User ${data.userId} authenticated on connection ${client.id}`,
+          );
         } else {
           client.emit('authentication_error', {
             message: 'Connection limit exceeded',
@@ -148,7 +154,7 @@ export class OptimizedTradingGateway
         // Subscribe to specific asset trades
         const roomName = `trades:${data.asset}`;
         const success = this.connectionPool.joinRoom(client.id, roomName);
-        
+
         if (success) {
           client.emit('subscribed', {
             type: 'trades',
@@ -169,7 +175,7 @@ export class OptimizedTradingGateway
         // Subscribe to user-specific trades
         const roomName = `user_trades:${data.userId}`;
         const success = this.connectionPool.joinRoom(client.id, roomName);
-        
+
         if (success) {
           client.emit('subscribed', {
             type: 'user_trades',
@@ -199,7 +205,7 @@ export class OptimizedTradingGateway
     try {
       const roomName = `orderbook:${data.asset}`;
       const success = this.connectionPool.joinRoom(client.id, roomName);
-      
+
       if (success) {
         client.emit('subscribed', {
           type: 'orderbook',
@@ -260,7 +266,7 @@ export class OptimizedTradingGateway
       `trades:${tradeUpdate.asset}`,
       'trade_update',
       tradeUpdate,
-      'high'
+      'high',
     );
 
     // Also broadcast to user-specific room if userId is available
@@ -269,7 +275,7 @@ export class OptimizedTradingGateway
         `user_trades:${tradeUpdate.asset}`,
         'trade_update',
         tradeUpdate,
-        'high'
+        'high',
       );
     }
 
@@ -286,7 +292,7 @@ export class OptimizedTradingGateway
       `orderbook:${orderBookUpdate.asset}`,
       'orderbook_update',
       orderBookUpdate,
-      'high'
+      'high',
     );
 
     // Update cache
@@ -298,7 +304,11 @@ export class OptimizedTradingGateway
    */
   private setupMessageQueueListener(): void {
     this.messageQueue.on('processMessage', (message) => {
-      this.connectionPool.broadcastToRoom(message.room, message.event, message.data);
+      this.connectionPool.broadcastToRoom(
+        message.room,
+        message.event,
+        message.data,
+      );
     });
   }
 
@@ -328,15 +338,15 @@ export class OptimizedTradingGateway
           price: 45000,
           volume: 0.1,
           timestamp: new Date(),
-          type: 'BUY'
+          type: 'BUY',
         },
         {
           asset,
           price: 44950,
           volume: 0.05,
           timestamp: new Date(Date.now() - 1000),
-          type: 'SELL'
-        }
+          type: 'SELL',
+        },
       ];
     } catch (error) {
       this.logger.error(`Error getting recent trades for ${asset}:`, error);
@@ -352,7 +362,7 @@ export class OptimizedTradingGateway
       connections: this.connectionPool.getConnectionStats(),
       messageQueue: this.messageQueue.getQueueStats(),
       cacheStats: this.cacheService.getCacheStats(),
-      serverTime: new Date().toISOString()
+      serverTime: new Date().toISOString(),
     };
   }
 }

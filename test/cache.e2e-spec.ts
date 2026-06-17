@@ -76,40 +76,48 @@ describe('Cache Integration Tests', () => {
         { asset: 'BTC', balance: 1.5, userId: 'test-user' },
         { asset: 'ETH', balance: 10, userId: 'test-user' },
       ];
-      
-      jest.spyOn((balanceService as any).balanceRepository, 'find').mockResolvedValue(mockBalances);
+
+      jest
+        .spyOn((balanceService as any).balanceRepository, 'find')
+        .mockResolvedValue(mockBalances);
 
       // First call - should query database and cache result
       const result1 = await balanceService.getUserBalances('test-user');
-      
+
       // Second call - should return cached result
       const result2 = await balanceService.getUserBalances('test-user');
-      
+
       // Results should be the same
       expect(result1).toEqual(result2);
-      
+
       // Verify repository was only called once (due to caching)
-      expect((balanceService as any).balanceRepository.find).toHaveBeenCalledTimes(1);
+      expect(
+        (balanceService as any).balanceRepository.find,
+      ).toHaveBeenCalledTimes(1);
     });
 
     it('should expire cache after TTL', async () => {
       const mockBalances = [
         { asset: 'BTC', balance: 1.5, userId: 'test-user' },
       ];
-      
-      jest.spyOn((balanceService as any).balanceRepository, 'find').mockResolvedValue(mockBalances);
+
+      jest
+        .spyOn((balanceService as any).balanceRepository, 'find')
+        .mockResolvedValue(mockBalances);
 
       // First call - populate cache
       await balanceService.getUserBalances('test-user');
-      
+
       // Manually clear the cache to simulate TTL expiration
       await cacheService.invalidateUserBalanceCache('test-user');
-      
+
       // Second call - should query database again
       const result2 = await balanceService.getUserBalances('test-user');
-      
+
       // Verify repository was called twice (no caching)
-      expect((balanceService as any).balanceRepository.find).toHaveBeenCalledTimes(2);
+      expect(
+        (balanceService as any).balanceRepository.find,
+      ).toHaveBeenCalledTimes(2);
       expect(result2).toEqual([{ asset: 'BTC', balance: 1.5 }]);
     });
   });
@@ -119,22 +127,30 @@ describe('Cache Integration Tests', () => {
       const mockBalances = [
         { asset: 'BTC', balance: 1.5, userId: 'test-user' },
       ];
-      
-      jest.spyOn((balanceService as any).balanceRepository, 'find').mockResolvedValue(mockBalances);
+
+      jest
+        .spyOn((balanceService as any).balanceRepository, 'find')
+        .mockResolvedValue(mockBalances);
 
       // Populate cache
       await balanceService.getUserBalances('test-user');
-      
+
       // Verify cache was populated by checking that subsequent calls don't hit DB
       await balanceService.getUserBalances('test-user');
-      expect((balanceService as any).balanceRepository.find).toHaveBeenCalledTimes(1);
-      
+      expect(
+        (balanceService as any).balanceRepository.find,
+      ).toHaveBeenCalledTimes(1);
+
       // Simulate balance change (which should trigger cache invalidation)
-      await (balanceService as any).cacheService.invalidateBalanceRelatedCaches('test-user');
-      
+      await (balanceService as any).cacheService.invalidateBalanceRelatedCaches(
+        'test-user',
+      );
+
       // Next call should hit database again
       await balanceService.getUserBalances('test-user');
-      expect((balanceService as any).balanceRepository.find).toHaveBeenCalledTimes(2);
+      expect(
+        (balanceService as any).balanceRepository.find,
+      ).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -143,18 +159,26 @@ describe('Cache Integration Tests', () => {
       const mockBalances = [
         { asset: 'BTC', balance: 1.5, userId: 'test-user' },
       ];
-      
-      jest.spyOn((balanceService as any).balanceRepository, 'find').mockResolvedValue(mockBalances);
-      
+
+      jest
+        .spyOn((balanceService as any).balanceRepository, 'find')
+        .mockResolvedValue(mockBalances);
+
       // Mock cache to throw error
-      jest.spyOn(cacheService, 'getUserBalanceCache').mockRejectedValue(new Error('Cache unavailable'));
-      jest.spyOn(cacheService, 'setUserBalanceCache').mockRejectedValue(new Error('Cache unavailable'));
+      jest
+        .spyOn(cacheService, 'getUserBalanceCache')
+        .mockRejectedValue(new Error('Cache unavailable'));
+      jest
+        .spyOn(cacheService, 'setUserBalanceCache')
+        .mockRejectedValue(new Error('Cache unavailable'));
 
       // Should still work despite cache errors
       const result = await balanceService.getUserBalances('test-user');
-      
+
       expect(result).toEqual([{ asset: 'BTC', balance: 1.5 }]);
-      expect((balanceService as any).balanceRepository.find).toHaveBeenCalledTimes(1);
+      expect(
+        (balanceService as any).balanceRepository.find,
+      ).toHaveBeenCalledTimes(1);
     });
   });
 });

@@ -35,7 +35,7 @@ export class PermissionsGuard implements CanActivate {
     }
 
     const userRoles: UserRole[] = user.roles || [user.role];
-    
+
     for (const permission of requiredPermissions) {
       if (!this.roleService.hasPermission(userRoles, permission)) {
         throw new ForbiddenException(

@@ -106,27 +106,53 @@ export class AdvancedIndexingOptimization1690000000001 implements MigrationInter
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Drop all created indexes
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_trades_user_asset_time"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_trades_asset_status_time"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_trades_buyer_seller_time"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_trades_price_volume_time"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_trades_executed_recent"`);
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_trades_user_asset_time"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_trades_asset_status_time"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_trades_buyer_seller_time"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_trades_price_volume_time"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_trades_executed_recent"`,
+    );
     await queryRunner.query(`DROP INDEX IF EXISTS "IDX_trades_user_recent"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_balance_user_asset_composite"`);
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_balance_user_asset_composite"`,
+    );
     await queryRunner.query(`DROP INDEX IF EXISTS "IDX_balance_asset_volume"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_balance_active_traders"`);
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_balance_active_traders"`,
+    );
     await queryRunner.query(`DROP INDEX IF EXISTS "IDX_assets_symbol_updated"`);
     await queryRunner.query(`DROP INDEX IF EXISTS "IDX_assets_price_range"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_trades_dashboard_covering"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_balance_portfolio_covering"`);
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_trades_dashboard_covering"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_balance_portfolio_covering"`,
+    );
     await queryRunner.query(`DROP INDEX IF EXISTS "IDX_trades_buyer_hash"`);
     await queryRunner.query(`DROP INDEX IF EXISTS "IDX_trades_seller_hash"`);
     await queryRunner.query(`DROP INDEX IF EXISTS "IDX_trades_time_partition"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_balance_time_partition"`);
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_balance_time_partition"`,
+    );
 
     // Restore original basic indexes
-    await queryRunner.query(`CREATE INDEX "IDX_trades_userId" ON "trades" ("userId")`);
-    await queryRunner.query(`CREATE INDEX "IDX_trades_asset" ON "trades" ("asset")`);
-    await queryRunner.query(`CREATE INDEX "IDX_trades_createdAt" ON "trades" ("createdAt")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_trades_userId" ON "trades" ("userId")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_trades_asset" ON "trades" ("asset")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_trades_createdAt" ON "trades" ("createdAt")`,
+    );
   }
 }

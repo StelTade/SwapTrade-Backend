@@ -2,7 +2,10 @@ import { Controller, Get, Query, Post, Param, Logger } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { ErrorMonitoringService } from '../services/error-monitoring.service';
 import type { ErrorMetrics } from '../services/error-monitoring.service';
-import { CircuitBreakerService, CircuitBreakerMetrics } from '../services/circuit-breaker.service';
+import {
+  CircuitBreakerService,
+  CircuitBreakerMetrics,
+} from '../services/circuit-breaker.service';
 import { BulkheadService, BulkheadMetrics } from '../services/bulkhead.service';
 import { DeadLetterQueueService } from '../services/dead-letter-queue.service';
 
@@ -154,7 +157,10 @@ export class ErrorDashboardController {
     @Param('queueName') queueName: string,
     @Query('limit') limit?: number,
   ) {
-    const messages = this.deadLetterQueueService.getDLQMessages(queueName, limit);
+    const messages = this.deadLetterQueueService.getDLQMessages(
+      queueName,
+      limit,
+    );
 
     return {
       queueName,
@@ -189,7 +195,7 @@ export class ErrorDashboardController {
     // Reduce score based on DLQ messages
     let totalDLQMessages = 0;
     for (const queueStats of Object.values(dlqStats)) {
-      totalDLQMessages += (queueStats as any).totalMessages || 0;
+      totalDLQMessages += queueStats.totalMessages || 0;
     }
 
     if (totalDLQMessages > 100) {
@@ -242,11 +248,15 @@ export class ErrorDashboardController {
       circuitBreakers: {
         total: circuitBreakers.length,
         open: circuitBreakers.filter((cb) => cb.state === 'OPEN').length,
-        halfOpen: circuitBreakers.filter((cb) => cb.state === 'HALF_OPEN').length,
+        halfOpen: circuitBreakers.filter((cb) => cb.state === 'HALF_OPEN')
+          .length,
       },
       bulkheads: {
         total: bulkheads.length,
-        totalConcurrent: bulkheads.reduce((sum, b) => sum + b.currentConcurrent, 0),
+        totalConcurrent: bulkheads.reduce(
+          (sum, b) => sum + b.currentConcurrent,
+          0,
+        ),
         totalQueued: bulkheads.reduce((sum, b) => sum + b.queuedRequests, 0),
       },
     };

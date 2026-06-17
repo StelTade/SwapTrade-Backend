@@ -1,4 +1,8 @@
-import { EventSubscriber, EntitySubscriberInterface, DataSource } from 'typeorm';
+import {
+  EventSubscriber,
+  EntitySubscriberInterface,
+  DataSource,
+} from 'typeorm';
 import { Logger } from '@nestjs/common';
 import { QueryPerformanceService } from '../services/query-performance.service';
 
@@ -10,7 +14,7 @@ export class QueryMonitoringSubscriber implements EntitySubscriberInterface {
 
   constructor(
     dataSource: DataSource,
-    private readonly queryPerformanceService: QueryPerformanceService
+    private readonly queryPerformanceService: QueryPerformanceService,
   ) {
     dataSource.subscribers.push(this);
   }
@@ -37,8 +41,8 @@ export class QueryMonitoringSubscriber implements EntitySubscriberInterface {
           duration,
           query: event.query,
           parameters: event.parameters,
-          queryCount: this.queryCount
-        }
+          queryCount: this.queryCount,
+        },
       );
 
       // Store in performance service
@@ -47,8 +51,8 @@ export class QueryMonitoringSubscriber implements EntitySubscriberInterface {
         event.parameters,
         () => Promise.resolve(event.result),
         {
-          entity: this.extractEntityFromQuery(event.query)
-        }
+          entity: this.extractEntityFromQuery(event.query),
+        },
       );
     }
 
@@ -63,21 +67,21 @@ export class QueryMonitoringSubscriber implements EntitySubscriberInterface {
    */
   queryError(event: any): Promise<any> | void {
     const duration = Date.now() - event.queryStartTime;
-    
+
     this.logger.error(
       `Query failed after ${duration}ms: ${event.query.substring(0, 200)}...`,
       {
         duration,
         query: event.query,
         parameters: event.parameters,
-        error: event.error?.message
-      }
+        error: event.error?.message,
+      },
     );
   }
 
   private extractEntityFromQuery(query: string): string | undefined {
     const upperQuery = query.toUpperCase();
-    
+
     // Extract table name from FROM clause
     const fromMatch = upperQuery.match(/FROM\s+(\w+)/);
     if (fromMatch) {

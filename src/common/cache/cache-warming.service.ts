@@ -1,9 +1,19 @@
-import { Injectable, OnApplicationBootstrap, Inject, Logger, Optional } from '@nestjs/common';
+import {
+  Injectable,
+  OnApplicationBootstrap,
+  Inject,
+  Logger,
+  Optional,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CacheService } from '../services/cache.service';
-import { CacheWarmingConfig, CacheWarmingMetrics, WarmingStrategyResult } from './interfaces/cache-warming.interface';
+import {
+  CacheWarmingConfig,
+  CacheWarmingMetrics,
+  WarmingStrategyResult,
+} from './interfaces/cache-warming.interface';
 // import { Balance } from '../../balance/balance.entity';
 // import { MarketData } from '../../trading/entities/market-data.entity';
 // import { VirtualAsset } from '../../trading/entities/virtual-asset.entity';
@@ -19,7 +29,7 @@ export class CacheWarmingService implements OnApplicationBootstrap {
     warmingDuration: 0,
     successCount: 0,
     failureCount: 0,
-    strategyResults: {}
+    strategyResults: {},
   };
   private isWarming = false;
 
@@ -44,7 +54,7 @@ export class CacheWarmingService implements OnApplicationBootstrap {
 
   async onApplicationBootstrap() {
     const warmingConfig = this.getWarmingConfig();
-    
+
     if (!warmingConfig.enabled) {
       this.logger.log('Cache warming is disabled');
       return;
@@ -52,29 +62,39 @@ export class CacheWarmingService implements OnApplicationBootstrap {
 
     this.logger.log('Starting cache warming...');
     const startTime = Date.now();
-    
+
     try {
       this.isWarming = true;
       await this.warmCache(warmingConfig);
       const duration = Date.now() - startTime;
-      
+
       this.warmingMetrics.warmingDuration = duration;
-      this.logger.log(`Cache warming completed in ${duration}ms. Keys warmed: ${this.warmingMetrics.totalKeysWarmed}`);
-      
+      this.logger.log(
+        `Cache warming completed in ${duration}ms. Keys warmed: ${this.warmingMetrics.totalKeysWarmed}`,
+      );
+
       // Record cache warming metrics - simulate cache hits for warmed keys
       for (let i = 0; i < this.warmingMetrics.totalKeysWarmed; i++) {
         this.metricsService?.recordCacheHit();
       }
-      
+
       // Get and record cache hit/miss metrics after warming
       const cacheMetrics = this.cacheService.getCacheMetrics();
-      this.logger.log(`Cache hit ratio after warming: ${cacheMetrics.hitRate.toFixed(2)}% (${cacheMetrics.hits}/${cacheMetrics.hits + cacheMetrics.misses})`);
-      this.logger.log(`Warmed cache hit ratio: ${cacheMetrics.warmedHitRate.toFixed(2)}% (${cacheMetrics.warmedHits}/${cacheMetrics.warmedHits + cacheMetrics.warmedMisses})`);
-      
+      this.logger.log(
+        `Cache hit ratio after warming: ${cacheMetrics.hitRate.toFixed(2)}% (${cacheMetrics.hits}/${cacheMetrics.hits + cacheMetrics.misses})`,
+      );
+      this.logger.log(
+        `Warmed cache hit ratio: ${cacheMetrics.warmedHitRate.toFixed(2)}% (${cacheMetrics.warmedHits}/${cacheMetrics.warmedHits + cacheMetrics.warmedMisses})`,
+      );
+
       // Log individual strategy results
-      for (const [strategyName, result] of Object.entries(this.warmingMetrics.strategyResults)) {
+      for (const [strategyName, result] of Object.entries(
+        this.warmingMetrics.strategyResults,
+      )) {
         if (result.success) {
-          this.logger.log(`✓ ${strategyName}: ${result.keysWarmed} keys warmed in ${result.duration}ms`);
+          this.logger.log(
+            `✓ ${strategyName}: ${result.keysWarmed} keys warmed in ${result.duration}ms`,
+          );
         } else {
           this.logger.warn(`✗ ${strategyName}: failed - ${result.error}`);
         }
@@ -92,7 +112,12 @@ export class CacheWarmingService implements OnApplicationBootstrap {
     return {
       enabled: cacheConfig.warming?.enabled || false,
       timeout: cacheConfig.warming?.timeout || 30000,
-      strategies: cacheConfig.warming?.strategies || ['user_balances', 'market_data', 'trading_pairs', 'portfolio']
+      strategies: cacheConfig.warming?.strategies || [
+        'user_balances',
+        'market_data',
+        'trading_pairs',
+        'portfolio',
+      ],
     };
   }
 
@@ -101,29 +126,29 @@ export class CacheWarmingService implements OnApplicationBootstrap {
       user_balances: () => this.warmUserBalances(),
       market_data: () => this.warmMarketData(),
       trading_pairs: () => this.warmTradingPairs(),
-      portfolio: () => this.warmPortfolioData()
+      portfolio: () => this.warmPortfolioData(),
     };
 
     const warmingPromises = config.strategies
-      .filter(strategy => strategies[strategy])
+      .filter((strategy) => strategies[strategy])
       .map(async (strategyName) => {
         const startTime = Date.now();
         try {
           const result = await strategies[strategyName]();
           const duration = Date.now() - startTime;
-          
+
           this.warmingMetrics.strategyResults[strategyName] = {
             ...result,
-            duration
+            duration,
           };
-          
+
           if (result.success) {
             this.warmingMetrics.successCount++;
             this.warmingMetrics.totalKeysWarmed += result.keysWarmed;
           } else {
             this.warmingMetrics.failureCount++;
           }
-          
+
           return result;
         } catch (error) {
           const duration = Date.now() - startTime;
@@ -132,12 +157,12 @@ export class CacheWarmingService implements OnApplicationBootstrap {
             success: false,
             keysWarmed: 0,
             duration,
-            error: error.message
+            error: error.message,
           };
-          
+
           this.warmingMetrics.strategyResults[strategyName] = result;
           this.warmingMetrics.failureCount++;
-          
+
           return result;
         }
       });
@@ -145,14 +170,17 @@ export class CacheWarmingService implements OnApplicationBootstrap {
     // Apply timeout if configured
     if (config.timeout > 0) {
       const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error(`Cache warming timeout after ${config.timeout}ms`)), config.timeout);
+        setTimeout(
+          () =>
+            reject(
+              new Error(`Cache warming timeout after ${config.timeout}ms`),
+            ),
+          config.timeout,
+        );
       });
 
       try {
-        await Promise.race([
-          Promise.all(warmingPromises),
-          timeoutPromise
-        ]);
+        await Promise.race([Promise.all(warmingPromises), timeoutPromise]);
       } catch (error) {
         this.logger.error(`Cache warming timed out: ${error.message}`);
         throw error;
@@ -169,7 +197,7 @@ export class CacheWarmingService implements OnApplicationBootstrap {
         success: false,
         keysWarmed: 0,
         duration: 0,
-        error: 'Balance repository not available'
+        error: 'Balance repository not available',
       };
     }
 
@@ -181,13 +209,15 @@ export class CacheWarmingService implements OnApplicationBootstrap {
         .getRawMany();
 
       let keysWarmed = 0;
-      
+
       // Warm balances for each user (limit to prevent excessive warming)
       const usersToWarm = userBalances.slice(0, 100); // Limit to 100 users
-      
+
       for (const user of usersToWarm) {
         const userId = user.userId;
-        const balances = await this.balanceRepository.find({ where: { userId } });
+        const balances = await this.balanceRepository.find({
+          where: { userId },
+        });
         await this.cacheService.setUserBalanceCache(userId, balances);
         keysWarmed++;
       }
@@ -196,7 +226,7 @@ export class CacheWarmingService implements OnApplicationBootstrap {
         strategyName: 'user_balances',
         success: true,
         keysWarmed,
-        duration: 0 // Will be set by caller
+        duration: 0, // Will be set by caller
       };
     } catch (error) {
       return {
@@ -204,7 +234,7 @@ export class CacheWarmingService implements OnApplicationBootstrap {
         success: false,
         keysWarmed: 0,
         duration: 0,
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -216,7 +246,7 @@ export class CacheWarmingService implements OnApplicationBootstrap {
         success: false,
         keysWarmed: 0,
         duration: 0,
-        error: 'Market data repository not available'
+        error: 'Market data repository not available',
       };
     }
 
@@ -228,7 +258,7 @@ export class CacheWarmingService implements OnApplicationBootstrap {
         await this.cacheService.setMarketPriceCache(marketData.asset, {
           price: marketData.currentPrice,
           volume24h: marketData.volume24h,
-          change24h: marketData.priceChange24h
+          change24h: marketData.priceChange24h,
         });
         keysWarmed++;
       }
@@ -237,7 +267,7 @@ export class CacheWarmingService implements OnApplicationBootstrap {
         strategyName: 'market_data',
         success: true,
         keysWarmed,
-        duration: 0 // Will be set by caller
+        duration: 0, // Will be set by caller
       };
     } catch (error) {
       return {
@@ -245,7 +275,7 @@ export class CacheWarmingService implements OnApplicationBootstrap {
         success: false,
         keysWarmed: 0,
         duration: 0,
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -257,7 +287,7 @@ export class CacheWarmingService implements OnApplicationBootstrap {
         success: false,
         keysWarmed: 0,
         duration: 0,
-        error: 'Virtual asset repository not available'
+        error: 'Virtual asset repository not available',
       };
     }
 
@@ -267,13 +297,17 @@ export class CacheWarmingService implements OnApplicationBootstrap {
 
       for (const asset of virtualAssets) {
         // Cache trading pair information
-        await this.cacheService.set(`trading_pair:${asset.symbol}`, {
-          symbol: asset.symbol,
-          name: asset.name,
-          balances: asset.balances,
-          createdAt: asset.createdAt
-        }, 300); // 5 minutes TTL
-        
+        await this.cacheService.set(
+          `trading_pair:${asset.symbol}`,
+          {
+            symbol: asset.symbol,
+            name: asset.name,
+            balances: asset.balances,
+            createdAt: asset.createdAt,
+          },
+          300,
+        ); // 5 minutes TTL
+
         keysWarmed++;
       }
 
@@ -281,7 +315,7 @@ export class CacheWarmingService implements OnApplicationBootstrap {
         strategyName: 'trading_pairs',
         success: true,
         keysWarmed,
-        duration: 0 // Will be set by caller
+        duration: 0, // Will be set by caller
       };
     } catch (error) {
       return {
@@ -289,7 +323,7 @@ export class CacheWarmingService implements OnApplicationBootstrap {
         success: false,
         keysWarmed: 0,
         duration: 0,
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -301,20 +335,22 @@ export class CacheWarmingService implements OnApplicationBootstrap {
         success: false,
         keysWarmed: 0,
         duration: 0,
-        error: 'Portfolio service not available'
+        error: 'Portfolio service not available',
       };
     }
 
     try {
       // This is a simplified approach - in production, you'd want to get actual user IDs
       // For demo purposes, we'll skip this or use sample data
-      this.logger.log('Portfolio warming strategy would require user enumeration');
-      
+      this.logger.log(
+        'Portfolio warming strategy would require user enumeration',
+      );
+
       return {
         strategyName: 'portfolio',
         success: true,
         keysWarmed: 0, // Portfolio warming would need actual user data
-        duration: 0
+        duration: 0,
       };
     } catch (error) {
       return {
@@ -322,7 +358,7 @@ export class CacheWarmingService implements OnApplicationBootstrap {
         success: false,
         keysWarmed: 0,
         duration: 0,
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -351,14 +387,14 @@ export class CacheWarmingService implements OnApplicationBootstrap {
 
     const config = this.getWarmingConfig();
     const startTime = Date.now();
-    
+
     this.isWarming = true;
     this.warmingMetrics = {
       totalKeysWarmed: 0,
       warmingDuration: 0,
       successCount: 0,
       failureCount: 0,
-      strategyResults: {}
+      strategyResults: {},
     };
 
     try {

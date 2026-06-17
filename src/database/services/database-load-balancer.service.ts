@@ -59,8 +59,12 @@ export class DatabaseLoadBalancerService {
   /**
    * Initialize load balancer with database nodes
    */
-  async initializeNodes(nodeConfigs: Array<{ id: string; dataSource: DataSource; weight?: number }>): Promise<void> {
-    this.logger.log(`Initializing load balancer with ${nodeConfigs.length} nodes`);
+  async initializeNodes(
+    nodeConfigs: Array<{ id: string; dataSource: DataSource; weight?: number }>,
+  ): Promise<void> {
+    this.logger.log(
+      `Initializing load balancer with ${nodeConfigs.length} nodes`,
+    );
 
     for (const config of nodeConfigs) {
       const node: DatabaseNode = {
@@ -76,7 +80,9 @@ export class DatabaseLoadBalancerService {
       };
 
       this.nodes.set(config.id, node);
-      this.logger.log(`Node ${config.id} initialized with weight ${node.weight}`);
+      this.logger.log(
+        `Node ${config.id} initialized with weight ${node.weight}`,
+      );
     }
 
     this.logger.log('Load balancer initialization completed');
@@ -93,7 +99,12 @@ export class DatabaseLoadBalancerService {
       forceNode?: string;
     },
   ): Promise<LoadBalancingResult<T>> {
-    return this.executeWithLoadBalancing(operation, 'read', entityClass, options);
+    return this.executeWithLoadBalancing(
+      operation,
+      'read',
+      entityClass,
+      options,
+    );
   }
 
   /**
@@ -107,7 +118,12 @@ export class DatabaseLoadBalancerService {
       forceNode?: string;
     },
   ): Promise<LoadBalancingResult<T>> {
-    return this.executeWithLoadBalancing(operation, 'write', entityClass, options);
+    return this.executeWithLoadBalancing(
+      operation,
+      'write',
+      entityClass,
+      options,
+    );
   }
 
   /**
@@ -127,9 +143,10 @@ export class DatabaseLoadBalancerService {
 
     while (retryCount <= this.config.maxRetries) {
       try {
-        const nodeId = options?.forceNode || 
-                       options?.preferShard || 
-                       this.selectNode(operationType);
+        const nodeId =
+          options?.forceNode ||
+          options?.preferShard ||
+          this.selectNode(operationType);
 
         const node = this.nodes.get(nodeId);
         if (!node) {
@@ -153,11 +170,11 @@ export class DatabaseLoadBalancerService {
         node.totalRequests++;
 
         try {
-          const repository = entityClass 
+          const repository = entityClass
             ? node.dataSource.getRepository(entityClass)
             : null;
 
-          const result = repository 
+          const result = repository
             ? await operation(repository)
             : await this.executeDirectOperation(node.dataSource, operation);
 
@@ -188,7 +205,10 @@ export class DatabaseLoadBalancerService {
           }
         }
 
-        this.logger.warn(`Operation failed (attempt ${retryCount}/${this.config.maxRetries + 1}):`, error.message);
+        this.logger.warn(
+          `Operation failed (attempt ${retryCount}/${this.config.maxRetries + 1}):`,
+          error.message,
+        );
 
         // Wait before retry
         if (retryCount <= this.config.maxRetries) {
@@ -204,8 +224,9 @@ export class DatabaseLoadBalancerService {
    * Select optimal node based on strategy
    */
   private selectNode(operationType: 'read' | 'write'): string {
-    const healthyNodes = Array.from(this.nodes.values())
-      .filter(node => node.isHealthy && !node.circuitBreakerOpen);
+    const healthyNodes = Array.from(this.nodes.values()).filter(
+      (node) => node.isHealthy && !node.circuitBreakerOpen,
+    );
 
     if (healthyNodes.length === 0) {
       throw new Error('No healthy nodes available');
@@ -214,16 +235,16 @@ export class DatabaseLoadBalancerService {
     switch (this.config.strategy) {
       case 'round-robin':
         return this.selectRoundRobin(healthyNodes);
-      
+
       case 'least-connections':
         return this.selectLeastConnections(healthyNodes);
-      
+
       case 'weighted':
         return this.selectWeighted(healthyNodes);
-      
+
       case 'response-time':
         return this.selectByResponseTime(healthyNodes);
-      
+
       default:
         return this.selectLeastConnections(healthyNodes);
     }
@@ -242,8 +263,8 @@ export class DatabaseLoadBalancerService {
    * Least connections node selection
    */
   private selectLeastConnections(nodes: DatabaseNode[]): string {
-    return nodes.reduce((min, current) => 
-      current.activeConnections < min.activeConnections ? current : min
+    return nodes.reduce((min, current) =>
+      current.activeConnections < min.activeConnections ? current : min,
     ).id;
   }
 
@@ -268,18 +289,23 @@ export class DatabaseLoadBalancerService {
    * Response time based node selection
    */
   private selectByResponseTime(nodes: DatabaseNode[]): string {
-    return nodes.reduce((best, current) => 
-      current.averageResponseTime < best.averageResponseTime ? current : best
+    return nodes.reduce((best, current) =>
+      current.averageResponseTime < best.averageResponseTime ? current : best,
     ).id;
   }
 
   /**
    * Update node metrics after operation
    */
-  private updateNodeMetrics(node: DatabaseNode, executionTime: number, success: boolean): void {
+  private updateNodeMetrics(
+    node: DatabaseNode,
+    executionTime: number,
+    success: boolean,
+  ): void {
     // Update response time (exponential moving average)
     const alpha = 0.1; // Smoothing factor
-    node.averageResponseTime = node.averageResponseTime * (1 - alpha) + executionTime * alpha;
+    node.averageResponseTime =
+      node.averageResponseTime * (1 - alpha) + executionTime * alpha;
 
     // Handle circuit breaker
     if (!success) {
@@ -305,7 +331,7 @@ export class DatabaseLoadBalancerService {
    */
   private shouldResetCircuitBreaker(node: DatabaseNode): boolean {
     if (!node.circuitBreakerOpenedAt) return false;
-    
+
     const timeSinceOpen = Date.now() - node.circuitBreakerOpenedAt.getTime();
     return timeSinceOpen >= this.config.circuitBreakerTimeout;
   }
@@ -333,16 +359,22 @@ export class DatabaseLoadBalancerService {
 
         node.isHealthy = true;
         node.lastHealthCheck = new Date();
-        
+
         // Update response time metric
         const alpha = 0.1;
-        node.averageResponseTime = node.averageResponseTime * (1 - alpha) + responseTime * alpha;
+        node.averageResponseTime =
+          node.averageResponseTime * (1 - alpha) + responseTime * alpha;
 
-        this.logger.debug(`Health check passed for node ${nodeId} in ${responseTime}ms`);
+        this.logger.debug(
+          `Health check passed for node ${nodeId} in ${responseTime}ms`,
+        );
       } catch (error) {
         node.isHealthy = false;
         node.lastHealthCheck = new Date();
-        this.logger.warn(`Health check failed for node ${nodeId}:`, error.message);
+        this.logger.warn(
+          `Health check failed for node ${nodeId}:`,
+          error.message,
+        );
       }
     }
   }
@@ -352,16 +384,20 @@ export class DatabaseLoadBalancerService {
    */
   getStatistics(): any {
     const nodes = Array.from(this.nodes.values());
-    
+
     return {
       totalNodes: nodes.length,
-      healthyNodes: nodes.filter(n => n.isHealthy).length,
+      healthyNodes: nodes.filter((n) => n.isHealthy).length,
       totalRequests: nodes.reduce((sum, n) => sum + n.totalRequests, 0),
-      totalActiveConnections: nodes.reduce((sum, n) => sum + n.activeConnections, 0),
-      averageResponseTime: nodes.reduce((sum, n) => sum + n.averageResponseTime, 0) / nodes.length,
-      circuitBreakersOpen: nodes.filter(n => n.circuitBreakerOpen).length,
+      totalActiveConnections: nodes.reduce(
+        (sum, n) => sum + n.activeConnections,
+        0,
+      ),
+      averageResponseTime:
+        nodes.reduce((sum, n) => sum + n.averageResponseTime, 0) / nodes.length,
+      circuitBreakersOpen: nodes.filter((n) => n.circuitBreakerOpen).length,
       strategy: this.config.strategy,
-      nodes: nodes.map(node => ({
+      nodes: nodes.map((node) => ({
         id: node.id,
         isHealthy: node.isHealthy,
         activeConnections: node.activeConnections,
@@ -426,7 +462,7 @@ export class DatabaseLoadBalancerService {
    * Simple delay utility
    */
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**
@@ -434,16 +470,20 @@ export class DatabaseLoadBalancerService {
    */
   async shutdown(): Promise<void> {
     this.logger.log('Shutting down load balancer...');
-    
+
     // Wait for all active connections to complete
-    let activeConnections = Array.from(this.nodes.values())
-      .reduce((sum, node) => sum + node.activeConnections, 0);
+    let activeConnections = Array.from(this.nodes.values()).reduce(
+      (sum, node) => sum + node.activeConnections,
+      0,
+    );
 
     while (activeConnections > 0) {
       this.logger.log(`Waiting for ${activeConnections} active connections...`);
       await this.delay(1000);
-      activeConnections = Array.from(this.nodes.values())
-        .reduce((sum, node) => sum + node.activeConnections, 0);
+      activeConnections = Array.from(this.nodes.values()).reduce(
+        (sum, node) => sum + node.activeConnections,
+        0,
+      );
     }
 
     this.logger.log('Load balancer shutdown completed');

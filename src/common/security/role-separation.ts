@@ -63,9 +63,13 @@ export function assertNoGovernanceKycRoleConflict(
   }
 }
 
-export function assertGovernanceActor(actor?: Partial<AuthenticatedActor>): void {
+export function assertGovernanceActor(
+  actor?: Partial<AuthenticatedActor>,
+): void {
   if (actor?.id === undefined || actor.id === null || !actor.roles) {
-    throw new RoleSeparationViolation('Authenticated governance actor is required.');
+    throw new RoleSeparationViolation(
+      'Authenticated governance actor is required.',
+    );
   }
 
   assertNoGovernanceKycRoleConflict(actor.roles);

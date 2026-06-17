@@ -19,7 +19,9 @@ export default registerAs('edge', () => ({
   // Edge Computing Configuration
   edge: {
     enabled: process.env.EDGE_COMPUTING_ENABLED === 'true',
-    regions: (process.env.EDGE_REGIONS || 'us-east,eu-west,ap-southeast').split(','),
+    regions: (process.env.EDGE_REGIONS || 'us-east,eu-west,ap-southeast').split(
+      ',',
+    ),
     computeUnits: parseInt(process.env.EDGE_COMPUTE_UNITS || '10', 10),
     timeout: parseInt(process.env.EDGE_TIMEOUT || '5000', 10),
     retryAttempts: parseInt(process.env.EDGE_RETRY_ATTEMPTS || '3', 10),
@@ -31,7 +33,12 @@ export default registerAs('edge', () => ({
       enabled: process.env.COMPRESSION_ENABLED !== 'false',
       level: parseInt(process.env.COMPRESSION_LEVEL || '6', 10),
       threshold: parseInt(process.env.COMPRESSION_THRESHOLD || '1024', 10), // 1KB
-      types: ['application/json', 'text/html', 'text/css', 'application/javascript'],
+      types: [
+        'application/json',
+        'text/html',
+        'text/css',
+        'application/javascript',
+      ],
     },
     http2: {
       enabled: process.env.HTTP2_ENABLED === 'true',
@@ -52,15 +59,24 @@ export default registerAs('edge', () => ({
       api: parseInt(process.env.EDGE_CACHE_TTL_API || '300', 10), // 5 minutes
       dynamic: parseInt(process.env.EDGE_CACHE_TTL_DYNAMIC || '0', 10), // No cache
     },
-    staleWhileRevalidate: parseInt(process.env.EDGE_CACHE_STALE_WHILE_REVALIDATE || '60', 10),
-    staleIfError: parseInt(process.env.EDGE_CACHE_STALE_IF_ERROR || '86400', 10), // 24 hours
+    staleWhileRevalidate: parseInt(
+      process.env.EDGE_CACHE_STALE_WHILE_REVALIDATE || '60',
+      10,
+    ),
+    staleIfError: parseInt(
+      process.env.EDGE_CACHE_STALE_IF_ERROR || '86400',
+      10,
+    ), // 24 hours
   },
 
   // Request Deduplication
   deduplication: {
     enabled: process.env.REQUEST_DEDUPLICATION_ENABLED === 'true',
     windowMs: parseInt(process.env.DEDUPLICATION_WINDOW_MS || '100', 10),
-    maxQueueSize: parseInt(process.env.DEDUPLICATION_MAX_QUEUE_SIZE || '1000', 10),
+    maxQueueSize: parseInt(
+      process.env.DEDUPLICATION_MAX_QUEUE_SIZE || '1000',
+      10,
+    ),
   },
 
   // Geographic Distribution

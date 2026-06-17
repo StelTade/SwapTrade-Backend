@@ -42,7 +42,10 @@ return {allowed, tostring(remaining), tostring(reset)}
 `;
 
 describe('Distributed Rate Limiter (integration)', () => {
-  const redis = new Redis({ host: process.env.REDIS_HOST || '127.0.0.1', port: Number(process.env.REDIS_PORT || 6379) });
+  const redis = new Redis({
+    host: process.env.REDIS_HOST || '127.0.0.1',
+    port: Number(process.env.REDIS_PORT || 6379),
+  });
   const key = `test:ratelimit:integration:${Date.now()}:${Math.random()}`;
 
   afterAll(async () => {
@@ -57,13 +60,29 @@ describe('Distributed Rate Limiter (integration)', () => {
     // perform capacity requests - should be allowed
     for (let i = 0; i < capacity; i++) {
       const now = Date.now();
-      const res: any = await redis.eval(tokenBucketLua, 1, key, capacity, refillPerMs, now, 1);
+      const res: any = await redis.eval(
+        tokenBucketLua,
+        1,
+        key,
+        capacity,
+        refillPerMs,
+        now,
+        1,
+      );
       expect(Number(res[0])).toBe(1);
     }
 
     // next request should be blocked
     const now = Date.now();
-    const res: any = await redis.eval(tokenBucketLua, 1, key, capacity, refillPerMs, now, 1);
+    const res: any = await redis.eval(
+      tokenBucketLua,
+      1,
+      key,
+      capacity,
+      refillPerMs,
+      now,
+      1,
+    );
     expect(Number(res[0])).toBe(0);
   }, 20000);
 });

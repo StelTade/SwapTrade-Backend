@@ -1,11 +1,11 @@
 export enum OrderType {
-	BUY = 'BUY',
-	SELL = 'SELL',
+  BUY = 'BUY',
+  SELL = 'SELL',
 }
 
 export enum OrderStatus {
-	PENDING = 'PENDING',
-	PARTIAL = 'PARTIAL',
-	FILLED = 'FILLED',
-	CANCELLED = 'CANCELLED',
+  PENDING = 'PENDING',
+  PARTIAL = 'PARTIAL',
+  FILLED = 'FILLED',
+  CANCELLED = 'CANCELLED',
 }

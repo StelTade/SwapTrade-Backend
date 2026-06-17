@@ -33,22 +33,25 @@ export class QueryPerformanceService {
     query: string,
     parameters: any[] = [],
     executor: () => Promise<T>,
-    context?: { userId?: string; entity?: string }
+    context?: { userId?: string; entity?: string },
   ): Promise<T> {
     const startTime = Date.now();
-    
+
     try {
       const result = await executor();
       const duration = Date.now() - startTime;
-      
+
       if (duration > this.SLOW_QUERY_THRESHOLD) {
         this.logSlowQuery(query, duration, parameters, context);
       }
-      
+
       return result;
     } catch (error) {
       const duration = Date.now() - startTime;
-      this.logger.error(`Query failed after ${duration}ms: ${query}`, error.stack);
+      this.logger.error(
+        `Query failed after ${duration}ms: ${query}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -64,14 +67,14 @@ export class QueryPerformanceService {
         const result = await this.dataSource.query(explainQuery, parameters);
         return result;
       }
-      
+
       // For SQLite - use EXPLAIN QUERY PLAN
       if (this.dataSource.options.type === 'sqlite') {
         const explainQuery = `EXPLAIN QUERY PLAN ${query}`;
         const result = await this.dataSource.query(explainQuery, parameters);
         return result;
       }
-      
+
       return null;
     } catch (error) {
       this.logger.error(`Failed to explain query: ${query}`, error.stack);
@@ -85,15 +88,19 @@ export class QueryPerformanceService {
   getPerformanceMetrics(): QueryPerformanceMetrics {
     const slowQueries = this.slowQueries.slice(-50); // Last 50 slow queries
     const totalQueries = this.slowQueries.length;
-    const averageDuration = slowQueries.length > 0 
-      ? slowQueries.reduce((sum, q) => sum + q.duration, 0) / slowQueries.length 
-      : 0;
+    const averageDuration =
+      slowQueries.length > 0
+        ? slowQueries.reduce((sum, q) => sum + q.duration, 0) /
+          slowQueries.length
+        : 0;
 
     return {
       totalQueries,
       slowQueries: slowQueries.length,
       averageDuration,
-      slowestQueries: slowQueries.sort((a, b) => b.duration - a.duration).slice(0, 10)
+      slowestQueries: slowQueries
+        .sort((a, b) => b.duration - a.duration)
+        .slice(0, 10),
     };
   }
 
@@ -101,14 +108,14 @@ export class QueryPerformanceService {
    * Get slow queries by entity
    */
   getSlowQueriesByEntity(entityName: string): SlowQueryLog[] {
-    return this.slowQueries.filter(q => q.entity === entityName);
+    return this.slowQueries.filter((q) => q.entity === entityName);
   }
 
   /**
    * Get slow queries by user
    */
   getSlowQueriesByUser(userId: string): SlowQueryLog[] {
-    return this.slowQueries.filter(q => q.userId === userId);
+    return this.slowQueries.filter((q) => q.userId === userId);
   }
 
   /**
@@ -124,24 +131,26 @@ export class QueryPerformanceService {
     const missingIndexes = this.findMissingIndexes();
 
     // Analyze patterns
-    const whereHeavyQueries = this.slowQueries.filter(q => 
-      q.query.toLowerCase().includes('where') && q.duration > 200
+    const whereHeavyQueries = this.slowQueries.filter(
+      (q) => q.query.toLowerCase().includes('where') && q.duration > 200,
     );
 
     if (whereHeavyQueries.length > 0) {
       recommendations.push('Consider adding indexes on WHERE clause columns');
     }
 
-    const joinHeavyQueries = this.slowQueries.filter(q => 
-      q.query.toLowerCase().includes('join') && q.duration > 300
+    const joinHeavyQueries = this.slowQueries.filter(
+      (q) => q.query.toLowerCase().includes('join') && q.duration > 300,
     );
 
     if (joinHeavyQueries.length > 0) {
-      recommendations.push('Consider optimizing JOIN operations and adding composite indexes');
+      recommendations.push(
+        'Consider optimizing JOIN operations and adding composite indexes',
+      );
     }
 
-    const orderHeavyQueries = this.slowQueries.filter(q => 
-      q.query.toLowerCase().includes('order by') && q.duration > 150
+    const orderHeavyQueries = this.slowQueries.filter(
+      (q) => q.query.toLowerCase().includes('order by') && q.duration > 150,
     );
 
     if (orderHeavyQueries.length > 0) {
@@ -151,7 +160,7 @@ export class QueryPerformanceService {
     return {
       recommendations,
       highFrequencyQueries,
-      missingIndexes
+      missingIndexes,
     };
   }
 
@@ -164,10 +173,10 @@ export class QueryPerformanceService {
   }
 
   private logSlowQuery(
-    query: string, 
-    duration: number, 
-    parameters?: any[], 
-    context?: { userId?: string; entity?: string }
+    query: string,
+    duration: number,
+    parameters?: any[],
+    context?: { userId?: string; entity?: string },
   ): void {
     const slowQuery: SlowQueryLog = {
       query: this.sanitizeQuery(query),
@@ -175,39 +184,51 @@ export class QueryPerformanceService {
       timestamp: new Date(),
       parameters,
       userId: context?.userId,
-      entity: context?.entity
+      entity: context?.entity,
     };
 
     this.slowQueries.push(slowQuery);
 
     // Keep only the last MAX_SLOW_QUERIES_LOG entries
     if (this.slowQueries.length > this.MAX_SLOW_QUERIES_LOG) {
-      this.slowQueries.splice(0, this.slowQueries.length - this.MAX_SLOW_QUERIES_LOG);
+      this.slowQueries.splice(
+        0,
+        this.slowQueries.length - this.MAX_SLOW_QUERIES_LOG,
+      );
     }
 
     this.logger.warn(
       `Slow query detected (${duration}ms): ${slowQuery.query.substring(0, 200)}...`,
-      { duration, parameters, context }
+      { duration, parameters, context },
     );
   }
 
   private sanitizeQuery(query: string): string {
     // Remove sensitive data and limit length
-    return query.replace(/password\s*=\s*['"][^'"]*['"]/gi, 'password=***')
-               .substring(0, 500);
+    return query
+      .replace(/password\s*=\s*['"][^'"]*['"]/gi, 'password=***')
+      .substring(0, 500);
   }
 
   private findHighFrequencyQueries(): SlowQueryLog[] {
-    const queryCounts = new Map<string, { count: number; totalDuration: number; avgDuration: number }>();
-    
-    this.slowQueries.forEach(query => {
+    const queryCounts = new Map<
+      string,
+      { count: number; totalDuration: number; avgDuration: number }
+    >();
+
+    this.slowQueries.forEach((query) => {
       const normalized = this.normalizeQuery(query.query);
-      const existing = queryCounts.get(normalized) || { count: 0, totalDuration: 0, avgDuration: 0 };
-      
+      const existing = queryCounts.get(normalized) || {
+        count: 0,
+        totalDuration: 0,
+        avgDuration: 0,
+      };
+
       queryCounts.set(normalized, {
         count: existing.count + 1,
         totalDuration: existing.totalDuration + query.duration,
-        avgDuration: (existing.totalDuration + query.duration) / (existing.count + 1)
+        avgDuration:
+          (existing.totalDuration + query.duration) / (existing.count + 1),
       });
     });
 
@@ -217,7 +238,7 @@ export class QueryPerformanceService {
         query,
         duration: stats.avgDuration,
         timestamp: new Date(),
-        entity: undefined
+        entity: undefined,
       }))
       .sort((a, b) => b.duration - a.duration)
       .slice(0, 10);
@@ -225,20 +246,22 @@ export class QueryPerformanceService {
 
   private findMissingIndexes(): string[] {
     const missingIndexes: string[] = [];
-    
-    this.slowQueries.forEach(slowQuery => {
+
+    this.slowQueries.forEach((slowQuery) => {
       const query = slowQuery.query.toLowerCase();
-      
+
       // Look for WHERE clauses on columns that might need indexes
       const whereMatch = query.match(/where\s+([^ ]+)\s*=/i);
       if (whereMatch && !query.includes('index')) {
         missingIndexes.push(`Consider adding index on ${whereMatch[1]}`);
       }
-      
+
       // Look for ORDER BY clauses
       const orderByMatch = query.match(/order\s+by\s+([^ ]+)/i);
       if (orderByMatch && !query.includes('index')) {
-        missingIndexes.push(`Consider adding index on ${orderByMatch[1]} for ORDER BY`);
+        missingIndexes.push(
+          `Consider adding index on ${orderByMatch[1]} for ORDER BY`,
+        );
       }
     });
 
@@ -247,9 +270,10 @@ export class QueryPerformanceService {
 
   private normalizeQuery(query: string): string {
     // Remove parameters and normalize whitespace for pattern matching
-    return query.replace(/\$\d+/g, '?')
-               .replace(/\s+/g, ' ')
-               .trim()
-               .toLowerCase();
+    return query
+      .replace(/\$\d+/g, '?')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
   }
 }

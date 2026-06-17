@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../../../user/entities/user.entity';
@@ -21,7 +26,11 @@ export class RoleManagementService {
    * Assign a role to a user
    * Performs role compatibility checks and publishes RoleAssigned event
    */
-  async assignRole(userId: number, dto: RoleAssignmentDto, assignedBy: { id: number; roles: UserRole[] }): Promise<User> {
+  async assignRole(
+    userId: number,
+    dto: RoleAssignmentDto,
+    assignedBy: { id: number; roles: UserRole[] },
+  ): Promise<User> {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException('User not found');
@@ -32,12 +41,14 @@ export class RoleManagementService {
       throw new ForbiddenException('Insufficient permissions to assign roles');
     }
 
-    const newRole = dto.role as UserRole;
-    
+    const newRole = dto.role;
+
     // Check role compatibility with existing roles
     for (const existingRole of user.roles) {
       if (!areRolesCompatible(existingRole, newRole)) {
-        throw new BadRequestException(`Role ${newRole} is incompatible with existing role ${existingRole}`);
+        throw new BadRequestException(
+          `Role ${newRole} is incompatible with existing role ${existingRole}`,
+        );
       }
     }
 
@@ -63,7 +74,11 @@ export class RoleManagementService {
    * Revoke a role from a user
    * Publishes RoleRevoked event
    */
-  async revokeRole(userId: number, roleToRevoke: UserRole, revokedBy: { id: number; roles: UserRole[] }): Promise<User> {
+  async revokeRole(
+    userId: number,
+    roleToRevoke: UserRole,
+    revokedBy: { id: number; roles: UserRole[] },
+  ): Promise<User> {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException('User not found');
@@ -81,7 +96,7 @@ export class RoleManagementService {
 
     // Prevent removing the last remaining role
     if (user.roles.length === 1) {
-      throw new BadRequestException('Cannot revoke the user\'s only role');
+      throw new BadRequestException("Cannot revoke the user's only role");
     }
 
     user.roles.splice(roleIndex, 1);
@@ -114,7 +129,11 @@ export class RoleManagementService {
    * Suspend a user account
    * Publishes UserSuspended event
    */
-  async suspendUser(userId: number, suspendedBy: { id: number; roles: UserRole[] }, reason: string): Promise<User> {
+  async suspendUser(
+    userId: number,
+    suspendedBy: { id: number; roles: UserRole[] },
+    reason: string,
+  ): Promise<User> {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException('User not found');
@@ -145,14 +164,19 @@ export class RoleManagementService {
    * Activate a previously suspended user
    * Publishes UserActivated event
    */
-  async activateUser(userId: number, activatedBy: { id: number; roles: UserRole[] }): Promise<User> {
+  async activateUser(
+    userId: number,
+    activatedBy: { id: number; roles: UserRole[] },
+  ): Promise<User> {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
     if (!this.roleService.hasPermission(activatedBy.roles, 'users.write')) {
-      throw new ForbiddenException('Insufficient permissions to activate users');
+      throw new ForbiddenException(
+        'Insufficient permissions to activate users',
+      );
     }
 
     (user as any).isSuspended = false;

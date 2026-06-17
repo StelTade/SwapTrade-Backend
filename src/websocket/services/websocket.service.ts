@@ -1,8 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { WebSocketGateway, WebSocketServer, SubscribeMessage, OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit } from '@nestjs/websockets';
+import {
+  WebSocketGateway,
+  WebSocketServer,
+  SubscribeMessage,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+  OnGatewayInit,
+} from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import type { 
-  WebSocketClient, 
+import type {
+  WebSocketClient,
   WebSocketAuthData,
   SubscriptionRequest,
   OrderBookUpdate,
@@ -11,7 +18,7 @@ import type {
   BalanceUpdate,
   PortfolioUpdate,
   MarketDataUpdate,
-  WebSocketMessage
+  WebSocketMessage,
 } from '../interfaces/websocket.interfaces';
 import { WebSocketMessageType } from '../interfaces/websocket.interfaces';
 import { v4 as uuidv4 } from 'uuid';
@@ -24,13 +31,15 @@ import { LogLevel } from 'src/common/monitoring/interfaces/monitoring.interfaces
 @WebSocketGateway({
   cors: {
     origin: process.env.WEBSOCKET_CORS_ORIGIN || '*',
-    credentials: true
+    credentials: true,
   },
   transports: ['websocket', 'polling'],
   pingTimeout: 60000,
-  pingInterval: 25000
+  pingInterval: 25000,
 })
-export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+export class WebSocketService
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer() server!: Server;
   private readonly logger = new Logger(WebSocketService.name);
   private clients: Map<string, WebSocketClient> = new Map();
@@ -40,12 +49,12 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
   constructor(
     private readonly jwtService: JwtService,
     private readonly structuredLogger: StructuredLoggerService,
-    private readonly prometheusService: PrometheusService
+    private readonly prometheusService: PrometheusService,
   ) {}
 
   afterInit(server: Server) {
     this.logger.log('WebSocket Gateway initialized');
-    
+
     // Set up heartbeat interval
     setInterval(() => {
       this.sendHeartbeat();
@@ -55,7 +64,7 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
   async handleConnection(client: Socket) {
     const clientId = uuidv4();
     const sessionId = uuidv4();
-    
+
     const wsClient: WebSocketClient = {
       id: clientId,
       sessionId,
@@ -66,8 +75,8 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
       metadata: {
         ip: client.handshake.address,
         userAgent: client.handshake.headers['user-agent'],
-        connectedAt: new Date().toISOString()
-      }
+        connectedAt: new Date().toISOString(),
+      },
     };
 
     this.clients.set(clientId, wsClient);
@@ -80,7 +89,7 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
     this.sendToClient(clientId, {
       type: WebSocketMessageType.CONNECT,
       data: { clientId, sessionId },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -90,7 +99,7 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
 
     if (wsClient) {
       // Remove from all subscriptions
-      wsClient.subscriptions.forEach(channel => {
+      wsClient.subscriptions.forEach((channel) => {
         this.unsubscribeFromChannel(clientId, channel);
       });
 
@@ -105,7 +114,10 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
   }
 
   @SubscribeMessage('authenticate')
-  async handleAuthenticate(client: Socket & { clientId: string }, data: WebSocketAuthData) {
+  async handleAuthenticate(
+    client: Socket & { clientId: string },
+    data: WebSocketAuthData,
+  ) {
     const clientId = client.clientId;
     const wsClient = this.clients.get(clientId);
 
@@ -113,13 +125,13 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
       return this.sendToClient(clientId, {
         type: WebSocketMessageType.AUTH_FAILED,
         data: { error: 'Client not found' },
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
 
     try {
       const payload = this.jwtService.verify(data.token);
-      
+
       wsClient.userId = payload.sub;
       wsClient.authenticated = true;
       wsClient.userRole = payload.role;
@@ -135,22 +147,26 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
       this.sendToClient(clientId, {
         type: WebSocketMessageType.AUTH_SUCCESS,
         data: { userId: wsClient.userId },
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
-
     } catch (error: any) {
-      this.logger.warn(`WebSocket authentication failed: ${clientId}, error: ${error.message}`);
+      this.logger.warn(
+        `WebSocket authentication failed: ${clientId}, error: ${error.message}`,
+      );
 
       this.sendToClient(clientId, {
         type: WebSocketMessageType.AUTH_FAILED,
         data: { error: 'Invalid token' },
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
   }
 
   @SubscribeMessage('subscribe')
-  async handleSubscribe(client: Socket & { clientId: string }, data: SubscriptionRequest) {
+  async handleSubscribe(
+    client: Socket & { clientId: string },
+    data: SubscriptionRequest,
+  ) {
     const clientId = client.clientId;
     const wsClient = this.clients.get(clientId);
 
@@ -158,7 +174,7 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
       return this.sendToClient(clientId, {
         type: WebSocketMessageType.ERROR,
         data: { error: 'Authentication required' },
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
 
@@ -172,16 +188,19 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
 
     this.sendToClient(clientId, {
       type: WebSocketMessageType.CONNECT,
-      data: { 
+      data: {
         message: 'Subscribed to channels',
-        channels: Array.from(wsClient.subscriptions)
+        channels: Array.from(wsClient.subscriptions),
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 
   @SubscribeMessage('unsubscribe')
-  async handleUnsubscribe(client: Socket & { clientId: string }, data: SubscriptionRequest) {
+  async handleUnsubscribe(
+    client: Socket & { clientId: string },
+    data: SubscriptionRequest,
+  ) {
     const clientId = client.clientId;
     const wsClient = this.clients.get(clientId);
 
@@ -195,11 +214,11 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
 
     this.sendToClient(clientId, {
       type: WebSocketMessageType.CONNECT,
-      data: { 
+      data: {
         message: 'Unsubscribed from channels',
-        channels: Array.from(wsClient.subscriptions)
+        channels: Array.from(wsClient.subscriptions),
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -215,7 +234,7 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
     this.sendToClient(clientId, {
       type: WebSocketMessageType.PONG,
       data: { timestamp: new Date().toISOString() },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -224,7 +243,7 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
     this.broadcastToChannel(`orderbook:${update.asset}`, {
       type: WebSocketMessageType.ORDER_BOOK_UPDATE,
       data: update,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -233,20 +252,20 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
     this.broadcastToChannel('trades', {
       type: WebSocketMessageType.TRADE_EXECUTED,
       data: trade,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
 
     // Send to specific users
     this.sendToUser(trade.buyerId, {
       type: WebSocketMessageType.USER_TRADE_EXECUTED,
       data: trade,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
 
     this.sendToUser(trade.sellerId, {
       type: WebSocketMessageType.USER_TRADE_EXECUTED,
       data: trade,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -255,7 +274,7 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
     this.sendToUser(order.userId, {
       type: WebSocketMessageType.USER_ORDER_UPDATE,
       data: order,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
 
     // Also broadcast to order book channel if it's a public order
@@ -263,7 +282,7 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
       this.broadcastToChannel(`orders:${order.asset}`, {
         type: WebSocketMessageType.ORDER_PLACED,
         data: order,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
   }
@@ -272,7 +291,7 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
     this.sendToUser(update.userId, {
       type: WebSocketMessageType.BALANCE_UPDATE,
       data: update,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -280,7 +299,7 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
     this.sendToUser(update.userId, {
       type: WebSocketMessageType.PORTFOLIO_UPDATE,
       data: update,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -288,7 +307,7 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
     this.broadcastToChannel(`market:${update.asset}`, {
       type: WebSocketMessageType.MARKET_DATA_UPDATE,
       data: update,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -296,7 +315,7 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
     this.sendToUser(userId, {
       type: WebSocketMessageType.USER_ACHIEVEMENT_UNLOCKED,
       data: achievement,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -304,7 +323,7 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
     this.sendToUser(userId, {
       type: WebSocketMessageType.USER_TIER_PROGRESS,
       data: tierProgress,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -312,7 +331,7 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
     this.broadcastToAll({
       type: WebSocketMessageType.SYSTEM_STATUS,
       data: status,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -320,7 +339,7 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
     this.broadcastToAll({
       type: WebSocketMessageType.MAINTENANCE_NOTICE,
       data: notice,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -329,7 +348,9 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
     const client = this.clients.get(clientId);
     if (client && client.socket.connected) {
       client.socket.emit('message', message);
-      this.prometheusService.incrementCounter('websocket_messages_sent_total', { type: message.type });
+      this.prometheusService.incrementCounter('websocket_messages_sent_total', {
+        type: message.type,
+      });
     }
   }
 
@@ -357,7 +378,11 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
     }
   }
 
-  private subscribeToChannel(clientId: string, channel: string, filters?: Record<string, any>) {
+  private subscribeToChannel(
+    clientId: string,
+    channel: string,
+    filters?: Record<string, any>,
+  ) {
     const client = this.clients.get(clientId);
     if (!client) return;
 
@@ -386,8 +411,8 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
         clientId,
         userId: client.userId,
         channel,
-        filters
-      }
+        filters,
+      },
     );
   }
 
@@ -408,7 +433,10 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
     client.subscriptions.delete(channel);
   }
 
-  private validateSubscription(client: WebSocketClient, channel: string): boolean {
+  private validateSubscription(
+    client: WebSocketClient,
+    channel: string,
+  ): boolean {
     // Check if user has permission to subscribe to this channel
     if (channel.startsWith('admin:') && client?.userRole !== 'admin') {
       return false;
@@ -439,7 +467,7 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
         this.sendToClient(clientId, {
           type: WebSocketMessageType.PING,
           data: { timestamp: new Date().toISOString() },
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       }
     }
@@ -451,7 +479,9 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
   }
 
   getAuthenticatedClientsCount(): number {
-    return Array.from(this.clients.values()).filter(client => client.authenticated).length;
+    return Array.from(this.clients.values()).filter(
+      (client) => client.authenticated,
+    ).length;
   }
 
   getChannelSubscribers(channel: string): number {
@@ -464,9 +494,12 @@ export class WebSocketService implements OnGatewayInit, OnGatewayConnection, OnG
       totalConnections: this.clients.size,
       authenticatedConnections: this.getAuthenticatedClientsCount(),
       channels: Object.fromEntries(
-        Array.from(this.subscriptions.entries()).map(([channel, subs]) => [channel, subs.size])
+        Array.from(this.subscriptions.entries()).map(([channel, subs]) => [
+          channel,
+          subs.size,
+        ]),
       ),
-      uptime: process.uptime()
+      uptime: process.uptime(),
     };
   }
 }

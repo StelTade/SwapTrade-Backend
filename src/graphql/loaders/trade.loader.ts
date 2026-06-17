@@ -11,47 +11,60 @@ export class TradeLoader {
    * DataLoader for user trades - batches individual user trade requests
    * Reduces N+1 queries when fetching trades for multiple users
    */
-  readonly userTradesLoader = new DataLoader(async (userIds: readonly string[]) => {
-    const startTime = Date.now();
-    
-    // Batch fetch all trades for all users in a single query
-    const tradesByUser = await this.tradingService.getTradesForUsers(userIds as string[]);
-    
-    const duration = Date.now() - startTime;
-    console.log(`Batch loaded trades for ${userIds.length} users in ${duration}ms`);
-    
-    // Return results in the same order as input keys
-    return userIds.map(userId => tradesByUser[userId] || []);
-  });
+  readonly userTradesLoader = new DataLoader(
+    async (userIds: readonly string[]) => {
+      const startTime = Date.now();
+
+      // Batch fetch all trades for all users in a single query
+      const tradesByUser = await this.tradingService.getTradesForUsers(userIds);
+
+      const duration = Date.now() - startTime;
+      console.log(
+        `Batch loaded trades for ${userIds.length} users in ${duration}ms`,
+      );
+
+      // Return results in the same order as input keys
+      return userIds.map((userId) => tradesByUser[userId] || []);
+    },
+  );
 
   /**
    * DataLoader for asset trades - batches trade requests by asset
    * Useful for market data and analytics
    */
-  readonly assetTradesLoader = new DataLoader(async (assets: readonly string[]) => {
-    const startTime = Date.now();
-    
-    const tradesByAsset = await this.tradingService.getTradesForAssets(assets as string[]);
-    
-    const duration = Date.now() - startTime;
-    console.log(`Batch loaded trades for ${assets.length} assets in ${duration}ms`);
-    
-    return assets.map(asset => tradesByAsset[asset] || []);
-  });
+  readonly assetTradesLoader = new DataLoader(
+    async (assets: readonly string[]) => {
+      const startTime = Date.now();
+
+      const tradesByAsset =
+        await this.tradingService.getTradesForAssets(assets);
+
+      const duration = Date.now() - startTime;
+      console.log(
+        `Batch loaded trades for ${assets.length} assets in ${duration}ms`,
+      );
+
+      return assets.map((asset) => tradesByAsset[asset] || []);
+    },
+  );
 
   /**
    * DataLoader for trade by ID - batches individual trade lookups
    */
-  readonly tradeByIdLoader = new DataLoader(async (tradeIds: readonly number[]) => {
-    const startTime = Date.now();
-    
-    const trades = await this.tradingService.getTradesByIds(tradeIds as number[]);
-    
-    const duration = Date.now() - startTime;
-    console.log(`Batch loaded ${tradeIds.length} trades in ${duration}ms`);
-    
-    return tradeIds.map(id => trades.find(trade => trade.id === id) || null);
-  });
+  readonly tradeByIdLoader = new DataLoader(
+    async (tradeIds: readonly number[]) => {
+      const startTime = Date.now();
+
+      const trades = await this.tradingService.getTradesByIds(tradeIds);
+
+      const duration = Date.now() - startTime;
+      console.log(`Batch loaded ${tradeIds.length} trades in ${duration}ms`);
+
+      return tradeIds.map(
+        (id) => trades.find((trade) => trade.id === id) || null,
+      );
+    },
+  );
 
   /**
    * Clear cache for specific user trades

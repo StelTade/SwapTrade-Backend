@@ -99,7 +99,8 @@ export function ApiErrorResponses() {
           success: false,
           error: {
             code: 'RATE_LIMIT_EXCEEDED',
-            message: 'Rate limit exceeded. Please try again later. Retry after 60s',
+            message:
+              'Rate limit exceeded. Please try again later. Retry after 60s',
             timestamp: '2024-01-29T10:30:00.000Z',
             metadata: {
               retryAfter: 60,
@@ -140,7 +141,8 @@ export function ApiBalanceErrorResponses() {
           success: false,
           error: {
             code: 'INSUFFICIENT_BALANCE',
-            message: 'Insufficient balance for BTC. Required: 0.5, Available: 0.2',
+            message:
+              'Insufficient balance for BTC. Required: 0.5, Available: 0.2',
             timestamp: '2024-01-29T10:30:00.000Z',
             metadata: {
               asset: 'BTC',

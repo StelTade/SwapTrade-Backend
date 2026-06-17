@@ -184,18 +184,19 @@ export class SchedulerController {
     @Body() body: TriggerReportDto & { startDate?: Date; endDate?: Date },
   ) {
     this.logger.log('Manual custom report triggered via API');
-    
-    const startDate = body.startDate || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+    const startDate =
+      body.startDate || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const endDate = body.endDate || new Date();
     const format = body.format || 'pdf';
-    
+
     await this.schedulerService.triggerCustomReport(
       startDate,
       endDate,
       body.email,
       format,
     );
-    
+
     return {
       success: true,
       message: 'Custom report triggered successfully',
@@ -242,7 +243,8 @@ export class SchedulerController {
     description: 'Failed jobs summary retrieved successfully',
   })
   async getFailedJobsSummary(@Param('queueName') queueName: string) {
-    const summary = await this.schedulerFailover.getFailedJobsSummary(queueName);
+    const summary =
+      await this.schedulerFailover.getFailedJobsSummary(queueName);
     return {
       success: true,
       data: summary,
@@ -274,7 +276,7 @@ export class SchedulerController {
       queueName,
       limit,
     );
-    
+
     return {
       success: true,
       message: `Recovered ${recoveredCount} jobs`,

@@ -45,9 +45,7 @@ export class KycRolesGuard implements CanActivate {
       throw error;
     }
 
-    const hasRole = requiredRoles.some((role) =>
-      userRoles.includes(role),
-    );
+    const hasRole = requiredRoles.some((role) => userRoles.includes(role));
 
     if (!hasRole) {
       throw new ForbiddenException(

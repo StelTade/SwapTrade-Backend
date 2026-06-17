@@ -3,7 +3,10 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PrivacyProfileService } from '../services/privacy-profile.service';
 import { PrivacyEncryptionService } from '../services/privacy-encryption.service';
-import { PrivacyProfile, AnonymityLevel } from '../entities/privacy-profile.entity';
+import {
+  PrivacyProfile,
+  AnonymityLevel,
+} from '../entities/privacy-profile.entity';
 
 describe('PrivacyProfileService', () => {
   let service: PrivacyProfileService;
@@ -30,8 +33,12 @@ describe('PrivacyProfileService', () => {
     }).compile();
 
     service = module.get<PrivacyProfileService>(PrivacyProfileService);
-    repository = module.get<Repository<PrivacyProfile>>(getRepositoryToken(PrivacyProfile));
-    encryptionService = module.get<PrivacyEncryptionService>(PrivacyEncryptionService);
+    repository = module.get<Repository<PrivacyProfile>>(
+      getRepositoryToken(PrivacyProfile),
+    );
+    encryptionService = module.get<PrivacyEncryptionService>(
+      PrivacyEncryptionService,
+    );
   });
 
   it('should be defined', () => {

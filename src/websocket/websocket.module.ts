@@ -15,8 +15,8 @@ import { RealtimeEventsService } from './events/realtime-events.service';
   imports: [
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'your-secret-key',
-      signOptions: { expiresIn: '1d' }
-    })
+      signOptions: { expiresIn: '1d' },
+    }),
   ],
   providers: [
     WebSocketService,
@@ -29,6 +29,12 @@ import { RealtimeEventsService } from './events/realtime-events.service';
     ConnectionManagerService,
     RealtimeEventsService,
   ],
-  exports: [WebSocketService, WebSocketEvents, StreamManagerService, ConnectionManagerService, RealtimeEventsService]
+  exports: [
+    WebSocketService,
+    WebSocketEvents,
+    StreamManagerService,
+    ConnectionManagerService,
+    RealtimeEventsService,
+  ],
 })
 export class WebSocketModule {}

@@ -22,13 +22,7 @@ import { AuditLogModule } from '../audit-log/audit-log.module';
     AuditLogModule,
   ],
   controllers: [ComplianceController],
-  providers: [
-    ComplianceMonitoringService,
-    RegulatoryReportingService,
-  ],
-  exports: [
-    ComplianceMonitoringService,
-    RegulatoryReportingService,
-  ],
+  providers: [ComplianceMonitoringService, RegulatoryReportingService],
+  exports: [ComplianceMonitoringService, RegulatoryReportingService],
 })
 export class ComplianceModule {}

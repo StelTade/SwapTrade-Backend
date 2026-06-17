@@ -27,7 +27,9 @@ describe('Redis pool (e2e)', () => {
 
   describe('GET /cache/redis/metrics', () => {
     it('should return Redis metrics or enabled: false', async () => {
-      const res = await request(app.getHttpServer()).get('/cache/redis/metrics');
+      const res = await request(app.getHttpServer()).get(
+        '/cache/redis/metrics',
+      );
       expect(res.status).toBe(200);
       if (res.body.enabled === false) {
         expect(res.body).toEqual({ enabled: false });
@@ -58,7 +60,9 @@ describe('Redis pool (e2e)', () => {
 
   describe('Redis reconnection scenario', () => {
     it('should expose retry and connection error metrics after failures', async () => {
-      const before = await request(app.getHttpServer()).get('/cache/redis/metrics');
+      const before = await request(app.getHttpServer()).get(
+        '/cache/redis/metrics',
+      );
       const beforeBody = before.body;
       if (beforeBody.enabled === false) {
         return;

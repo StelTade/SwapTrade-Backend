@@ -10,10 +10,13 @@ export default registerAs('cache', () => ({
   warming: {
     enabled: process.env.CACHE_WARMING_ENABLED === 'true',
     timeout: parseInt(process.env.CACHE_WARMING_TIMEOUT || '30000', 10), // 30 seconds
-    strategies: (process.env.CACHE_WARMING_STRATEGIES || 'user_balances,market_data,portfolio')
+    strategies: (
+      process.env.CACHE_WARMING_STRATEGIES ||
+      'user_balances,market_data,portfolio'
+    )
       .split(',')
-      .map(s => s.trim())
-      .filter(s => s.length > 0),
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0),
   },
   redis: {
     host: process.env.REDIS_HOST || 'localhost',

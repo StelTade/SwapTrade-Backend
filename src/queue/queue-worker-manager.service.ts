@@ -55,7 +55,7 @@ export class QueueWorkerManagerService {
     capacity: number = 10,
   ): WorkerNode {
     const workerId = `worker-${hostname}-${pid}-${++this.workerIdCounter}`;
-    
+
     const worker: WorkerNode = {
       workerId,
       hostname,
@@ -76,7 +76,7 @@ export class QueueWorkerManagerService {
 
     this.workers.set(workerId, worker);
     this.logger.log(`Worker registered: ${workerId} (capacity: ${capacity})`);
-    
+
     this.eventEmitter.emit('worker.registered', worker);
     return worker;
   }
@@ -94,7 +94,7 @@ export class QueueWorkerManagerService {
     worker.status = 'offline';
     this.workers.delete(workerId);
     this.logger.log(`Worker unregistered: ${workerId}`);
-    
+
     this.eventEmitter.emit('worker.unregistered', worker);
     return true;
   }
@@ -102,14 +102,17 @@ export class QueueWorkerManagerService {
   /**
    * Update worker heartbeat
    */
-  updateWorkerHeartbeat(workerId: string, metrics?: Partial<WorkerMetrics>): boolean {
+  updateWorkerHeartbeat(
+    workerId: string,
+    metrics?: Partial<WorkerMetrics>,
+  ): boolean {
     const worker = this.workers.get(workerId);
     if (!worker) {
       return false;
     }
 
     worker.lastHeartbeat = new Date();
-    
+
     if (metrics) {
       worker.metrics = {
         ...worker.metrics,
@@ -130,7 +133,7 @@ export class QueueWorkerManagerService {
     }
 
     worker.currentLoad = currentLoad;
-    
+
     // Update status based on load
     if (currentLoad >= worker.capacity) {
       worker.status = 'busy';
@@ -157,7 +160,7 @@ export class QueueWorkerManagerService {
 
     // Sort by current load (ascending)
     activeWorkers.sort((a, b) => a.currentLoad - b.currentLoad);
-    
+
     return activeWorkers[0];
   }
 
@@ -180,7 +183,8 @@ export class QueueWorkerManagerService {
    */
   getActiveWorkersCount(): number {
     return Array.from(this.workers.values()).filter(
-      (w) => w.status === 'active' || w.status === 'idle' || w.status === 'busy',
+      (w) =>
+        w.status === 'active' || w.status === 'idle' || w.status === 'busy',
     ).length;
   }
 
@@ -190,7 +194,11 @@ export class QueueWorkerManagerService {
   async checkScalingNeeded(
     queue: Queue,
     queueName: string,
-  ): Promise<{ needed: boolean; direction: 'up' | 'down' | null; reason: string }> {
+  ): Promise<{
+    needed: boolean;
+    direction: 'up' | 'down' | null;
+    reason: string;
+  }> {
     const counts = await queue.getJobCounts();
     const waitingJobs = counts.waiting || 0;
     const activeJobs = counts.active || 0;
@@ -200,12 +208,28 @@ export class QueueWorkerManagerService {
     const lastScaleUp = this.lastScaleUpTime.get(queueName);
     const lastScaleDown = this.lastScaleDownTime.get(queueName);
 
-    if (lastScaleUp && now.getTime() - lastScaleUp.getTime() < this.config.workerPool.cooldownPeriodMs) {
-      return { needed: false, direction: null, reason: 'Scale-up cooldown active' };
+    if (
+      lastScaleUp &&
+      now.getTime() - lastScaleUp.getTime() <
+        this.config.workerPool.cooldownPeriodMs
+    ) {
+      return {
+        needed: false,
+        direction: null,
+        reason: 'Scale-up cooldown active',
+      };
     }
 
-    if (lastScaleDown && now.getTime() - lastScaleDown.getTime() < this.config.workerPool.cooldownPeriodMs) {
-      return { needed: false, direction: null, reason: 'Scale-down cooldown active' };
+    if (
+      lastScaleDown &&
+      now.getTime() - lastScaleDown.getTime() <
+        this.config.workerPool.cooldownPeriodMs
+    ) {
+      return {
+        needed: false,
+        direction: null,
+        reason: 'Scale-down cooldown active',
+      };
     }
 
     // Check if scale-up is needed
@@ -221,7 +245,10 @@ export class QueueWorkerManagerService {
     }
 
     // Check if scale-down is needed
-    if (waitingJobs < this.config.workerPool.scaleDownThreshold && activeJobs < this.config.workerPool.scaleDownThreshold) {
+    if (
+      waitingJobs < this.config.workerPool.scaleDownThreshold &&
+      activeJobs < this.config.workerPool.scaleDownThreshold
+    ) {
       const currentWorkers = this.getActiveWorkersCount();
       if (currentWorkers > this.config.workerPool.minWorkers) {
         return {
@@ -243,7 +270,10 @@ export class QueueWorkerManagerService {
     count: number = this.config.workerPool.scaleUpStep,
   ): Promise<ScalingEvent> {
     const currentWorkers = this.getActiveWorkersCount();
-    const newWorkers = Math.min(currentWorkers + count, this.config.workerPool.maxWorkers);
+    const newWorkers = Math.min(
+      currentWorkers + count,
+      this.config.workerPool.maxWorkers,
+    );
     const actualAdded = newWorkers - currentWorkers;
 
     // Register new workers
@@ -267,10 +297,12 @@ export class QueueWorkerManagerService {
 
     this.scalingHistory.push(event);
     this.lastScaleUpTime.set(queueName, new Date());
-    
-    this.logger.log(`Scaled up ${queueName}: ${currentWorkers} → ${newWorkers} workers`);
+
+    this.logger.log(
+      `Scaled up ${queueName}: ${currentWorkers} → ${newWorkers} workers`,
+    );
     this.eventEmitter.emit('queue.scaled-up', event);
-    
+
     return event;
   }
 
@@ -282,7 +314,10 @@ export class QueueWorkerManagerService {
     count: number = this.config.workerPool.scaleDownStep,
   ): Promise<ScalingEvent> {
     const currentWorkers = this.getActiveWorkersCount();
-    const newWorkers = Math.max(currentWorkers - count, this.config.workerPool.minWorkers);
+    const newWorkers = Math.max(
+      currentWorkers - count,
+      this.config.workerPool.minWorkers,
+    );
     const actualRemoved = currentWorkers - newWorkers;
 
     // Find idle workers to remove
@@ -310,10 +345,12 @@ export class QueueWorkerManagerService {
 
     this.scalingHistory.push(event);
     this.lastScaleDownTime.set(queueName, new Date());
-    
-    this.logger.log(`Scaled down ${queueName}: ${currentWorkers} → ${newWorkers} workers`);
+
+    this.logger.log(
+      `Scaled down ${queueName}: ${currentWorkers} → ${newWorkers} workers`,
+    );
     this.eventEmitter.emit('queue.scaled-down', event);
-    
+
     return event;
   }
 
@@ -344,10 +381,15 @@ export class QueueWorkerManagerService {
 
     for (const [workerId, worker] of this.workers.entries()) {
       const timeSinceHeartbeat = now.getTime() - worker.lastHeartbeat.getTime();
-      
-      if (timeSinceHeartbeat > heartbeatTimeout && worker.status !== 'offline') {
+
+      if (
+        timeSinceHeartbeat > heartbeatTimeout &&
+        worker.status !== 'offline'
+      ) {
         worker.status = 'unhealthy';
-        this.logger.warn(`Worker ${workerId} marked unhealthy (no heartbeat for ${timeSinceHeartbeat}ms)`);
+        this.logger.warn(
+          `Worker ${workerId} marked unhealthy (no heartbeat for ${timeSinceHeartbeat}ms)`,
+        );
         this.eventEmitter.emit('worker.unhealthy', worker);
       }
     }
@@ -375,7 +417,7 @@ export class QueueWorkerManagerService {
     averageLoadPercent: number;
   } {
     const workers = Array.from(this.workers.values());
-    
+
     const stats = {
       total: workers.length,
       active: workers.filter((w) => w.status === 'active').length,
@@ -400,7 +442,7 @@ export class QueueWorkerManagerService {
    */
   async rebalanceWorkers(queues: Map<string, Queue>): Promise<void> {
     this.logger.log('Rebalancing workers across queues...');
-    
+
     const queueMetrics = new Map<string, number>();
     let totalWaiting = 0;
 
@@ -423,11 +465,16 @@ export class QueueWorkerManagerService {
 
     for (const [queueName, waiting] of queueMetrics.entries()) {
       const proportion = waiting / totalWaiting;
-      const workersForQueue = Math.max(1, Math.round(totalWorkers * proportion));
+      const workersForQueue = Math.max(
+        1,
+        Math.round(totalWorkers * proportion),
+      );
       distribution.set(queueName, workersForQueue);
     }
 
-    this.logger.log(`Worker distribution: ${JSON.stringify(Object.fromEntries(distribution))}`);
+    this.logger.log(
+      `Worker distribution: ${JSON.stringify(Object.fromEntries(distribution))}`,
+    );
     this.eventEmitter.emit('queue.rebalanced', { distribution, totalWorkers });
   }
 

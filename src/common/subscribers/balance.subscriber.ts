@@ -16,9 +16,7 @@ import { CacheInvalidationService } from '../cache/cache-invalidation.service';
  */
 @Injectable()
 @EventSubscriber()
-export class BalanceCacheSubscriber
-  implements EntitySubscriberInterface<UserBalance>
-{
+export class BalanceCacheSubscriber implements EntitySubscriberInterface<UserBalance> {
   private readonly logger = new Logger(BalanceCacheSubscriber.name);
 
   constructor(
@@ -37,7 +35,9 @@ export class BalanceCacheSubscriber
   }
 
   async afterUpdate(event: UpdateEvent<UserBalance>): Promise<void> {
-    await this.handleMutation(event.entity?.userId ?? event.databaseEntity?.userId);
+    await this.handleMutation(
+      event.entity?.userId ?? event.databaseEntity?.userId,
+    );
   }
 
   private async handleMutation(userId?: string): Promise<void> {

@@ -12,8 +12,15 @@ export class MFAController {
   }
 
   @Post('enable')
-  async enable(@Req() req: any, @Body() body: { secret: string; token: string }) {
-    return this.mfaService.verifyAndEnable(req.user.id, body.secret, body.token);
+  async enable(
+    @Req() req: any,
+    @Body() body: { secret: string; token: string },
+  ) {
+    return this.mfaService.verifyAndEnable(
+      req.user.id,
+      body.secret,
+      body.token,
+    );
   }
 
   @Post('disable')

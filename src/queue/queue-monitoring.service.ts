@@ -400,14 +400,18 @@ export class QueueMonitoringService {
     );
   }
 
-  getScheduledTaskMetrics(taskName?: string): ScheduledTaskMetrics[] | ScheduledTaskMetrics {
+  getScheduledTaskMetrics(
+    taskName?: string,
+  ): ScheduledTaskMetrics[] | ScheduledTaskMetrics {
     if (taskName) {
-      return this.scheduledTaskMetrics.get(taskName) || {
-        taskName,
-        status: 'scheduled',
-        executionCount: 0,
-        failureCount: 0,
-      };
+      return (
+        this.scheduledTaskMetrics.get(taskName) || {
+          taskName,
+          status: 'scheduled',
+          executionCount: 0,
+          failureCount: 0,
+        }
+      );
     }
 
     return Array.from(this.scheduledTaskMetrics.values());
@@ -422,10 +426,14 @@ export class QueueMonitoringService {
       totalTasks: tasks.length,
       totalExecutions,
       totalFailures,
-      successRate: totalExecutions > 0 
-        ? ((totalExecutions - totalFailures) / totalExecutions * 100).toFixed(2) + '%'
-        : 'N/A',
-      tasks: tasks.map(t => ({
+      successRate:
+        totalExecutions > 0
+          ? (
+              ((totalExecutions - totalFailures) / totalExecutions) *
+              100
+            ).toFixed(2) + '%'
+          : 'N/A',
+      tasks: tasks.map((t) => ({
         name: t.taskName,
         lastExecution: t.lastExecution?.toISOString(),
         status: t.status,

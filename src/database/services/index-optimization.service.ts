@@ -36,26 +36,34 @@ export class IndexOptimizationService {
    */
   async analyzeIndexes(): Promise<IndexAnalysisResult> {
     const existingIndexes = await this.getExistingIndexes();
-    const recommendations = await this.generateIndexRecommendations(existingIndexes);
+    const recommendations =
+      await this.generateIndexRecommendations(existingIndexes);
     const compositeIndexes = await this.analyzeCompositeIndexes();
 
     return {
       existingIndexes,
       recommendations,
-      compositeIndexes
+      compositeIndexes,
     };
   }
 
   /**
    * Create recommended indexes
    */
-  async createRecommendedIndexes(recommendations: IndexRecommendation[]): Promise<void> {
+  async createRecommendedIndexes(
+    recommendations: IndexRecommendation[],
+  ): Promise<void> {
     for (const recommendation of recommendations) {
       try {
         await this.createIndex(recommendation);
-        this.logger.log(`Created index: ${recommendation.tableName}.${recommendation.columnName}`);
+        this.logger.log(
+          `Created index: ${recommendation.tableName}.${recommendation.columnName}`,
+        );
       } catch (error) {
-        this.logger.error(`Failed to create index: ${recommendation.tableName}.${recommendation.columnName}`, error.stack);
+        this.logger.error(
+          `Failed to create index: ${recommendation.tableName}.${recommendation.columnName}`,
+          error.stack,
+        );
       }
     }
   }
@@ -70,26 +78,31 @@ export class IndexOptimizationService {
         const result = await this.dataSource.query(explainQuery, parameters);
         return this.analyzePostgresPlan(result);
       }
-      
+
       if (this.dataSource.options.type === 'sqlite') {
         const explainQuery = `EXPLAIN QUERY PLAN ${query}`;
         const result = await this.dataSource.query(explainQuery, parameters);
         return this.analyzeSQLitePlan(result);
       }
-      
+
       return null;
     } catch (error) {
-      this.logger.error(`Failed to get execution plan for query: ${query}`, error.stack);
+      this.logger.error(
+        `Failed to get execution plan for query: ${query}`,
+        error.stack,
+      );
       return null;
     }
   }
 
-  private async getExistingIndexes(): Promise<Array<{
-    tableName: string;
-    indexName: string;
-    columns: string[];
-    type: string;
-  }>> {
+  private async getExistingIndexes(): Promise<
+    Array<{
+      tableName: string;
+      indexName: string;
+      columns: string[];
+      type: string;
+    }>
+  > {
     const indexes: Array<{
       tableName: string;
       indexName: string;
@@ -110,28 +123,28 @@ export class IndexOptimizationService {
           ORDER BY tablename, indexname
         `;
         const result = await this.dataSource.query(query);
-        
+
         for (const row of result) {
           indexes.push({
             tableName: row.tablename,
             indexName: row.indexname,
             columns: this.extractColumnsFromIndexDef(row.indexdef),
-            type: 'btree'
+            type: 'btree',
           });
         }
       } else if (this.dataSource.options.type === 'sqlite') {
         const query = `PRAGMA index_list('trades')`;
         const result = await this.dataSource.query(query);
-        
+
         for (const row of result) {
           const columnsQuery = `PRAGMA index_info('${row.name}')`;
           const columns = await this.dataSource.query(columnsQuery);
-          
+
           indexes.push({
             tableName: 'trades',
             indexName: row.name,
-            columns: columns.map(col => col.name),
-            type: 'btree'
+            columns: columns.map((col) => col.name),
+            type: 'btree',
           });
         }
       }
@@ -142,19 +155,23 @@ export class IndexOptimizationService {
     return indexes;
   }
 
-  private async generateIndexRecommendations(existingIndexes: any[]): Promise<IndexRecommendation[]> {
+  private async generateIndexRecommendations(
+    existingIndexes: any[],
+  ): Promise<IndexRecommendation[]> {
     const recommendations: IndexRecommendation[] = [];
     const entityMetadatas = this.dataSource.entityMetadatas;
 
     for (const metadata of entityMetadatas) {
       const tableName = metadata.tableName;
-      const tableIndexes = existingIndexes.filter(idx => idx.tableName === tableName);
+      const tableIndexes = existingIndexes.filter(
+        (idx) => idx.tableName === tableName,
+      );
 
       // Analyze foreign keys for indexing
       for (const foreignKey of metadata.foreignKeys) {
-        const indexedColumns = tableIndexes.flatMap(idx => idx.columns);
+        const indexedColumns = tableIndexes.flatMap((idx) => idx.columns);
         const fkcColumn = foreignKey.columnNames[0];
-        
+
         if (!indexedColumns.includes(fkcColumn)) {
           recommendations.push({
             tableName,
@@ -162,7 +179,7 @@ export class IndexOptimizationService {
             indexType: 'btree',
             reason: 'Foreign key column should be indexed for JOIN performance',
             estimatedImprovement: 80,
-            priority: 'high'
+            priority: 'high',
           });
         }
       }
@@ -170,8 +187,8 @@ export class IndexOptimizationService {
       // Analyze WHERE clause patterns based on common queries
       const commonWhereColumns = this.getCommonWhereColumns(tableName);
       for (const column of commonWhereColumns) {
-        const indexedColumns = tableIndexes.flatMap(idx => idx.columns);
-        
+        const indexedColumns = tableIndexes.flatMap((idx) => idx.columns);
+
         if (!indexedColumns.includes(column)) {
           recommendations.push({
             tableName,
@@ -179,7 +196,7 @@ export class IndexOptimizationService {
             indexType: 'btree',
             reason: 'Frequently used in WHERE clauses',
             estimatedImprovement: 60,
-            priority: 'medium'
+            priority: 'medium',
           });
         }
       }
@@ -187,8 +204,8 @@ export class IndexOptimizationService {
       // Analyze ORDER BY patterns
       const commonOrderByColumns = this.getCommonOrderByColumns(tableName);
       for (const column of commonOrderByColumns) {
-        const indexedColumns = tableIndexes.flatMap(idx => idx.columns);
-        
+        const indexedColumns = tableIndexes.flatMap((idx) => idx.columns);
+
         if (!indexedColumns.includes(column)) {
           recommendations.push({
             tableName,
@@ -196,7 +213,7 @@ export class IndexOptimizationService {
             indexType: 'btree',
             reason: 'Frequently used in ORDER BY clauses',
             estimatedImprovement: 50,
-            priority: 'medium'
+            priority: 'medium',
           });
         }
       }
@@ -208,11 +225,13 @@ export class IndexOptimizationService {
     });
   }
 
-  private async analyzeCompositeIndexes(): Promise<Array<{
-    tableName: string;
-    columns: string[];
-    reason: string;
-  }>> {
+  private async analyzeCompositeIndexes(): Promise<
+    Array<{
+      tableName: string;
+      columns: string[];
+      reason: string;
+    }>
+  > {
     const compositeIndexes: Array<{
       tableName: string;
       columns: string[];
@@ -223,45 +242,47 @@ export class IndexOptimizationService {
     compositeIndexes.push({
       tableName: 'trades',
       columns: ['userId', 'asset', 'timestamp'],
-      reason: 'Optimize user trade history queries with asset filtering'
+      reason: 'Optimize user trade history queries with asset filtering',
     });
 
     compositeIndexes.push({
       tableName: 'trades',
       columns: ['asset', 'status', 'timestamp'],
-      reason: 'Optimize active order queries by asset'
+      reason: 'Optimize active order queries by asset',
     });
 
     compositeIndexes.push({
       tableName: 'trades',
       columns: ['buyerId', 'timestamp'],
-      reason: 'Optimize buyer trade history queries'
+      reason: 'Optimize buyer trade history queries',
     });
 
     compositeIndexes.push({
       tableName: 'trades',
       columns: ['sellerId', 'timestamp'],
-      reason: 'Optimize seller trade history queries'
+      reason: 'Optimize seller trade history queries',
     });
 
     // Portfolio table composite indexes
     compositeIndexes.push({
       tableName: 'portfolio',
       columns: ['userId', 'asset'],
-      reason: 'Optimize user portfolio lookups'
+      reason: 'Optimize user portfolio lookups',
     });
 
     // Balance table composite indexes
     compositeIndexes.push({
       tableName: 'user_balance',
       columns: ['userId', 'asset'],
-      reason: 'Optimize user balance queries'
+      reason: 'Optimize user balance queries',
     });
 
     return compositeIndexes;
   }
 
-  private async createIndex(recommendation: IndexRecommendation): Promise<void> {
+  private async createIndex(
+    recommendation: IndexRecommendation,
+  ): Promise<void> {
     const indexName = `idx_${recommendation.tableName}_${recommendation.columnName}`;
     let createQuery = '';
 
@@ -288,11 +309,11 @@ export class IndexOptimizationService {
 
   private getCommonWhereColumns(tableName: string): string[] {
     const commonPatterns: Record<string, string[]> = {
-      'trades': ['userId', 'asset', 'status', 'buyerId', 'sellerId'],
-      'portfolio': ['userId', 'asset'],
-      'user_balance': ['userId', 'asset'],
-      'order_book': ['asset', 'status', 'userId'],
-      'virtual_asset': ['symbol']
+      trades: ['userId', 'asset', 'status', 'buyerId', 'sellerId'],
+      portfolio: ['userId', 'asset'],
+      user_balance: ['userId', 'asset'],
+      order_book: ['asset', 'status', 'userId'],
+      virtual_asset: ['symbol'],
     };
 
     return commonPatterns[tableName] || [];
@@ -300,10 +321,10 @@ export class IndexOptimizationService {
 
   private getCommonOrderByColumns(tableName: string): string[] {
     const commonPatterns: Record<string, string[]> = {
-      'trades': ['timestamp', 'createdAt'],
-      'order_book': ['price', 'createdAt'],
-      'portfolio': ['updatedAt'],
-      'user_balance': ['updatedAt']
+      trades: ['timestamp', 'createdAt'],
+      order_book: ['price', 'createdAt'],
+      portfolio: ['updatedAt'],
+      user_balance: ['updatedAt'],
     };
 
     return commonPatterns[tableName] || [];
@@ -312,7 +333,7 @@ export class IndexOptimizationService {
   private extractColumnsFromIndexDef(indexDef: string): string[] {
     const match = indexDef.match(/\(([^)]+)\)/);
     if (match) {
-      return match[1].split(',').map(col => col.trim().replace(/"/g, ''));
+      return match[1].split(',').map((col) => col.trim().replace(/"/g, ''));
     }
     return [];
   }
@@ -326,7 +347,7 @@ export class IndexOptimizationService {
         planningTime: plan[0]['Planning Time'],
         executionTime: plan[0]['Execution Time'],
         indexUsage: this.extractIndexUsage(executionPlan),
-        nodeTypes: this.extractNodeTypes(executionPlan)
+        nodeTypes: this.extractNodeTypes(executionPlan),
       };
     }
     return null;
@@ -335,8 +356,10 @@ export class IndexOptimizationService {
   private analyzeSQLitePlan(plan: any[]): any {
     return {
       plan: plan,
-      indexUsage: plan.some(row => row.detail && row.detail.includes('USING INDEX')),
-      details: plan
+      indexUsage: plan.some(
+        (row) => row.detail && row.detail.includes('USING INDEX'),
+      ),
+      details: plan,
     };
   }
 
@@ -348,7 +371,7 @@ export class IndexOptimizationService {
     const usage = {
       indexesUsed: [] as string[],
       sequentialScans: 0,
-      indexScans: 0
+      indexScans: 0,
     };
 
     if (node['Node Type'] === 'Index Scan') {
@@ -372,13 +395,13 @@ export class IndexOptimizationService {
 
   private extractNodeTypes(node: any): string[] {
     const types = [node['Node Type']];
-    
+
     if (node['Plans']) {
       for (const plan of node['Plans']) {
         types.push(...this.extractNodeTypes(plan));
       }
     }
-    
+
     return types;
   }
 }

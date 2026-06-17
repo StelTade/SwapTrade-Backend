@@ -16,12 +16,15 @@ export interface CacheWarmingMetrics {
   warmingDuration: number;
   successCount: number;
   failureCount: number;
-  strategyResults: Record<string, {
-    success: boolean;
-    keysWarmed: number;
-    duration: number;
-    error?: string;
-  }>;
+  strategyResults: Record<
+    string,
+    {
+      success: boolean;
+      keysWarmed: number;
+      duration: number;
+      error?: string;
+    }
+  >;
 }
 
 export interface CacheHitMissMetrics {

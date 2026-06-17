@@ -1,9 +1,24 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ComplianceRuleEntity, RuleType, ActionType, RuleSeverity, RuleStatus } from '../entities/compliance-rule.entity';
-import { ComplianceAlertEntity, AlertStatus, AlertPriority } from '../entities/compliance-alert.entity';
-import { AuditTrailEntity, AuditAction, ResourceType, AuditStatus } from '../entities/audit-trail.entity';
+import {
+  ComplianceRuleEntity,
+  RuleType,
+  ActionType,
+  RuleSeverity,
+  RuleStatus,
+} from '../entities/compliance-rule.entity';
+import {
+  ComplianceAlertEntity,
+  AlertStatus,
+  AlertPriority,
+} from '../entities/compliance-alert.entity';
+import {
+  AuditTrailEntity,
+  AuditAction,
+  ResourceType,
+  AuditStatus,
+} from '../entities/audit-trail.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { VcIssuerService } from '../../did/services/vc-issuer.service';
 
@@ -49,18 +64,22 @@ export class ComplianceMonitoringService implements OnModuleInit {
     this.logger.log('Compliance monitoring service initialized');
   }
 
-  async monitorTransaction(transactionData: TransactionData): Promise<ComplianceAlertEntity[]> {
-    this.logger.log(`Monitoring transaction ${transactionData.id} for user ${transactionData.userId}`);
+  async monitorTransaction(
+    transactionData: TransactionData,
+  ): Promise<ComplianceAlertEntity[]> {
+    this.logger.log(
+      `Monitoring transaction ${transactionData.id} for user ${transactionData.userId}`,
+    );
 
     const alerts: ComplianceAlertEntity[] = [];
-    
+
     try {
       // Get applicable compliance rules
       const rules = await this.getApplicableRules(transactionData);
-      
+
       // Evaluate each rule
       const evaluations = await Promise.all(
-        rules.map(rule => this.evaluateRule(rule, transactionData))
+        rules.map((rule) => this.evaluateRule(rule, transactionData)),
       );
 
       // Generate alerts for triggered rules
@@ -68,7 +87,7 @@ export class ComplianceMonitoringService implements OnModuleInit {
         if (evaluation.triggered) {
           const alert = await this.createAlert(evaluation, transactionData);
           alerts.push(alert);
-          
+
           // Take immediate action based on rule
           await this.takeAction(evaluation.rule, alert, transactionData);
         }
@@ -84,7 +103,9 @@ export class ComplianceMonitoringService implements OnModuleInit {
     }
   }
 
-  private async getApplicableRules(transactionData: TransactionData): Promise<ComplianceRuleEntity[]> {
+  private async getApplicableRules(
+    transactionData: TransactionData,
+  ): Promise<ComplianceRuleEntity[]> {
     return this.complianceRuleRepository.find({
       where: { status: RuleStatus.ACTIVE },
       order: { severity: 'DESC' },
@@ -96,7 +117,9 @@ export class ComplianceMonitoringService implements OnModuleInit {
     transactionData: TransactionData,
   ): Promise<RuleEvaluation> {
     const triggered = await this.checkRuleConditions(rule, transactionData);
-    const riskScore = triggered ? this.calculateRiskScore(rule, transactionData) : 0;
+    const riskScore = triggered
+      ? this.calculateRiskScore(rule, transactionData)
+      : 0;
     const details = this.buildRuleDetails(rule, transactionData);
 
     return {
@@ -131,9 +154,12 @@ export class ComplianceMonitoringService implements OnModuleInit {
     }
   }
 
-  private checkTransactionLimit(rule: ComplianceRuleEntity, transactionData: TransactionData): boolean {
+  private checkTransactionLimit(
+    rule: ComplianceRuleEntity,
+    transactionData: TransactionData,
+  ): boolean {
     const { minAmount, maxAmount, currency } = rule.conditions;
-    
+
     if (currency && transactionData.currency !== currency) {
       return false;
     }
@@ -149,7 +175,10 @@ export class ComplianceMonitoringService implements OnModuleInit {
     return false;
   }
 
-  private checkGeographicRestriction(rule: ComplianceRuleEntity, transactionData: TransactionData): boolean {
+  private checkGeographicRestriction(
+    rule: ComplianceRuleEntity,
+    transactionData: TransactionData,
+  ): boolean {
     const { restrictedCountries, allowedCountries } = rule.conditions;
     const location = transactionData.geographicLocation;
 
@@ -168,7 +197,10 @@ export class ComplianceMonitoringService implements OnModuleInit {
     return false;
   }
 
-  private checkAssetRestriction(rule: ComplianceRuleEntity, transactionData: TransactionData): boolean {
+  private checkAssetRestriction(
+    rule: ComplianceRuleEntity,
+    transactionData: TransactionData,
+  ): boolean {
     const { restrictedAssets, allowedAssets } = rule.conditions;
     const asset = transactionData.assetSymbol;
 
@@ -187,9 +219,12 @@ export class ComplianceMonitoringService implements OnModuleInit {
     return false;
   }
 
-  private async checkVolumeLimit(rule: ComplianceRuleEntity, transactionData: TransactionData): Promise<boolean> {
+  private async checkVolumeLimit(
+    rule: ComplianceRuleEntity,
+    transactionData: TransactionData,
+  ): Promise<boolean> {
     const { period, maxVolume, currency } = rule.conditions;
-    
+
     if (currency && transactionData.currency !== currency) {
       return false;
     }
@@ -212,14 +247,21 @@ export class ComplianceMonitoringService implements OnModuleInit {
 
     // This would typically query the transaction database
     // For demonstration, we'll use a mock calculation
-    const currentVolume = await this.calculateUserVolume(transactionData.userId, periodStart, currency);
+    const currentVolume = await this.calculateUserVolume(
+      transactionData.userId,
+      periodStart,
+      currency,
+    );
 
     return currentVolume + transactionData.amount > maxVolume;
   }
 
-  private async checkFrequencyLimit(rule: ComplianceRuleEntity, transactionData: TransactionData): Promise<boolean> {
+  private async checkFrequencyLimit(
+    rule: ComplianceRuleEntity,
+    transactionData: TransactionData,
+  ): Promise<boolean> {
     const { period, maxTransactions } = rule.conditions;
-    
+
     const periodStart = new Date();
     switch (period) {
       case 'hourly':
@@ -236,14 +278,20 @@ export class ComplianceMonitoringService implements OnModuleInit {
     }
 
     // This would typically query the transaction database
-    const transactionCount = await this.calculateUserTransactionCount(transactionData.userId, periodStart);
+    const transactionCount = await this.calculateUserTransactionCount(
+      transactionData.userId,
+      periodStart,
+    );
 
     return transactionCount >= maxTransactions;
   }
 
-  private checkAMLScreening(rule: ComplianceRuleEntity, transactionData: TransactionData): boolean {
+  private checkAMLScreening(
+    rule: ComplianceRuleEntity,
+    transactionData: TransactionData,
+  ): boolean {
     const { patterns } = rule.conditions;
-    
+
     // Check for suspicious patterns
     for (const pattern of patterns) {
       if (this.matchesPattern(transactionData, pattern)) {
@@ -254,10 +302,16 @@ export class ComplianceMonitoringService implements OnModuleInit {
     return false;
   }
 
-  private checkSanctions(rule: ComplianceRuleEntity, transactionData: TransactionData): boolean {
+  private checkSanctions(
+    rule: ComplianceRuleEntity,
+    transactionData: TransactionData,
+  ): boolean {
     const { checkCounterparties, checkLocation } = rule.conditions;
 
-    if (checkLocation && this.sanctionedCountries.has(transactionData.geographicLocation || '')) {
+    if (
+      checkLocation &&
+      this.sanctionedCountries.has(transactionData.geographicLocation || '')
+    ) {
       return true;
     }
 
@@ -272,7 +326,10 @@ export class ComplianceMonitoringService implements OnModuleInit {
     return false;
   }
 
-  private matchesPattern(transactionData: TransactionData, pattern: string): boolean {
+  private matchesPattern(
+    transactionData: TransactionData,
+    pattern: string,
+  ): boolean {
     switch (pattern) {
       case 'round_amount':
         return transactionData.amount % 1000 === 0;
@@ -288,9 +345,12 @@ export class ComplianceMonitoringService implements OnModuleInit {
     }
   }
 
-  private calculateRiskScore(rule: ComplianceRuleEntity, transactionData: TransactionData): number {
+  private calculateRiskScore(
+    rule: ComplianceRuleEntity,
+    transactionData: TransactionData,
+  ): number {
     let baseScore = 0;
-    
+
     switch (rule.severity) {
       case RuleSeverity.LOW:
         baseScore = 25;
@@ -311,14 +371,19 @@ export class ComplianceMonitoringService implements OnModuleInit {
       baseScore += 10;
     }
 
-    if (this.sanctionedCountries.has(transactionData.geographicLocation || '')) {
+    if (
+      this.sanctionedCountries.has(transactionData.geographicLocation || '')
+    ) {
       baseScore += 20;
     }
 
     return Math.min(100, baseScore);
   }
 
-  private buildRuleDetails(rule: ComplianceRuleEntity, transactionData: TransactionData): Record<string, any> {
+  private buildRuleDetails(
+    rule: ComplianceRuleEntity,
+    transactionData: TransactionData,
+  ): Record<string, any> {
     return {
       ruleId: rule.id,
       ruleName: rule.ruleName,
@@ -396,21 +461,36 @@ export class ComplianceMonitoringService implements OnModuleInit {
   }
 
   private async blockTransaction(transactionId: string): Promise<void> {
-    this.logger.log(`Blocking transaction ${transactionId} due to compliance violation`);
+    this.logger.log(
+      `Blocking transaction ${transactionId} due to compliance violation`,
+    );
     // Implementation would integrate with transaction service
   }
 
-  private async flagTransaction(transactionId: string, alertId: string): Promise<void> {
-    this.logger.log(`Flagging transaction ${transactionId} with alert ${alertId}`);
+  private async flagTransaction(
+    transactionId: string,
+    alertId: string,
+  ): Promise<void> {
+    this.logger.log(
+      `Flagging transaction ${transactionId} with alert ${alertId}`,
+    );
     // Implementation would update transaction status
   }
 
-  private async requireApproval(transactionId: string, alertId: string): Promise<void> {
-    this.logger.log(`Requiring approval for transaction ${transactionId} due to alert ${alertId}`);
+  private async requireApproval(
+    transactionId: string,
+    alertId: string,
+  ): Promise<void> {
+    this.logger.log(
+      `Requiring approval for transaction ${transactionId} due to alert ${alertId}`,
+    );
     // Implementation would create approval workflow
   }
 
-  private async sendNotification(alert: ComplianceAlertEntity, transactionData: TransactionData): Promise<void> {
+  private async sendNotification(
+    alert: ComplianceAlertEntity,
+    transactionData: TransactionData,
+  ): Promise<void> {
     this.logger.log(`Sending compliance notification for alert ${alert.id}`);
     // Implementation would send email/SMS/notification
   }
@@ -419,7 +499,9 @@ export class ComplianceMonitoringService implements OnModuleInit {
     transactionData: TransactionData,
     evaluations: RuleEvaluation[],
   ): Promise<void> {
-    const triggeredRules = evaluations.filter(e => e.triggered).map(e => e.rule.id);
+    const triggeredRules = evaluations
+      .filter((e) => e.triggered)
+      .map((e) => e.rule.id);
 
     const audit = this.auditTrailRepository.create({
       auditId: this.generateAuditId(),
@@ -427,12 +509,13 @@ export class ComplianceMonitoringService implements OnModuleInit {
       action: AuditAction.TRANSACTION,
       resourceType: ResourceType.TRANSACTION,
       resourceId: transactionData.id,
-      status: triggeredRules.length > 0 ? AuditStatus.FAILURE : AuditStatus.SUCCESS,
+      status:
+        triggeredRules.length > 0 ? AuditStatus.FAILURE : AuditStatus.SUCCESS,
       description: `Compliance monitoring for transaction ${transactionData.id}`,
       metadata: {
         triggeredRules,
         totalRules: evaluations.length,
-        riskScore: Math.max(...evaluations.map(e => e.riskScore)),
+        riskScore: Math.max(...evaluations.map((e) => e.riskScore)),
       },
       ipAddress: transactionData.ipAddress,
       userAgent: transactionData.userAgent,
@@ -447,7 +530,7 @@ export class ComplianceMonitoringService implements OnModuleInit {
     // In production, this would fetch from external compliance databases
     this.watchlist.add('SANCTIONED_ENTITY_1');
     this.watchlist.add('SANCTIONED_ENTITY_2');
-    
+
     this.sanctionedCountries.add('XX');
     this.sanctionedCountries.add('YY');
   }
@@ -461,12 +544,19 @@ export class ComplianceMonitoringService implements OnModuleInit {
   }
 
   // Mock methods - in production, these would query actual databases
-  private async calculateUserVolume(userId: string, periodStart: Date, currency?: string): Promise<number> {
+  private async calculateUserVolume(
+    userId: string,
+    periodStart: Date,
+    currency?: string,
+  ): Promise<number> {
     // Mock calculation
     return Math.random() * 100000;
   }
 
-  private async calculateUserTransactionCount(userId: string, periodStart: Date): Promise<number> {
+  private async calculateUserTransactionCount(
+    userId: string,
+    periodStart: Date,
+  ): Promise<number> {
     // Mock calculation
     return Math.floor(Math.random() * 50);
   }
@@ -490,7 +580,11 @@ export class ComplianceMonitoringService implements OnModuleInit {
     });
   }
 
-  async resolveAlert(alertId: string, resolutionDetails: string, resolvedBy: string): Promise<void> {
+  async resolveAlert(
+    alertId: string,
+    resolutionDetails: string,
+    resolvedBy: string,
+  ): Promise<void> {
     await this.complianceAlertRepository.update(alertId, {
       status: AlertStatus.RESOLVED,
       resolutionDetails,
@@ -499,10 +593,22 @@ export class ComplianceMonitoringService implements OnModuleInit {
     });
   }
 
-  async grantKycClearance(userDid: string, kycTier: number, fullName: string, dob: string): Promise<any> {
-    this.logger.log(`Granting KYC clearance Verifiable Credential for DID ${userDid}`);
+  async grantKycClearance(
+    userDid: string,
+    kycTier: number,
+    fullName: string,
+    dob: string,
+  ): Promise<any> {
+    this.logger.log(
+      `Granting KYC clearance Verifiable Credential for DID ${userDid}`,
+    );
     // Internally mints an encrypted JSON payload verifying their compliance tier
-    const vc = await this.vcIssuerService.issueKycCredential(userDid, kycTier, fullName, dob);
+    const vc = await this.vcIssuerService.issueKycCredential(
+      userDid,
+      kycTier,
+      fullName,
+      dob,
+    );
     return vc;
   }
 }

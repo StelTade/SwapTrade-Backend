@@ -1,4 +1,10 @@
-import { MigrationInterface, QueryRunner, Table, TableForeignKey, TableIndex } from 'typeorm';
+import {
+  MigrationInterface,
+  QueryRunner,
+  Table,
+  TableForeignKey,
+  TableIndex,
+} from 'typeorm';
 
 export class CreateReferralSystem1743000000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -537,25 +543,67 @@ export class CreateReferralSystem1743000000000 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Drop foreign keys
-    await queryRunner.dropForeignKey('waitlist_verification_tokens', 'FK_waitlist_tokens_email');
-    await queryRunner.dropForeignKey('referral_rewards', 'FK_referral_rewards_referralId');
-    await queryRunner.dropForeignKey('referrals', 'FK_referrals_referredUserId');
+    await queryRunner.dropForeignKey(
+      'waitlist_verification_tokens',
+      'FK_waitlist_tokens_email',
+    );
+    await queryRunner.dropForeignKey(
+      'referral_rewards',
+      'FK_referral_rewards_referralId',
+    );
+    await queryRunner.dropForeignKey(
+      'referrals',
+      'FK_referrals_referredUserId',
+    );
     await queryRunner.dropForeignKey('referrals', 'FK_referrals_referrerId');
-    await queryRunner.dropForeignKey('referral_codes', 'FK_referral_codes_userId');
+    await queryRunner.dropForeignKey(
+      'referral_codes',
+      'FK_referral_codes_userId',
+    );
 
     // Drop indexes
-    await queryRunner.dropIndex('waitlist_verification_tokens', 'IDX_waitlist_tokens_expiresAt');
-    await queryRunner.dropIndex('waitlist_verification_tokens', 'IDX_waitlist_tokens_email');
-    await queryRunner.dropIndex('waitlist_verification_tokens', 'IDX_waitlist_tokens_token');
-    await queryRunner.dropIndex('waitlist_users', 'IDX_waitlist_users_createdAt');
-    await queryRunner.dropIndex('waitlist_users', 'IDX_waitlist_users_referralCode');
+    await queryRunner.dropIndex(
+      'waitlist_verification_tokens',
+      'IDX_waitlist_tokens_expiresAt',
+    );
+    await queryRunner.dropIndex(
+      'waitlist_verification_tokens',
+      'IDX_waitlist_tokens_email',
+    );
+    await queryRunner.dropIndex(
+      'waitlist_verification_tokens',
+      'IDX_waitlist_tokens_token',
+    );
+    await queryRunner.dropIndex(
+      'waitlist_users',
+      'IDX_waitlist_users_createdAt',
+    );
+    await queryRunner.dropIndex(
+      'waitlist_users',
+      'IDX_waitlist_users_referralCode',
+    );
     await queryRunner.dropIndex('waitlist_users', 'IDX_waitlist_users_status');
     await queryRunner.dropIndex('waitlist_users', 'IDX_waitlist_users_email');
-    await queryRunner.dropIndex('leaderboard_cache', 'IDX_leaderboard_cache_userId');
-    await queryRunner.dropIndex('leaderboard_cache', 'IDX_leaderboard_cache_type_period_rank');
-    await queryRunner.dropIndex('referral_rewards', 'IDX_referral_rewards_createdAt');
-    await queryRunner.dropIndex('referral_rewards', 'IDX_referral_rewards_type');
-    await queryRunner.dropIndex('referral_rewards', 'IDX_referral_rewards_referralId');
+    await queryRunner.dropIndex(
+      'leaderboard_cache',
+      'IDX_leaderboard_cache_userId',
+    );
+    await queryRunner.dropIndex(
+      'leaderboard_cache',
+      'IDX_leaderboard_cache_type_period_rank',
+    );
+    await queryRunner.dropIndex(
+      'referral_rewards',
+      'IDX_referral_rewards_createdAt',
+    );
+    await queryRunner.dropIndex(
+      'referral_rewards',
+      'IDX_referral_rewards_type',
+    );
+    await queryRunner.dropIndex(
+      'referral_rewards',
+      'IDX_referral_rewards_referralId',
+    );
     await queryRunner.dropIndex('referrals', 'IDX_referrals_createdAt');
     await queryRunner.dropIndex('referrals', 'IDX_referrals_status');
     await queryRunner.dropIndex('referrals', 'IDX_referrals_referredUserId');

@@ -57,7 +57,7 @@ export class BalanceServiceExample {
       }
 
       // Fetch current balance
-      let balance = await this.balanceRepository.findOne({
+      const balance = await this.balanceRepository.findOne({
         where: { userId, asset },
       });
 
@@ -67,16 +67,11 @@ export class BalanceServiceExample {
 
       // Check sufficient balance
       if (balance.balance < amount) {
-        throw new InsufficientBalanceException(
-          asset,
-          amount,
-          balance.balance,
-          {
-            userId,
-            requestedAmount: amount,
-            availableAmount: balance.balance,
-          },
-        );
+        throw new InsufficientBalanceException(asset, amount, balance.balance, {
+          userId,
+          requestedAmount: amount,
+          availableAmount: balance.balance,
+        });
       }
 
       // Deduct balance
@@ -105,19 +100,16 @@ export class BalanceServiceExample {
       }
 
       // Log unexpected errors
-      this.errorLogger.logError(
-        error,
-        undefined,
-        500,
-        'BALANCE_DEDUCT_ERROR',
-        { userId, asset, amount },
-      );
+      this.errorLogger.logError(error, undefined, 500, 'BALANCE_DEDUCT_ERROR', {
+        userId,
+        asset,
+        amount,
+      });
 
-      throw new DatabaseException(
-        'deduct',
-        'An unexpected error occurred',
-        { userId, asset },
-      );
+      throw new DatabaseException('deduct', 'An unexpected error occurred', {
+        userId,
+        asset,
+      });
     }
   }
 
@@ -184,7 +176,7 @@ export class TradingServiceExample {
       }
 
       // Fetch existing trade
-      let trade = await this.tradeRepository.findOne({
+      const trade = await this.tradeRepository.findOne({
         where: { id: tradeDto.id },
       });
 
@@ -294,9 +286,7 @@ export class AuthServiceExample {
 
       if (!user) {
         // Don't reveal user doesn't exist (security)
-        throw new AuthenticationFailedException(
-          'Invalid email or password',
-        );
+        throw new AuthenticationFailedException('Invalid email or password');
       }
 
       // Validate password
@@ -304,9 +294,7 @@ export class AuthServiceExample {
 
       if (!passwordValid) {
         this.recordFailedAttempt(email);
-        throw new AuthenticationFailedException(
-          'Invalid email or password',
-        );
+        throw new AuthenticationFailedException('Invalid email or password');
       }
 
       // Reset failed attempts on successful login
@@ -324,13 +312,9 @@ export class AuthServiceExample {
         throw error;
       }
 
-      this.errorLogger.logError(
-        error,
-        undefined,
-        500,
-        'LOGIN_ERROR',
-        { email },
-      );
+      this.errorLogger.logError(error, undefined, 500, 'LOGIN_ERROR', {
+        email,
+      });
 
       throw new DatabaseException(
         'login',
@@ -414,16 +398,14 @@ export async function safeAsyncOperation<T>(
     return await operation();
   } catch (error) {
     // Log the error with context
-    errorLogger.logError(
-      error,
-      undefined,
-      500,
-      `${context}_ERROR`,
-      { context },
-    );
+    errorLogger.logError(error, undefined, 500, `${context}_ERROR`, {
+      context,
+    });
 
     // Re-throw custom exceptions or convert to appropriate exception
-    if (error instanceof (InsufficientBalanceException || InvalidTradeException)) {
+    if (
+      error instanceof (InsufficientBalanceException || InvalidTradeException)
+    ) {
       throw error;
     }
 
@@ -438,10 +420,7 @@ export async function safeAsyncOperation<T>(
  * EXAMPLE 5: Validation utility with error handling
  */
 export class ValidationUtil {
-  static validatePositiveNumber(
-    value: any,
-    fieldName: string,
-  ): void {
+  static validatePositiveNumber(value: any, fieldName: string): void {
     if (typeof value !== 'number' || value <= 0) {
       throw new ValidationException({
         [fieldName]: [`${fieldName} must be a positive number`],
@@ -458,10 +437,7 @@ export class ValidationUtil {
     }
   }
 
-  static validateRequired(
-    value: any,
-    fieldName: string,
-  ): void {
+  static validateRequired(value: any, fieldName: string): void {
     if (!value) {
       throw new ValidationException({
         [fieldName]: [`${fieldName} is required`],
@@ -476,9 +452,7 @@ export class ValidationUtil {
   ): void {
     if (value.length < minLength) {
       throw new ValidationException({
-        [fieldName]: [
-          `${fieldName} must be at least ${minLength} characters`,
-        ],
+        [fieldName]: [`${fieldName} must be at least ${minLength} characters`],
       });
     }
   }
