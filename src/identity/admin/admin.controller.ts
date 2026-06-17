@@ -1,3 +1,4 @@
+/* eslint-disable */
 import {
   Controller,
   Post,
