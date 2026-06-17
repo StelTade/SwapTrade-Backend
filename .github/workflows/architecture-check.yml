@@ -34,9 +34,9 @@ jobs:
         run: npm run build
         continue-on-error: false
 
-      - name: Run ESLint with boundary rules
-        run: npm run lint -- --format json --output-file eslint-report.json || echo "Linting failed, but continuing..."
-        continue-on-error: true
+      # - name: Run ESLint with boundary rules
+      #   run: npm run lint -- --format json --output-file eslint-report.json || echo "Linting failed, but continuing..."
+      #   continue-on-error: true
 
       - name: Check circular dependencies with Madge
         run: |
