@@ -49,7 +49,7 @@ jobs:
           node tools/analyze-simple.js 2>&1 | tee dependency-analysis.log
         continue-on-error: true
 
-      # - name: Validate against architecture rules
+      - name: Validate against architecture rules
         run: |
           echo "=== Architecture Validation Results ==="
           echo ""
