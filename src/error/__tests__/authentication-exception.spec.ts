@@ -3,7 +3,10 @@ import { AuthenticationException } from '../exceptions/authentication.exception'
 
 describe('AuthenticationException', () => {
   it('should create token expired exception', () => {
-    const exception = AuthenticationException.tokenExpired({ token: 'abc' }, 'req-123');
+    const exception = AuthenticationException.tokenExpired(
+      { token: 'abc' },
+      'req-123',
+    );
 
     expect(exception.code).toBe('AUTH_TOKEN_EXPIRED_401');
     expect(exception.httpStatus).toBe(HttpStatus.UNAUTHORIZED);

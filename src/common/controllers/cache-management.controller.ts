@@ -30,7 +30,8 @@ export class CacheManagementController {
   @Get('statistics')
   @ApiOperation({
     summary: 'Get cache performance statistics',
-    description: 'Returns cache hit/miss ratio, error counts, and key-level stats',
+    description:
+      'Returns cache hit/miss ratio, error counts, and key-level stats',
   })
   @ApiResponse({
     status: 200,
@@ -141,7 +142,9 @@ export class CacheManagementController {
   })
   @ApiResponse({ status: 200, description: 'Cache warming triggered' })
   async triggerWarming(@Query('task') taskName?: string) {
-    this.logger.log(`Triggering cache warming${taskName ? ` for task: ${taskName}` : ''}`);
+    this.logger.log(
+      `Triggering cache warming${taskName ? ` for task: ${taskName}` : ''}`,
+    );
     const metrics = await this.cacheWarming.forceWarmCache();
     return {
       success: true,
@@ -235,19 +238,27 @@ export class CacheManagementController {
     const recommendations: string[] = [];
 
     if (stats.hitRatio < 0.5) {
-      recommendations.push('Cache hit ratio is low. Consider increasing TTL values.');
+      recommendations.push(
+        'Cache hit ratio is low. Consider increasing TTL values.',
+      );
     }
 
     if (stats.hitRatio < 0.7) {
-      recommendations.push('Cache hit ratio below 70%. Consider warming cache more frequently.');
+      recommendations.push(
+        'Cache hit ratio below 70%. Consider warming cache more frequently.',
+      );
     }
 
     if (stats.errors > stats.totalRequests * 0.1) {
-      recommendations.push('High error rate in cache operations. Check Redis connectivity.');
+      recommendations.push(
+        'High error rate in cache operations. Check Redis connectivity.',
+      );
     }
 
     if (recommendations.length === 0) {
-      recommendations.push('Cache is performing well. No immediate actions needed.');
+      recommendations.push(
+        'Cache is performing well. No immediate actions needed.',
+      );
     }
 
     return recommendations;

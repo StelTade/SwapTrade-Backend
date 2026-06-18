@@ -33,8 +33,11 @@ export class MigrationMonitorService {
         executed: executedMigrations.length,
         pending: pendingMigrations.length,
         isSynced: pendingMigrations.length === 0,
-        lastMigration: executedMigrations.length > 0 ? executedMigrations[executedMigrations.length - 1].name : undefined,
-        pendingList: pendingMigrations.map(m => m.constructor.name),
+        lastMigration:
+          executedMigrations.length > 0
+            ? executedMigrations[executedMigrations.length - 1].name
+            : undefined,
+        pendingList: pendingMigrations.map((m) => m.constructor.name),
       };
     } catch (error) {
       this.logger.error('Failed to check migration status', error);

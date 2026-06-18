@@ -18,7 +18,7 @@ export class IsAssetTypeConstraint implements ValidatorConstraintInterface {
 }
 
 export function IsAssetType(validationOptions?: any) {
-  return function (object: Object, propertyName: string) {
+  return function (object: object, propertyName: string) {
     const { registerDecorator } = require('class-validator');
     registerDecorator({
       target: object.constructor,

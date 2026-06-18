@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import * as crypto from 'crypto';
 import * as sodium from 'libsodium-wrappers';
 
@@ -28,7 +32,13 @@ export class PrivacyEncryptionService {
     salt: Buffer = this.generateRandomBytes(32),
     iterations: number = 100000,
   ): { key: Buffer; salt: Buffer } {
-    const key = crypto.pbkdf2Sync(password, salt, iterations, this.keyLength, 'sha256');
+    const key = crypto.pbkdf2Sync(
+      password,
+      salt,
+      iterations,
+      this.keyLength,
+      'sha256',
+    );
     return { key, salt };
   }
 
@@ -67,12 +77,14 @@ export class PrivacyEncryptionService {
   } {
     try {
       if (key.length !== this.keyLength) {
-        throw new BadRequestException(`Key must be ${this.keyLength} bytes (256 bits)`);
+        throw new BadRequestException(
+          `Key must be ${this.keyLength} bytes (256 bits)`,
+        );
       }
 
       const usedNonce = nonce || this.generateNonce();
       const cipher = crypto.createCipheriv(this.algorithm, key, usedNonce);
-      
+
       let encrypted: string;
       if (typeof plaintext === 'string') {
         encrypted = cipher.update(plaintext, 'utf8', 'hex');
@@ -80,7 +92,7 @@ export class PrivacyEncryptionService {
         encrypted = cipher.update(plaintext, undefined, 'hex');
       }
       encrypted += cipher.final('hex');
-      
+
       const tag = cipher.getAuthTag();
 
       return {
@@ -106,15 +118,12 @@ export class PrivacyEncryptionService {
    * @param tag Authentication tag (base64)
    * @returns Decrypted plaintext
    */
-  decrypt(
-    ciphertext: string,
-    key: Buffer,
-    nonce: string,
-    tag: string,
-  ): string {
+  decrypt(ciphertext: string, key: Buffer, nonce: string, tag: string): string {
     try {
       if (key.length !== this.keyLength) {
-        throw new BadRequestException(`Key must be ${this.keyLength} bytes (256 bits)`);
+        throw new BadRequestException(
+          `Key must be ${this.keyLength} bytes (256 bits)`,
+        );
       }
 
       const decipher = crypto.createDecipheriv(
@@ -190,7 +199,10 @@ export class PrivacyEncryptionService {
    * @param password Password for key derivation
    * @returns Encrypted data with salt, nonce, and tag
    */
-  encryptWithPassword(plaintext: string | Buffer, password: string): {
+  encryptWithPassword(
+    plaintext: string | Buffer,
+    password: string,
+  ): {
     ciphertext: string;
     salt: string;
     nonce: string;

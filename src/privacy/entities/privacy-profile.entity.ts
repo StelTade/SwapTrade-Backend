@@ -36,7 +36,11 @@ export class PrivacyProfile {
   @Column({ type: 'text', comment: 'User public key for encryption' })
   publicKey: string;
 
-  @Column({ type: 'text', nullable: true, comment: 'Encrypted backup of user private key' })
+  @Column({
+    type: 'text',
+    nullable: true,
+    comment: 'Encrypted backup of user private key',
+  })
   encryptedPrivateKeyBackup?: string;
 
   @Column({
@@ -63,7 +67,11 @@ export class PrivacyProfile {
   })
   encryptedPseudonym?: string;
 
-  @Column({ type: 'int', default: 0, comment: 'Count of anonymous orders placed' })
+  @Column({
+    type: 'int',
+    default: 0,
+    comment: 'Count of anonymous orders placed',
+  })
   anonymousOrderCount: number;
 
   @Column({

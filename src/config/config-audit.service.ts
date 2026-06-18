@@ -111,14 +111,14 @@ export class ConfigAuditService implements OnModuleInit {
         const content = fs.readFileSync(this.auditLogPath, 'utf-8');
         const lines = content.trim().split('\n');
         this.auditEntries = lines
-          .map(line => {
+          .map((line) => {
             try {
               return JSON.parse(line);
             } catch {
               return null;
             }
           })
-          .filter(entry => entry !== null)
+          .filter((entry) => entry !== null)
           .slice(-1000); // Keep only last 1000 entries
       }
     } catch (error) {
@@ -168,11 +168,13 @@ export class ConfigAuditService implements OnModuleInit {
     let entries = [...this.auditEntries];
 
     if (options?.action) {
-      entries = entries.filter(entry => entry.action === options.action);
+      entries = entries.filter((entry) => entry.action === options.action);
     }
 
     if (options?.since) {
-      entries = entries.filter(entry => new Date(entry.timestamp) >= options.since!);
+      entries = entries.filter(
+        (entry) => new Date(entry.timestamp) >= options.since!,
+      );
     }
 
     if (options?.limit) {
@@ -201,9 +203,10 @@ export class ConfigAuditService implements OnModuleInit {
       }
     }
 
-    const lastActivity = this.auditEntries.length > 0
-      ? this.auditEntries[this.auditEntries.length - 1].timestamp
-      : null;
+    const lastActivity =
+      this.auditEntries.length > 0
+        ? this.auditEntries[this.auditEntries.length - 1].timestamp
+        : null;
 
     return {
       totalEntries: this.auditEntries.length,

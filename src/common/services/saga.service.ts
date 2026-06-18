@@ -46,10 +46,7 @@ export class SagaService {
   /**
    * Execute a saga (sequence of steps with compensations)
    */
-  async executeSaga(
-    sagaName: string,
-    steps: SagaStep[],
-  ): Promise<SagaResult> {
+  async executeSaga(sagaName: string, steps: SagaStep[]): Promise<SagaResult> {
     const correlationId = this.correlationIdService.getCorrelationId();
     const startTime = Date.now();
     const completedSteps: string[] = [];
@@ -73,7 +70,9 @@ export class SagaService {
           stepResults.set(step.name, result);
           completedSteps.push(step.name);
 
-          this.logger.debug(`[${correlationId}] Saga step completed: ${step.name}`);
+          this.logger.debug(
+            `[${correlationId}] Saga step completed: ${step.name}`,
+          );
         } catch (error) {
           this.logger.error(
             `[${correlationId}] Saga step failed: ${step.name} - ${
@@ -155,7 +154,9 @@ export class SagaService {
           const result = await this.executeWithTimeout(step.action);
           stepResults.set(step.name, result);
 
-          this.logger.debug(`[${correlationId}] Parallel saga step completed: ${step.name}`);
+          this.logger.debug(
+            `[${correlationId}] Parallel saga step completed: ${step.name}`,
+          );
 
           return { success: true, stepName: step.name };
         } catch (error) {
@@ -190,7 +191,9 @@ export class SagaService {
         const executionTimeMs = Date.now() - startTime;
         return {
           success: false,
-          completedSteps: results.filter((r) => r.success).map((r) => r.stepName),
+          completedSteps: results
+            .filter((r) => r.success)
+            .map((r) => r.stepName),
           failedStep: failedResult.stepName,
           error: failedResult.error,
           compensatedSteps,
@@ -250,16 +253,12 @@ export class SagaService {
 
       try {
         const stepResult = stepResults.get(step.name);
-        this.logger.debug(
-          `[${correlationId}] Compensating step: ${step.name}`,
-        );
+        this.logger.debug(`[${correlationId}] Compensating step: ${step.name}`);
 
         await this.executeWithTimeout(() => step.compensation!(stepResult));
         compensatedSteps.push(step.name);
 
-        this.logger.debug(
-          `[${correlationId}] Step compensated: ${step.name}`,
-        );
+        this.logger.debug(`[${correlationId}] Step compensated: ${step.name}`);
       } catch (error) {
         this.logger.error(
           `[${correlationId}] Compensation failed for step ${step.name}: ${

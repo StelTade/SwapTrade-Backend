@@ -31,8 +31,7 @@ export class ExponentialBackoffService {
   calculateRetryDelay(job: Job, policy: RetryPolicy): BackoffResult {
     const policyConfig = RETRY_POLICIES[policy];
     const attempt = job.attemptsMade || 0;
-    const hasRetriesLeft =
-      attempt < policyConfig.maxAttempts;
+    const hasRetriesLeft = attempt < policyConfig.maxAttempts;
 
     if (!hasRetriesLeft) {
       this.logger.warn(
@@ -106,8 +105,7 @@ export class ExponentialBackoffService {
    * Some errors are not retryable
    */
   isRetryableError(error: Error | string): boolean {
-    const errorStr =
-      typeof error === 'string' ? error : error?.message || '';
+    const errorStr = typeof error === 'string' ? error : error?.message || '';
 
     // Non-retryable error patterns
     const nonRetryablePatterns = [
@@ -122,15 +120,16 @@ export class ExponentialBackoffService {
     ];
 
     const lowerError = errorStr.toLowerCase();
-    return !nonRetryablePatterns.some((pattern) => lowerError.includes(pattern));
+    return !nonRetryablePatterns.some((pattern) =>
+      lowerError.includes(pattern),
+    );
   }
 
   /**
    * Get recommended retry policy based on error
    */
   getRecommendedPolicy(error: Error | string): RetryPolicy {
-    const errorStr =
-      typeof error === 'string' ? error : error?.message || '';
+    const errorStr = typeof error === 'string' ? error : error?.message || '';
     const lowerError = errorStr.toLowerCase();
 
     // Critical errors that need more retries

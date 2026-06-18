@@ -11,11 +11,25 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { ComplianceMonitoringService } from '../services/compliance-monitoring.service';
 import { RegulatoryReportingService } from '../services/regulatory-reporting.service';
-import { ComplianceAlertEntity, AlertStatus, AlertPriority } from '../entities/compliance-alert.entity';
-import { RegulatoryReportEntity, ReportType, ReportStatus, RegulatoryFramework } from '../entities/regulatory-report.entity';
+import {
+  ComplianceAlertEntity,
+  AlertStatus,
+  AlertPriority,
+} from '../entities/compliance-alert.entity';
+import {
+  RegulatoryReportEntity,
+  ReportType,
+  ReportStatus,
+  RegulatoryFramework,
+} from '../entities/regulatory-report.entity';
 
 interface TransactionMonitoringRequest {
   id: string;
@@ -61,13 +75,19 @@ export class ComplianceController {
 
   @Post('monitor/transaction')
   @ApiOperation({ summary: 'Monitor transaction for compliance violations' })
-  @ApiResponse({ status: 200, description: 'Transaction monitoring completed', type: [ComplianceAlertEntity] })
+  @ApiResponse({
+    status: 200,
+    description: 'Transaction monitoring completed',
+    type: [ComplianceAlertEntity],
+  })
   @ApiResponse({ status: 400, description: 'Invalid transaction data' })
   async monitorTransaction(
     @Body() transactionData: TransactionMonitoringRequest,
   ): Promise<ComplianceAlertEntity[]> {
     try {
-      return await this.complianceMonitoringService.monitorTransaction(transactionData);
+      return await this.complianceMonitoringService.monitorTransaction(
+        transactionData,
+      );
     } catch (error) {
       this.logger.error('Transaction monitoring failed:', error);
       throw new BadRequestException(this.getErrorMessage(error));
@@ -76,7 +96,11 @@ export class ComplianceController {
 
   @Get('alerts')
   @ApiOperation({ summary: 'Get active compliance alerts' })
-  @ApiResponse({ status: 200, description: 'Active alerts retrieved', type: [ComplianceAlertEntity] })
+  @ApiResponse({
+    status: 200,
+    description: 'Active alerts retrieved',
+    type: [ComplianceAlertEntity],
+  })
   @ApiResponse({ status: 403, description: 'Insufficient permissions' })
   async getActiveAlerts(
     @Query('userId') userId?: string,
@@ -87,7 +111,9 @@ export class ComplianceController {
         return await this.complianceMonitoringService.getActiveAlerts(userId);
       }
       // Would need to implement getAlertsByStatus in the service
-      throw new BadRequestException('Filtering by status other than OPEN not implemented');
+      throw new BadRequestException(
+        'Filtering by status other than OPEN not implemented',
+      );
     } catch (error) {
       this.logger.error('Failed to get alerts:', error);
       throw new BadRequestException(this.getErrorMessage(error));
@@ -110,7 +136,7 @@ export class ComplianceController {
         resolutionRequest.resolutionDetails,
         resolvedBy,
       );
-      
+
       return { message: 'Alert resolved successfully' };
     } catch (error) {
       this.logger.error(`Failed to resolve alert ${alertId}:`, error);
@@ -120,13 +146,19 @@ export class ComplianceController {
 
   @Post('reports/sar')
   @ApiOperation({ summary: 'Generate Suspicious Activity Report (SAR)' })
-  @ApiResponse({ status: 201, description: 'SAR report generated', type: RegulatoryReportEntity })
+  @ApiResponse({
+    status: 201,
+    description: 'SAR report generated',
+    type: RegulatoryReportEntity,
+  })
   @ApiResponse({ status: 400, description: 'Invalid alert data' })
   async generateSARReport(
     @Body() sarRequest: SARReportRequest,
   ): Promise<RegulatoryReportEntity> {
     try {
-      return await this.regulatoryReportingService.generateSARReport(sarRequest.alertIds);
+      return await this.regulatoryReportingService.generateSARReport(
+        sarRequest.alertIds,
+      );
     } catch (error) {
       this.logger.error('SAR report generation failed:', error);
       throw new BadRequestException(this.getErrorMessage(error));
@@ -135,13 +167,19 @@ export class ComplianceController {
 
   @Post('reports/ctr')
   @ApiOperation({ summary: 'Generate Currency Transaction Report (CTR)' })
-  @ApiResponse({ status: 201, description: 'CTR report generated', type: RegulatoryReportEntity })
+  @ApiResponse({
+    status: 201,
+    description: 'CTR report generated',
+    type: RegulatoryReportEntity,
+  })
   @ApiResponse({ status: 400, description: 'Invalid transaction data' })
   async generateCTRReport(
     @Body() ctrRequest: CTRReportRequest,
   ): Promise<RegulatoryReportEntity> {
     try {
-      return await this.regulatoryReportingService.generateCTRReport(ctrRequest.transactions);
+      return await this.regulatoryReportingService.generateCTRReport(
+        ctrRequest.transactions,
+      );
     } catch (error) {
       this.logger.error('CTR report generation failed:', error);
       throw new BadRequestException(this.getErrorMessage(error));
@@ -150,7 +188,11 @@ export class ComplianceController {
 
   @Post('reports/aml')
   @ApiOperation({ summary: 'Generate Anti-Money Laundering (AML) report' })
-  @ApiResponse({ status: 201, description: 'AML report generated', type: RegulatoryReportEntity })
+  @ApiResponse({
+    status: 201,
+    description: 'AML report generated',
+    type: RegulatoryReportEntity,
+  })
   @ApiResponse({ status: 400, description: 'Invalid period data' })
   async generateAMLReport(
     @Body() amlRequest: AMLReportRequest,
@@ -158,8 +200,11 @@ export class ComplianceController {
     try {
       const periodStart = new Date(amlRequest.periodStart);
       const periodEnd = new Date(amlRequest.periodEnd);
-      
-      return await this.regulatoryReportingService.generateAMLReport(periodStart, periodEnd);
+
+      return await this.regulatoryReportingService.generateAMLReport(
+        periodStart,
+        periodEnd,
+      );
     } catch (error) {
       this.logger.error('AML report generation failed:', error);
       throw new BadRequestException(this.getErrorMessage(error));
@@ -168,12 +213,19 @@ export class ComplianceController {
 
   @Post('reports/sec-form-4')
   @ApiOperation({ summary: 'Generate SEC Form 4 report' })
-  @ApiResponse({ status: 201, description: 'SEC Form 4 report generated', type: RegulatoryReportEntity })
+  @ApiResponse({
+    status: 201,
+    description: 'SEC Form 4 report generated',
+    type: RegulatoryReportEntity,
+  })
   async generateSECForm4(
     @Body() body: { userId: string; transactionIds: string[] },
   ): Promise<RegulatoryReportEntity> {
     try {
-      return await this.regulatoryReportingService.generateSECForm4(body.userId, body.transactionIds);
+      return await this.regulatoryReportingService.generateSECForm4(
+        body.userId,
+        body.transactionIds,
+      );
     } catch (error) {
       this.logger.error('SEC Form 4 report generation failed:', error);
       throw new BadRequestException(this.getErrorMessage(error));
@@ -182,12 +234,18 @@ export class ComplianceController {
 
   @Post('reports/finra-cat')
   @ApiOperation({ summary: 'Generate FINRA CAT report' })
-  @ApiResponse({ status: 201, description: 'FINRA CAT report generated', type: RegulatoryReportEntity })
+  @ApiResponse({
+    status: 201,
+    description: 'FINRA CAT report generated',
+    type: RegulatoryReportEntity,
+  })
   async generateFINRACAT(
     @Body() body: { orderIds: string[] },
   ): Promise<RegulatoryReportEntity> {
     try {
-      return await this.regulatoryReportingService.generateFINRACAT(body.orderIds);
+      return await this.regulatoryReportingService.generateFINRACAT(
+        body.orderIds,
+      );
     } catch (error) {
       this.logger.error('FINRA CAT report generation failed:', error);
       throw new BadRequestException(this.getErrorMessage(error));
@@ -222,7 +280,10 @@ export class ComplianceController {
     @Body() body: { userId: string; transactions: any[] },
   ): Promise<any> {
     try {
-      return await this.regulatoryReportingService.validateTransactionHistory(body.userId, body.transactions);
+      return await this.regulatoryReportingService.validateTransactionHistory(
+        body.userId,
+        body.transactions,
+      );
     } catch (error) {
       this.logger.error('Transaction history validation failed:', error);
       throw new BadRequestException(this.getErrorMessage(error));
@@ -231,9 +292,15 @@ export class ComplianceController {
 
   @Post('reports/:reportId/submit')
   @ApiOperation({ summary: 'Submit regulatory report' })
-  @ApiResponse({ status: 200, description: 'Report submitted successfully', type: RegulatoryReportEntity })
+  @ApiResponse({
+    status: 200,
+    description: 'Report submitted successfully',
+    type: RegulatoryReportEntity,
+  })
   @ApiResponse({ status: 404, description: 'Report not found' })
-  async submitReport(@Param('reportId') reportId: string): Promise<RegulatoryReportEntity> {
+  async submitReport(
+    @Param('reportId') reportId: string,
+  ): Promise<RegulatoryReportEntity> {
     try {
       return await this.regulatoryReportingService.submitReport(reportId);
     } catch (error) {
@@ -244,7 +311,11 @@ export class ComplianceController {
 
   @Get('reports')
   @ApiOperation({ summary: 'Get regulatory reports' })
-  @ApiResponse({ status: 200, description: 'Reports retrieved', type: [RegulatoryReportEntity] })
+  @ApiResponse({
+    status: 200,
+    description: 'Reports retrieved',
+    type: [RegulatoryReportEntity],
+  })
   async getReports(
     @Query('status') status?: ReportStatus,
     @Query('type') type?: ReportType,
@@ -254,7 +325,7 @@ export class ComplianceController {
       if (status) {
         return await this.regulatoryReportingService.getReportsByStatus(status);
       }
-      
+
       if (type) {
         return await this.regulatoryReportingService.getReportsByType(type);
       }
@@ -269,9 +340,15 @@ export class ComplianceController {
 
   @Get('reports/:reportId')
   @ApiOperation({ summary: 'Get specific regulatory report' })
-  @ApiResponse({ status: 200, description: 'Report retrieved', type: RegulatoryReportEntity })
+  @ApiResponse({
+    status: 200,
+    description: 'Report retrieved',
+    type: RegulatoryReportEntity,
+  })
   @ApiResponse({ status: 404, description: 'Report not found' })
-  async getReport(@Param('reportId') reportId: string): Promise<RegulatoryReportEntity> {
+  async getReport(
+    @Param('reportId') reportId: string,
+  ): Promise<RegulatoryReportEntity> {
     try {
       // Would need to implement getReportById in the service
       throw new BadRequestException('Get report by ID not implemented');
@@ -291,14 +368,23 @@ export class ComplianceController {
     recentSubmissions: number;
   }> {
     try {
-      const activeAlerts = await this.complianceMonitoringService.getActiveAlerts();
-      const pendingReports = await this.regulatoryReportingService.getReportsByStatus(ReportStatus.DRAFT);
-      
-      const highRiskAlerts = activeAlerts.filter(alert => 
-        alert.priority === AlertPriority.HIGH || alert.priority === AlertPriority.CRITICAL
+      const activeAlerts =
+        await this.complianceMonitoringService.getActiveAlerts();
+      const pendingReports =
+        await this.regulatoryReportingService.getReportsByStatus(
+          ReportStatus.DRAFT,
+        );
+
+      const highRiskAlerts = activeAlerts.filter(
+        (alert) =>
+          alert.priority === AlertPriority.HIGH ||
+          alert.priority === AlertPriority.CRITICAL,
       ).length;
 
-      const recentSubmissions = await this.regulatoryReportingService.getReportsByStatus(ReportStatus.SUBMITTED);
+      const recentSubmissions =
+        await this.regulatoryReportingService.getReportsByStatus(
+          ReportStatus.SUBMITTED,
+        );
 
       return {
         activeAlerts: activeAlerts.length,
@@ -323,18 +409,22 @@ export class ComplianceController {
     recommendations: string[];
   }> {
     try {
-      const alerts = await this.complianceMonitoringService.getActiveAlerts(userId);
-      
+      const alerts =
+        await this.complianceMonitoringService.getActiveAlerts(userId);
+
       // Simplified risk assessment
       const riskScore = Math.min(100, alerts.length * 10 + Math.random() * 20);
       let riskLevel = 'LOW';
-      
+
       if (riskScore >= 80) riskLevel = 'CRITICAL';
       else if (riskScore >= 60) riskLevel = 'HIGH';
       else if (riskScore >= 40) riskLevel = 'MEDIUM';
 
-      const riskFactors = alerts.map(alert => alert.alertType);
-      const recommendations = this.generateRiskRecommendations(riskLevel, alerts);
+      const riskFactors = alerts.map((alert) => alert.alertType);
+      const recommendations = this.generateRiskRecommendations(
+        riskLevel,
+        alerts,
+      );
 
       return {
         userId,
@@ -344,7 +434,10 @@ export class ComplianceController {
         recommendations,
       };
     } catch (error) {
-      this.logger.error(`Failed to get risk assessment for user ${userId}:`, error);
+      this.logger.error(
+        `Failed to get risk assessment for user ${userId}:`,
+        error,
+      );
       throw new BadRequestException(this.getErrorMessage(error));
     }
   }
@@ -378,7 +471,10 @@ export class ComplianceController {
     }
   }
 
-  private generateRiskRecommendations(riskLevel: string, alerts: ComplianceAlertEntity[]): string[] {
+  private generateRiskRecommendations(
+    riskLevel: string,
+    alerts: ComplianceAlertEntity[],
+  ): string[] {
     const recommendations: string[] = [];
 
     if (riskLevel === 'CRITICAL' || riskLevel === 'HIGH') {
@@ -391,15 +487,15 @@ export class ComplianceController {
       recommendations.push('Additional documentation required');
     }
 
-    if (alerts.some(alert => alert.alertType === 'geographic_restriction')) {
+    if (alerts.some((alert) => alert.alertType === 'geographic_restriction')) {
       recommendations.push('Verify user location and identity');
     }
 
-    if (alerts.some(alert => alert.alertType === 'transaction_limit')) {
+    if (alerts.some((alert) => alert.alertType === 'transaction_limit')) {
       recommendations.push('Review transaction patterns and limits');
     }
 
-    if (alerts.some(alert => alert.alertType === 'aml_screening')) {
+    if (alerts.some((alert) => alert.alertType === 'aml_screening')) {
       recommendations.push('Conduct enhanced due diligence');
     }
 

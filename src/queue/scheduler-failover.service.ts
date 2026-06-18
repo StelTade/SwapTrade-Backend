@@ -41,7 +41,7 @@ export class SchedulerFailoverService implements OnModuleInit {
   private setupFailedJobHandlers() {
     // Listen to global queue error events
     const queues = [this.notificationQueue, this.reportQueue];
-    
+
     for (const queue of queues) {
       queue.on('error', (error) => {
         this.logger.error(`Queue ${queue.name} error:`, error);
@@ -65,16 +65,16 @@ export class SchedulerFailoverService implements OnModuleInit {
 
     try {
       const queues = [this.notificationQueue, this.reportQueue];
-      
+
       for (const queue of queues) {
         const jobCounts = await queue.getJobCounts();
-        
+
         // Check for excessive failed jobs
         if (jobCounts.failed > 50) {
           this.logger.warn(
             `Queue ${queue.name} has ${jobCounts.failed} failed jobs. Consider investigation.`,
           );
-          
+
           // Auto-retry failed jobs if count is too high
           if (jobCounts.failed > 100) {
             await this.autoRetryFailedJobs(queue, 10);
@@ -108,9 +108,12 @@ export class SchedulerFailoverService implements OnModuleInit {
 
       for (const queue of queues) {
         const failedJobs = await queue.getFailed(0, 100);
-        
+
         for (const job of failedJobs) {
-          if (job.finishedOn && Date.now() - job.finishedOn > this.FAILED_JOB_TTL) {
+          if (
+            job.finishedOn &&
+            Date.now() - job.finishedOn > this.FAILED_JOB_TTL
+          ) {
             await job.remove();
           }
         }
@@ -124,7 +127,10 @@ export class SchedulerFailoverService implements OnModuleInit {
 
   // ==================== Auto-Retry Mechanism ====================
 
-  async autoRetryFailedJobs(queue: Queue, maxRetries: number = 10): Promise<number> {
+  async autoRetryFailedJobs(
+    queue: Queue,
+    maxRetries: number = 10,
+  ): Promise<number> {
     this.logger.log(`Auto-retrying failed jobs for queue ${queue.name}`);
 
     try {
@@ -141,7 +147,7 @@ export class SchedulerFailoverService implements OnModuleInit {
           }
         } catch (error) {
           this.logger.error(`Failed to retry job ${job.id}:`, error);
-          
+
           // Move to DLQ if retry fails
           await this.dlqService.addToDLQ(
             job,
@@ -165,7 +171,7 @@ export class SchedulerFailoverService implements OnModuleInit {
   async handleStalledJob(queue: Queue, jobId: string): Promise<void> {
     try {
       const job = await queue.getJob(jobId);
-      
+
       if (!job) {
         this.logger.warn(`Stalled job ${jobId} not found`);
         return;
@@ -173,12 +179,12 @@ export class SchedulerFailoverService implements OnModuleInit {
 
       // Check if job has exceeded max stalled count
       const maxStalledCount = (job.opts as any)?.maxStalledCount || 1;
-      
+
       if (job.attemptsMade >= maxStalledCount) {
         this.logger.error(
           `Job ${jobId} has exceeded max stalled count. Moving to DLQ.`,
         );
-        
+
         await this.dlqService.addToDLQ(
           job,
           new Error('Max stalled count exceeded'),
@@ -216,26 +222,29 @@ export class SchedulerFailoverService implements OnModuleInit {
   ): Promise<number> {
     this.logger.log(`Manually recovering failed jobs for ${queueName}`);
 
-    const queue = queueName === QueueName.NOTIFICATIONS 
-      ? this.notificationQueue 
-      : this.reportQueue;
+    const queue =
+      queueName === QueueName.NOTIFICATIONS
+        ? this.notificationQueue
+        : this.reportQueue;
 
     return await this.autoRetryFailedJobs(queue, limit);
   }
 
   async getFailedJobsSummary(queueName: string): Promise<any> {
-    const queue = queueName === QueueName.NOTIFICATIONS 
-      ? this.notificationQueue 
-      : this.reportQueue;
+    const queue =
+      queueName === QueueName.NOTIFICATIONS
+        ? this.notificationQueue
+        : this.reportQueue;
 
     const failedJobs = await queue.getFailed(0, 100);
-    
+
     return {
       queue: queueName,
       totalFailed: failedJobs.length,
-      recentFailures: failedJobs.slice(0, 10).map(job => ({
+      recentFailures: failedJobs.slice(0, 10).map((job) => ({
         id: job.id,
-        failedAt: job.finishedOn !== undefined ? new Date(job.finishedOn) : null,
+        failedAt:
+          job.finishedOn !== undefined ? new Date(job.finishedOn) : null,
         error: job.failedReason,
         attempts: job.attemptsMade,
       })),

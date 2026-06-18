@@ -101,7 +101,10 @@ export class HorizontalScalingController {
     @Param('workerId') workerId: string,
     @Body() body: { metrics?: any },
   ) {
-    const success = this.workerManager.updateWorkerHeartbeat(workerId, body.metrics);
+    const success = this.workerManager.updateWorkerHeartbeat(
+      workerId,
+      body.metrics,
+    );
     return { success };
   }
 
@@ -138,7 +141,9 @@ export class HorizontalScalingController {
   @ApiResponse({ status: 200, description: 'Circuit breaker states' })
   getCircuitBreakers() {
     return {
-      states: Object.fromEntries(this.faultTolerance.getAllCircuitBreakerStates()),
+      states: Object.fromEntries(
+        this.faultTolerance.getAllCircuitBreakerStates(),
+      ),
     };
   }
 
@@ -172,7 +177,10 @@ export class HorizontalScalingController {
   @ApiOperation({ summary: 'Check if message is duplicate' })
   @ApiResponse({ status: 200, description: 'Duplicate check result' })
   checkDuplicate(@Body() body: { messageId: string; data: any }) {
-    const isDuplicate = this.deduplication.isDuplicate(body.messageId, body.data);
+    const isDuplicate = this.deduplication.isDuplicate(
+      body.messageId,
+      body.data,
+    );
     return { messageId: body.messageId, isDuplicate };
   }
 
@@ -217,7 +225,9 @@ export class HorizontalScalingController {
   @ApiResponse({ status: 200, description: 'Scaling decisions' })
   getScalingDecisions() {
     return {
-      decisions: Object.fromEntries(this.dynamicScaling.getAllScalingDecisions()),
+      decisions: Object.fromEntries(
+        this.dynamicScaling.getAllScalingDecisions(),
+      ),
     };
   }
 
@@ -245,7 +255,11 @@ export class HorizontalScalingController {
 
   @Get('monitoring/alerts')
   @ApiOperation({ summary: 'Get alerts' })
-  @ApiQuery({ name: 'level', required: false, enum: ['info', 'warning', 'critical'] })
+  @ApiQuery({
+    name: 'level',
+    required: false,
+    enum: ['info', 'warning', 'critical'],
+  })
   @ApiQuery({ name: 'component', required: false, type: String })
   @ApiQuery({ name: 'acknowledged', required: false, type: Boolean })
   @ApiQuery({ name: 'limit', required: false, type: Number })
@@ -257,7 +271,12 @@ export class HorizontalScalingController {
     @Query('limit') limit?: number,
   ) {
     return {
-      alerts: this.monitoring.getAlerts({ level: level as any, component, acknowledged, limit }),
+      alerts: this.monitoring.getAlerts({
+        level: level as any,
+        component,
+        acknowledged,
+        limit,
+      }),
     };
   }
 
@@ -336,9 +355,7 @@ export class HorizontalScalingController {
   @Post('load-testing/start')
   @ApiOperation({ summary: 'Start a load test' })
   @ApiResponse({ status: 201, description: 'Test started' })
-  async startLoadTest(
-    @Body() body: { config?: any; queueName: string },
-  ) {
+  async startLoadTest(@Body() body: { config?: any; queueName: string }) {
     // Note: In real implementation, you'd inject the actual queue
     // For now, return a placeholder
     return {

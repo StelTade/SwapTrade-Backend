@@ -9,18 +9,19 @@ export class HealthController {
   constructor(
     private readonly healthService: HealthService,
     private readonly prometheusService: PrometheusService,
-    private readonly telemetryService: OpenTelemetryService
+    private readonly telemetryService: OpenTelemetryService,
   ) {}
 
   @Get()
   async getHealth(@Res() res: Response) {
     const healthResult = await this.healthService.performHealthChecks();
-    
-    const statusCode = healthResult.status === 'healthy' 
-      ? HttpStatus.OK 
-      : healthResult.status === 'degraded' 
-      ? HttpStatus.SERVICE_UNAVAILABLE 
-      : HttpStatus.INTERNAL_SERVER_ERROR;
+
+    const statusCode =
+      healthResult.status === 'healthy'
+        ? HttpStatus.OK
+        : healthResult.status === 'degraded'
+          ? HttpStatus.SERVICE_UNAVAILABLE
+          : HttpStatus.INTERNAL_SERVER_ERROR;
 
     res.status(statusCode).json(healthResult);
   }
@@ -31,7 +32,7 @@ export class HealthController {
     const result = {
       status: 'ok',
       timestamp: new Date().toISOString(),
-      uptime: process.uptime()
+      uptime: process.uptime(),
     };
 
     res.status(HttpStatus.OK).json(result);
@@ -41,14 +42,14 @@ export class HealthController {
   async getReadiness(@Res() res: Response) {
     // Readiness probe - check if service is ready to accept traffic
     const healthResult = await this.healthService.performHealthChecks();
-    
+
     const isReady = healthResult.status !== 'unhealthy';
     const statusCode = isReady ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE;
 
     res.status(statusCode).json({
       status: isReady ? 'ready' : 'not_ready',
       timestamp: new Date().toISOString(),
-      checks: healthResult.checks
+      checks: healthResult.checks,
     });
   }
 
@@ -62,17 +63,17 @@ export class HealthController {
       ...healthResult,
       slos: sloResults,
       business_metrics: businessMetrics,
-      trace_context: this.telemetryService.getCurrentContext()
+      trace_context: this.telemetryService.getCurrentContext(),
     };
   }
 
   @Get('slos')
   async getSLOs() {
     const sloResults = await this.healthService.checkSLOs();
-    
+
     return {
       timestamp: new Date().toISOString(),
-      slos: sloResults
+      slos: sloResults,
     };
   }
 }

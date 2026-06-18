@@ -12,18 +12,32 @@ export class AIServiceException extends StructuredException {
     super(
       errorDef.code,
       errorDef.message,
-      errorDef.httpStatus as HttpStatus,
+      errorDef.httpStatus,
       details,
       requestId,
       errorDef.retryable,
     );
   }
 
-  static serviceUnavailable(details?: Record<string, any>, requestId?: string): AIServiceException {
-    return new AIServiceException('AI_SERVICE_UNAVAILABLE_503', details, requestId);
+  static serviceUnavailable(
+    details?: Record<string, any>,
+    requestId?: string,
+  ): AIServiceException {
+    return new AIServiceException(
+      'AI_SERVICE_UNAVAILABLE_503',
+      details,
+      requestId,
+    );
   }
 
-  static invalidRequest(details?: Record<string, any>, requestId?: string): AIServiceException {
-    return new AIServiceException('AI_SERVICE_INVALID_REQUEST_400', details, requestId);
+  static invalidRequest(
+    details?: Record<string, any>,
+    requestId?: string,
+  ): AIServiceException {
+    return new AIServiceException(
+      'AI_SERVICE_INVALID_REQUEST_400',
+      details,
+      requestId,
+    );
   }
 }

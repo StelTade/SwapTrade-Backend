@@ -55,6 +55,14 @@ interface UserAuditData {
   action: string;
 }
 
+interface CreateEntryDto {
+  userId: number;
+  eventType: string;
+  entityType: string;
+  entityId: string;
+  metadata: Record<string, any>;
+}
+
 @Injectable()
 export class AuditService {
   constructor(private readonly logger: LoggerService) {}
@@ -92,9 +100,10 @@ export class AuditService {
   }
 
   logBalanceUpdate(data: BalanceAuditData): void {
-    const action = data.amount > 0 
-      ? AuditAction.BALANCE_DEPOSIT 
-      : AuditAction.BALANCE_WITHDRAWAL;
+    const action =
+      data.amount > 0
+        ? AuditAction.BALANCE_DEPOSIT
+        : AuditAction.BALANCE_WITHDRAWAL;
 
     const auditData: AuditLogData = {
       action,
@@ -166,9 +175,16 @@ export class AuditService {
     this.logger.audit(auditData);
   }
 
-  logLoginAttempt(userId: string, success: boolean, ip: string, userAgent: string): void {
-    const action = success ? AuditAction.USER_LOGIN : AuditAction.USER_LOGIN_FAILED;
-    
+  logLoginAttempt(
+    userId: string,
+    success: boolean,
+    ip: string,
+    userAgent: string,
+  ): void {
+    const action = success
+      ? AuditAction.USER_LOGIN
+      : AuditAction.USER_LOGIN_FAILED;
+
     const auditData: AuditLogData = {
       action,
       resource: AuditResource.USER,
@@ -203,7 +219,11 @@ export class AuditService {
     this.logger.audit(auditData);
   }
 
-  logApiKeyCreation(userId: string, keyId: string, permissions: string[]): void {
+  logApiKeyCreation(
+    userId: string,
+    keyId: string,
+    permissions: string[],
+  ): void {
     const auditData: AuditLogData = {
       action: AuditAction.API_KEY_CREATED,
       resource: AuditResource.API_KEY,
@@ -222,6 +242,38 @@ export class AuditService {
       resourceId: keyId,
       userId,
       metadata: { reason },
+    };
+
+    this.logger.audit(auditData);
+  }
+
+  /**
+   * Generic method to create an audit entry for any event type
+   * Used for role management, user suspension/activation, and other custom events
+   */
+  async createEntry(dto: CreateEntryDto): Promise<void> {
+    // Map common event types to existing AuditAction enum values if possible
+    let action: string = dto.eventType;
+
+    // Use existing enum values for known events to maintain consistency
+    if (dto.eventType === 'RoleAssigned' || dto.eventType === 'RoleRevoked') {
+      action = AuditAction.PERMISSION_CHANGED;
+    } else if (
+      dto.eventType === 'UserSuspended' ||
+      dto.eventType === 'UserActivated'
+    ) {
+      action = AuditAction.USER_UPDATED;
+    }
+
+    const auditData: AuditLogData = {
+      action,
+      resource: dto.entityType.toUpperCase(),
+      resourceId: dto.entityId,
+      userId: dto.userId.toString(),
+      metadata: {
+        ...dto.metadata,
+        eventType: dto.eventType, // Keep original event type for specific filtering
+      },
     };
 
     this.logger.audit(auditData);

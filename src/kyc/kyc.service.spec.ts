@@ -48,14 +48,10 @@ describe('KycService', () => {
     const { service, dataSource } = createService();
 
     await expect(
-      service.updateStatus(
-        2,
-        KycStatus.IN_REVIEW,
-        {
-          id: 1,
-          roles: [KycRole.GOVERNANCE_OPERATOR, KycRole.KYC_OPERATOR],
-        },
-      ),
+      service.updateStatus(2, KycStatus.IN_REVIEW, {
+        id: 1,
+        roles: [KycRole.GOVERNANCE_OPERATOR, KycRole.KYC_OPERATOR],
+      }),
     ).rejects.toBeInstanceOf(ForbiddenException);
 
     expect(dataSource.transaction).not.toHaveBeenCalled();

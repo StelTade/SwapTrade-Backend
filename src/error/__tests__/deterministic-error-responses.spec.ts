@@ -147,7 +147,9 @@ describe('Exception Classes - Deterministic Error Responses', () => {
 
       expect(exception.code).toBe('AUTH_INSUFFICIENT_PERMISSIONS_403');
       expect(exception.httpStatus).toBe(403);
-      expect(exception.message).toBe('Insufficient permissions for this operation');
+      expect(exception.message).toBe(
+        'Insufficient permissions for this operation',
+      );
     });
 
     it('should create tokenMissing error', () => {
@@ -244,7 +246,7 @@ describe('Exception Classes - Deterministic Error Responses', () => {
         new AIServiceException(),
       ];
 
-      exceptions.forEach(ex => {
+      exceptions.forEach((ex) => {
         expect(ex).toBeInstanceOf(StructuredException);
         expect(ex).toHaveProperty('code');
         expect(ex).toHaveProperty('httpStatus');
@@ -263,7 +265,7 @@ describe('Exception Classes - Deterministic Error Responses', () => {
         new AIServiceException(),
       ];
 
-      exceptions.forEach(ex => {
+      exceptions.forEach((ex) => {
         const response = ex.toResponse();
 
         expect(response).toHaveProperty('error');
@@ -284,7 +286,7 @@ describe('Exception Classes - Deterministic Error Responses', () => {
         new AIServiceException(),
       ];
 
-      exceptions.forEach(ex => {
+      exceptions.forEach((ex) => {
         const response = ex.toResponse();
         expect(response.success).toBe(false);
       });
@@ -300,10 +302,7 @@ describe('Exception Classes - Deterministic Error Responses', () => {
     });
 
     it('timestamp should be ISO 8601 string', () => {
-      const exception = new StructuredException(
-        'TEST_ERROR',
-        'Test message',
-      );
+      const exception = new StructuredException('TEST_ERROR', 'Test message');
 
       const response = exception.toResponse();
       const isoRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;

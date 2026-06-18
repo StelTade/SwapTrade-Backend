@@ -100,7 +100,10 @@ export class DatabaseBenchmarkingService {
 
     const startTime = Date.now();
     const latencies: number[] = [];
-    const scenarioMetrics = new Map<string, { latencies: number[]; errors: number; total: number }>();
+    const scenarioMetrics = new Map<
+      string,
+      { latencies: number[]; errors: number; total: number }
+    >();
 
     try {
       // Warmup phase
@@ -113,7 +116,12 @@ export class DatabaseBenchmarkingService {
       this.logger.log(`Starting main benchmark for ${config.duration} seconds`);
       const endTime = Date.now() + config.duration * 1000;
 
-      const results = await this.runBenchmarkPhase(config, endTime, latencies, scenarioMetrics);
+      const results = await this.runBenchmarkPhase(
+        config,
+        endTime,
+        latencies,
+        scenarioMetrics,
+      );
 
       const systemMetrics = await this.collectSystemMetrics();
 
@@ -131,14 +139,17 @@ export class DatabaseBenchmarkingService {
         p99Latency: this.calculatePercentile(latencies, 99),
         maxLatency: Math.max(...latencies),
         minLatency: Math.min(...latencies),
-        throughput: results.successfulOperations / ((Date.now() - startTime) / 1000),
-        errorRate: results.failedOperations / results.totalOperations * 100,
+        throughput:
+          results.successfulOperations / ((Date.now() - startTime) / 1000),
+        errorRate: (results.failedOperations / results.totalOperations) * 100,
         scenarioResults: this.calculateScenarioResults(scenarioMetrics),
         systemMetrics,
       };
 
       this.currentBenchmark = benchmarkResult;
-      this.logger.log(`Benchmark completed: ${JSON.stringify(benchmarkResult, null, 2)}`);
+      this.logger.log(
+        `Benchmark completed: ${JSON.stringify(benchmarkResult, null, 2)}`,
+      );
 
       return benchmarkResult;
     } finally {
@@ -177,7 +188,9 @@ export class DatabaseBenchmarkingService {
   /**
    * Stress test to find breaking point
    */
-  async runStressTest(baseConfig: Partial<BenchmarkConfig>): Promise<BenchmarkResult[]> {
+  async runStressTest(
+    baseConfig: Partial<BenchmarkConfig>,
+  ): Promise<BenchmarkResult[]> {
     const results: BenchmarkResult[] = [];
     let concurrency = 10;
     const maxConcurrency = 1000;
@@ -202,17 +215,25 @@ export class DatabaseBenchmarkingService {
 
         // Stop if error rate is too high
         if (result.errorRate > 10) {
-          this.logger.log(`Stopping stress test - error rate too high: ${result.errorRate}%`);
+          this.logger.log(
+            `Stopping stress test - error rate too high: ${result.errorRate}%`,
+          );
           break;
         }
 
         // Stop if latency is too high
-        if (result.p95Latency > 5000) { // 5 seconds
-          this.logger.log(`Stopping stress test - latency too high: ${result.p95Latency}ms`);
+        if (result.p95Latency > 5000) {
+          // 5 seconds
+          this.logger.log(
+            `Stopping stress test - latency too high: ${result.p95Latency}ms`,
+          );
           break;
         }
       } catch (error) {
-        this.logger.error(`Stress test failed at concurrency ${concurrency}:`, error);
+        this.logger.error(
+          `Stress test failed at concurrency ${concurrency}:`,
+          error,
+        );
         break;
       }
 
@@ -229,7 +250,11 @@ export class DatabaseBenchmarkingService {
   async comparePerformance(
     beforeConfig: BenchmarkConfig,
     afterConfig: BenchmarkConfig,
-  ): Promise<{ before: BenchmarkResult; after: BenchmarkResult; improvement: any }> {
+  ): Promise<{
+    before: BenchmarkResult;
+    after: BenchmarkResult;
+    improvement: any;
+  }> {
     this.logger.log('Running performance comparison test');
 
     // Run before optimization
@@ -242,10 +267,15 @@ export class DatabaseBenchmarkingService {
     const after = await this.runBenchmark(afterConfig);
 
     const improvement = {
-      latencyImprovement: ((before.averageLatency - after.averageLatency) / before.averageLatency) * 100,
-      throughputImprovement: ((after.throughput - before.throughput) / before.throughput) * 100,
+      latencyImprovement:
+        ((before.averageLatency - after.averageLatency) /
+          before.averageLatency) *
+        100,
+      throughputImprovement:
+        ((after.throughput - before.throughput) / before.throughput) * 100,
       errorRateImprovement: before.errorRate - after.errorRate,
-      p95LatencyImprovement: ((before.p95Latency - after.p95Latency) / before.p95Latency) * 100,
+      p95LatencyImprovement:
+        ((before.p95Latency - after.p95Latency) / before.p95Latency) * 100,
     };
 
     return { before, after, improvement };
@@ -261,7 +291,10 @@ export class DatabaseBenchmarkingService {
         weight: 30,
         operation: async () => {
           const userId = Math.floor(Math.random() * 1000) + 1;
-          return await this.optimizedQueryService.getUserTradeHistory(userId, 50);
+          return await this.optimizedQueryService.getUserTradeHistory(
+            userId,
+            50,
+          );
         },
         expectedLatency: 50,
         expectedThroughput: 1000,
@@ -271,7 +304,10 @@ export class DatabaseBenchmarkingService {
         weight: 20,
         operation: async () => {
           const assets = ['BTC', 'ETH', 'USDT'];
-          return await this.optimizedQueryService.getMarketDataAggregation(assets, '24h');
+          return await this.optimizedQueryService.getMarketDataAggregation(
+            assets,
+            '24h',
+          );
         },
         expectedLatency: 100,
         expectedThroughput: 500,
@@ -281,7 +317,9 @@ export class DatabaseBenchmarkingService {
         weight: 25,
         operation: async () => {
           const userId = Math.floor(Math.random() * 1000) + 1;
-          return await this.optimizedQueryService.getUserPortfolioSnapshot(userId);
+          return await this.optimizedQueryService.getUserPortfolioSnapshot(
+            userId,
+          );
         },
         expectedLatency: 75,
         expectedThroughput: 800,
@@ -312,16 +350,23 @@ export class DatabaseBenchmarkingService {
    */
   private getScenariosByName(names: string[]): BenchmarkScenario[] {
     const allScenarios = this.getDefaultScenarios();
-    return names.map(name => 
-      allScenarios.find(s => s.name === name) || 
-      { name, weight: 1, operation: async () => {} }
+    return names.map(
+      (name) =>
+        allScenarios.find((s) => s.name === name) || {
+          name,
+          weight: 1,
+          operation: async () => {},
+        },
     );
   }
 
   /**
    * Run warmup phase
    */
-  private async runWarmup(config: BenchmarkConfig, duration: number): Promise<void> {
+  private async runWarmup(
+    config: BenchmarkConfig,
+    duration: number,
+  ): Promise<void> {
     const endTime = Date.now() + duration * 1000;
     const concurrency = Math.min(config.concurrency, 10); // Lower concurrency for warmup
 
@@ -343,23 +388,32 @@ export class DatabaseBenchmarkingService {
     config: BenchmarkConfig,
     endTime: number,
     latencies: number[],
-    scenarioMetrics: Map<string, { latencies: number[]; errors: number; total: number }>,
-  ): Promise<{ totalOperations: number; successfulOperations: number; failedOperations: number }> {
+    scenarioMetrics: Map<
+      string,
+      { latencies: number[]; errors: number; total: number }
+    >,
+  ): Promise<{
+    totalOperations: number;
+    successfulOperations: number;
+    failedOperations: number;
+  }> {
     let totalOperations = 0;
     let successfulOperations = 0;
     let failedOperations = 0;
 
     while (Date.now() < endTime) {
       const promises: Promise<any>[] = [];
-      
+
       for (let i = 0; i < config.concurrency; i++) {
         const scenario = this.selectRandomScenario(config.scenarios);
-        promises.push(this.executeScenarioWithMetrics(scenario, latencies, scenarioMetrics));
+        promises.push(
+          this.executeScenarioWithMetrics(scenario, latencies, scenarioMetrics),
+        );
       }
 
       const results = await Promise.allSettled(promises);
-      
-      results.forEach(result => {
+
+      results.forEach((result) => {
         totalOperations++;
         if (result.status === 'fulfilled') {
           successfulOperations++;
@@ -381,40 +435,51 @@ export class DatabaseBenchmarkingService {
   private async executeScenarioWithMetrics(
     scenario: BenchmarkScenario,
     latencies: number[],
-    scenarioMetrics: Map<string, { latencies: number[]; errors: number; total: number }>,
+    scenarioMetrics: Map<
+      string,
+      { latencies: number[]; errors: number; total: number }
+    >,
   ): Promise<any> {
     const startTime = Date.now();
-    
+
     try {
       const result = await this.executeScenario(scenario);
       const latency = Date.now() - startTime;
-      
+
       latencies.push(latency);
-      
+
       // Record scenario-specific metrics
       if (!scenarioMetrics.has(scenario.name)) {
-        scenarioMetrics.set(scenario.name, { latencies: [], errors: 0, total: 0 });
+        scenarioMetrics.set(scenario.name, {
+          latencies: [],
+          errors: 0,
+          total: 0,
+        });
       }
-      
+
       const metrics = scenarioMetrics.get(scenario.name)!;
       metrics.latencies.push(latency);
       metrics.total++;
-      
+
       return result;
     } catch (error) {
       const latency = Date.now() - startTime;
       latencies.push(latency);
-      
+
       // Record error
       if (!scenarioMetrics.has(scenario.name)) {
-        scenarioMetrics.set(scenario.name, { latencies: [], errors: 0, total: 0 });
+        scenarioMetrics.set(scenario.name, {
+          latencies: [],
+          errors: 0,
+          total: 0,
+        });
       }
-      
+
       const metrics = scenarioMetrics.get(scenario.name)!;
       metrics.latencies.push(latency);
       metrics.errors++;
       metrics.total++;
-      
+
       throw error;
     }
   }
@@ -429,17 +494,19 @@ export class DatabaseBenchmarkingService {
   /**
    * Select random scenario based on weights
    */
-  private selectRandomScenario(scenarios: BenchmarkScenario[]): BenchmarkScenario {
+  private selectRandomScenario(
+    scenarios: BenchmarkScenario[],
+  ): BenchmarkScenario {
     const totalWeight = scenarios.reduce((sum, s) => sum + s.weight, 0);
     let random = Math.random() * totalWeight;
-    
+
     for (const scenario of scenarios) {
       random -= scenario.weight;
       if (random <= 0) {
         return scenario;
       }
     }
-    
+
     return scenarios[0];
   }
 
@@ -447,10 +514,13 @@ export class DatabaseBenchmarkingService {
    * Calculate scenario results
    */
   private calculateScenarioResults(
-    scenarioMetrics: Map<string, { latencies: number[]; errors: number; total: number }>,
+    scenarioMetrics: Map<
+      string,
+      { latencies: number[]; errors: number; total: number }
+    >,
   ): ScenarioResult[] {
     const results: ScenarioResult[] = [];
-    
+
     for (const [scenarioName, metrics] of scenarioMetrics) {
       results.push({
         scenarioName,
@@ -461,7 +531,7 @@ export class DatabaseBenchmarkingService {
         errorRate: (metrics.errors / metrics.total) * 100,
       });
     }
-    
+
     return results;
   }
 
@@ -470,7 +540,7 @@ export class DatabaseBenchmarkingService {
    */
   private async collectSystemMetrics(): Promise<SystemMetrics> {
     const memUsage = process.memoryUsage();
-    
+
     return {
       cpuUsage: 0, // Would need a library like 'os-utils'
       memoryUsage: (memUsage.heapUsed / memUsage.heapTotal) * 100,
@@ -493,7 +563,7 @@ export class DatabaseBenchmarkingService {
    */
   private calculatePercentile(values: number[], percentile: number): number {
     if (values.length === 0) return 0;
-    
+
     const sorted = [...values].sort((a, b) => a - b);
     const index = Math.ceil((percentile / 100) * sorted.length) - 1;
     return sorted[Math.max(0, index)];
@@ -503,7 +573,7 @@ export class DatabaseBenchmarkingService {
    * Simple delay utility
    */
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**

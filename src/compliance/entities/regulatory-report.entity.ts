@@ -1,4 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+  Index,
+} from 'typeorm';
 import { User } from '../../user/entities/user.entity';
 
 export enum ReportType {
@@ -138,7 +147,11 @@ export class RegulatoryReportEntity {
   @Index()
   riskLevel: string; // LOW, MEDIUM, HIGH, CRITICAL
 
-  @Column({ name: 'suspicious_activity_indicators', type: 'json', nullable: true })
+  @Column({
+    name: 'suspicious_activity_indicators',
+    type: 'json',
+    nullable: true,
+  })
   suspiciousActivityIndicators: string[];
 
   @Column({ name: 'compliance_findings', type: 'json', nullable: true })

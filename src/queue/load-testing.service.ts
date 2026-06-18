@@ -57,12 +57,15 @@ interface LoadTestMetrics {
 @Injectable()
 export class LoadTestingService {
   private readonly logger = new Logger(LoadTestingService.name);
-  private activeTests: Map<string, {
-    config: LoadTestConfig;
-    metrics: LoadTestMetrics[];
-    startTime: Date;
-    isRunning: boolean;
-  }> = new Map();
+  private activeTests: Map<
+    string,
+    {
+      config: LoadTestConfig;
+      metrics: LoadTestMetrics[];
+      startTime: Date;
+      isRunning: boolean;
+    }
+  > = new Map();
   private testIdCounter = 0;
 
   constructor(private eventEmitter: EventEmitter2) {
@@ -72,14 +75,11 @@ export class LoadTestingService {
   /**
    * Start a load test
    */
-  async startTest(
-    queue: Queue,
-    config: LoadTestConfig,
-  ): Promise<string> {
+  async startTest(queue: Queue, config: LoadTestConfig): Promise<string> {
     const testId = `test-${++this.testIdCounter}-${Date.now()}`;
-    
+
     this.logger.log(`Starting load test: ${config.name} (${testId})`);
-    
+
     this.activeTests.set(testId, {
       config,
       metrics: [],
@@ -111,42 +111,58 @@ export class LoadTestingService {
     const startTime = Date.now();
     const endTime = startTime + config.durationMs;
     const messageInterval = 1000 / config.messagesPerSecond;
-    
-    let messagesSent = 0;
-    let messagesCompleted = 0;
-    let messagesFailed = 0;
+
+    const messagesSent = 0;
+    const messagesCompleted = 0;
+    const messagesFailed = 0;
     const latencies: number[] = [];
     const errors: Map<string, number> = new Map();
 
     // Ramp-up phase
     const rampUpSteps = 10;
     const rampUpInterval = config.rampUpTimeMs / rampUpSteps;
-    
+
     for (let step = 0; step < rampUpSteps && test.isRunning; step++) {
       const currentRate = (config.messagesPerSecond * (step + 1)) / rampUpSteps;
-      await this.sendMessagesAtRate(queue, config, currentRate, messageInterval, latencies, errors);
+      await this.sendMessagesAtRate(
+        queue,
+        config,
+        currentRate,
+        messageInterval,
+        latencies,
+        errors,
+      );
       await this.delay(rampUpInterval);
     }
 
     // Main test phase
     while (Date.now() < endTime && test.isRunning) {
       const batchStartTime = Date.now();
-      
+
       // Send messages at configured rate
-      await this.sendMessagesAtRate(queue, config, config.messagesPerSecond, messageInterval, latencies, errors);
-      
+      await this.sendMessagesAtRate(
+        queue,
+        config,
+        config.messagesPerSecond,
+        messageInterval,
+        latencies,
+        errors,
+      );
+
       // Record metrics
       const metrics: LoadTestMetrics = {
         timestamp: new Date(),
         messagesSent: messagesSent,
         messagesCompleted: messagesCompleted,
         messagesFailed: messagesFailed,
-        currentLatencyMs: latencies.length > 0 ? latencies[latencies.length - 1] : 0,
-        currentThroughput: messagesCompleted / ((Date.now() - startTime) / 1000),
+        currentLatencyMs:
+          latencies.length > 0 ? latencies[latencies.length - 1] : 0,
+        currentThroughput:
+          messagesCompleted / ((Date.now() - startTime) / 1000),
       };
-      
+
       test.metrics.push(metrics);
-      
+
       // Wait for next interval
       const elapsed = Date.now() - batchStartTime;
       if (elapsed < 1000) {
@@ -157,21 +173,44 @@ export class LoadTestingService {
     // Ramp-down phase
     for (let step = rampUpSteps - 1; step >= 0 && test.isRunning; step--) {
       const currentRate = (config.messagesPerSecond * (step + 1)) / rampUpSteps;
-      await this.sendMessagesAtRate(queue, config, currentRate, messageInterval, latencies, errors);
+      await this.sendMessagesAtRate(
+        queue,
+        config,
+        currentRate,
+        messageInterval,
+        latencies,
+        errors,
+      );
       await this.delay(config.rampDownTimeMs / rampUpSteps);
     }
 
     // Calculate results
-    const result = this.calculateResults(testId, config, startTime, Date.now(), messagesSent, messagesCompleted, messagesFailed, latencies, errors);
-    
+    const result = this.calculateResults(
+      testId,
+      config,
+      startTime,
+      Date.now(),
+      messagesSent,
+      messagesCompleted,
+      messagesFailed,
+      latencies,
+      errors,
+    );
+
     test.isRunning = false;
-    
+
     this.logger.log(`Load test completed: ${config.name}`);
     this.logger.log(`  Total messages: ${result.totalMessages}`);
-    this.logger.log(`  Success rate: ${((result.successCount / result.totalMessages) * 100).toFixed(2)}%`);
-    this.logger.log(`  Average latency: ${result.averageLatencyMs.toFixed(2)}ms`);
-    this.logger.log(`  Throughput: ${result.throughputPerSecond.toFixed(2)} msg/s`);
-    
+    this.logger.log(
+      `  Success rate: ${((result.successCount / result.totalMessages) * 100).toFixed(2)}%`,
+    );
+    this.logger.log(
+      `  Average latency: ${result.averageLatencyMs.toFixed(2)}ms`,
+    );
+    this.logger.log(
+      `  Throughput: ${result.throughputPerSecond.toFixed(2)} msg/s`,
+    );
+
     this.eventEmitter.emit('load-test.completed', result);
   }
 
@@ -187,24 +226,25 @@ export class LoadTestingService {
     errors: Map<string, number>,
   ): Promise<void> {
     const messagesToSend = Math.ceil(rate * (interval / 1000));
-    
+
     for (let i = 0; i < messagesToSend; i++) {
       const startTime = Date.now();
-      
+
       try {
         const messageData = this.generateMessage(config.messageSizeBytes);
         await queue.add(messageData, {
           attempts: 3,
           backoff: { type: 'exponential', delay: 1000 },
         });
-        
+
         const latency = Date.now() - startTime;
         latencies.push(latency);
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
         errors.set(errorMessage, (errors.get(errorMessage) || 0) + 1);
       }
-      
+
       if (i < messagesToSend - 1) {
         await this.delay(interval / messagesToSend);
       }
@@ -216,7 +256,7 @@ export class LoadTestingService {
    */
   private generateMessage(sizeBytes: number): any {
     const payload = 'x'.repeat(Math.max(0, sizeBytes - 100));
-    
+
     return {
       type: 'load-test',
       timestamp: Date.now(),
@@ -241,22 +281,26 @@ export class LoadTestingService {
   ): LoadTestResult {
     const durationMs = endTime - startTime;
     const totalMessages = messagesSent;
-    
+
     // Sort latencies for percentile calculations
     const sortedLatencies = [...latencies].sort((a, b) => a - b);
-    
-    const averageLatencyMs = sortedLatencies.length > 0
-      ? sortedLatencies.reduce((a, b) => a + b, 0) / sortedLatencies.length
-      : 0;
-    
+
+    const averageLatencyMs =
+      sortedLatencies.length > 0
+        ? sortedLatencies.reduce((a, b) => a + b, 0) / sortedLatencies.length
+        : 0;
+
     const p50LatencyMs = this.calculatePercentile(sortedLatencies, 50);
     const p95LatencyMs = this.calculatePercentile(sortedLatencies, 95);
     const p99LatencyMs = this.calculatePercentile(sortedLatencies, 99);
-    const maxLatencyMs = sortedLatencies.length > 0 ? sortedLatencies[sortedLatencies.length - 1] : 0;
+    const maxLatencyMs =
+      sortedLatencies.length > 0
+        ? sortedLatencies[sortedLatencies.length - 1]
+        : 0;
     const minLatencyMs = sortedLatencies.length > 0 ? sortedLatencies[0] : 0;
-    
+
     const throughputPerSecond = totalMessages / (durationMs / 1000);
-    
+
     const errorArray = Array.from(errors.entries()).map(([error, count]) => ({
       error,
       count,
@@ -285,11 +329,14 @@ export class LoadTestingService {
   /**
    * Calculate percentile
    */
-  private calculatePercentile(sortedValues: number[], percentile: number): number {
+  private calculatePercentile(
+    sortedValues: number[],
+    percentile: number,
+  ): number {
     if (sortedValues.length === 0) {
       return 0;
     }
-    
+
     const index = Math.ceil((percentile / 100) * sortedValues.length) - 1;
     return sortedValues[Math.max(0, index)];
   }

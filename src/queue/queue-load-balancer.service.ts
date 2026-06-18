@@ -67,7 +67,8 @@ export class QueueLoadBalancerService {
   private leastConnectionsSelect(workers: WorkerNode[]): WorkerNode {
     return workers.reduce((min, worker) => {
       const minConnections = this.workerConnections.get(min.workerId) || 0;
-      const workerConnections = this.workerConnections.get(worker.workerId) || 0;
+      const workerConnections =
+        this.workerConnections.get(worker.workerId) || 0;
       return workerConnections < minConnections ? worker : min;
     });
   }
@@ -115,19 +116,22 @@ export class QueueLoadBalancerService {
       // Factor 2: Average processing time (lower is better)
       const avgProcessingTime = worker.metrics.averageProcessingTimeMs;
       if (avgProcessingTime > 0) {
-        score += Math.max(0, 20 - (avgProcessingTime / 1000));
+        score += Math.max(0, 20 - avgProcessingTime / 1000);
       }
 
       // Factor 3: Success rate (higher is better)
-      const totalJobs = worker.metrics.jobsProcessed + worker.metrics.jobsFailed;
+      const totalJobs =
+        worker.metrics.jobsProcessed + worker.metrics.jobsFailed;
       if (totalJobs > 0) {
         const successRate = worker.metrics.jobsProcessed / totalJobs;
         score += successRate * 30;
       }
 
       // Factor 4: Resource usage (lower is better)
-      const resourceUsage = (worker.metrics.cpuUsagePercent + worker.metrics.memoryUsagePercent) / 2;
-      score += Math.max(0, 10 - (resourceUsage / 10));
+      const resourceUsage =
+        (worker.metrics.cpuUsagePercent + worker.metrics.memoryUsagePercent) /
+        2;
+      score += Math.max(0, 10 - resourceUsage / 10);
 
       return { worker, score };
     });
@@ -214,7 +218,9 @@ export class QueueLoadBalancerService {
       // Check if worker is responsive (has recent heartbeat)
       const now = new Date();
       const timeSinceHeartbeat = now.getTime() - worker.lastHeartbeat.getTime();
-      const isHealthy = timeSinceHeartbeat < this.config.loadBalancing.healthCheckIntervalMs * 2;
+      const isHealthy =
+        timeSinceHeartbeat <
+        this.config.loadBalancing.healthCheckIntervalMs * 2;
 
       healthStatus.set(worker.workerId, isHealthy);
 

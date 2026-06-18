@@ -26,10 +26,10 @@ export class ServiceBoundaryInterceptor implements NestInterceptor {
   constructor(private readonly reflector: Reflector) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    const isInternal = this.reflector.getAllAndOverride<boolean>(INTERNAL_ONLY_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const isInternal = this.reflector.getAllAndOverride<boolean>(
+      INTERNAL_ONLY_KEY,
+      [context.getHandler(), context.getClass()],
+    );
 
     if (isInternal) {
       const req = context.switchToHttp().getRequest();

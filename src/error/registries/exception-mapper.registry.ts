@@ -11,20 +11,33 @@ import { ExceptionMapping } from '../types/error-response.types';
  * Ensures all exceptions produce consistent API responses
  */
 export class ExceptionMapperRegistry {
-  private static readonly exceptionMappings: Map<string, ExceptionMapping> = new Map();
+  private static readonly exceptionMappings: Map<string, ExceptionMapping> =
+    new Map();
 
   /**
    * Register exception mappings during application initialization
    */
   static initialize(): void {
     // Validation Exceptions
-    this.registerMapping(ValidationException, 'VALIDATION_INVALID_INPUT_400', 400);
+    this.registerMapping(
+      ValidationException,
+      'VALIDATION_INVALID_INPUT_400',
+      400,
+    );
 
     // Authentication Exceptions
-    this.registerMapping(AuthenticationException, 'AUTH_INVALID_CREDENTIALS_401', 401);
+    this.registerMapping(
+      AuthenticationException,
+      'AUTH_INVALID_CREDENTIALS_401',
+      401,
+    );
 
     // Blockchain Exceptions
-    this.registerMapping(BlockchainException, 'BLOCKCHAIN_TRANSACTION_FAILED_500', 500);
+    this.registerMapping(
+      BlockchainException,
+      'BLOCKCHAIN_TRANSACTION_FAILED_500',
+      500,
+    );
 
     // AI Service Exceptions
     this.registerMapping(AIServiceException, 'AI_SERVICE_UNAVAILABLE_503', 503);

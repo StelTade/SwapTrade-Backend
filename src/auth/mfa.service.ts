@@ -15,7 +15,7 @@ export class MFAService {
   async generateSecret(auth: Auth) {
     const secret = speakeasy.generateSecret({ length: 20 });
     const otpauthUrl = secret.otpauth_url;
-    const qrCodeDataUrl = await qrcode.toDataURL(otpauthUrl!);
+    const qrCodeDataUrl = await qrcode.toDataURL(otpauthUrl);
 
     return {
       secret: secret.base32,
@@ -24,7 +24,11 @@ export class MFAService {
   }
 
   async verifyAndEnable(authId: number, secret: string, token: string) {
-    const isValid = speakeasy.totp.verify({ token, secret, encoding: 'base32' });
+    const isValid = speakeasy.totp.verify({
+      token,
+      secret,
+      encoding: 'base32',
+    });
     if (!isValid) {
       throw new BadRequestException('Invalid TOTP token');
     }
@@ -51,7 +55,11 @@ export class MFAService {
       return true; // MFA not enabled
     }
 
-    return speakeasy.totp.verify({ token, secret: auth.totpSecret, encoding: 'base32' });
+    return speakeasy.totp.verify({
+      token,
+      secret: auth.totpSecret,
+      encoding: 'base32',
+    });
   }
 
   async disable(authId: number, token: string) {
@@ -64,7 +72,11 @@ export class MFAService {
       throw new BadRequestException('MFA not enabled');
     }
 
-    const isValid = speakeasy.totp.verify({ token, secret: auth.totpSecret, encoding: 'base32' });
+    const isValid = speakeasy.totp.verify({
+      token,
+      secret: auth.totpSecret,
+      encoding: 'base32',
+    });
     if (!isValid) {
       throw new BadRequestException('Invalid TOTP token');
     }

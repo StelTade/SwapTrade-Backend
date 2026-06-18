@@ -1,6 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { AuditLogService } from '../audit-log.service';
-import { AuditEventType, AuditSeverity } from '../../common/security/audit-log.entity';
+import {
+  AuditEventType,
+  AuditSeverity,
+} from '../../common/security/audit-log.entity';
 
 export const AUDITABLE_KEY = Symbol('AUDITABLE');
 
@@ -15,17 +18,24 @@ export function Auditable(options?: {
   logParameters?: boolean;
   logResult?: boolean;
 }) {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor,
+  ) {
     const originalMethod = descriptor.value;
 
     // Mark method as auditable
     Reflect.defineMetadata(AUDITABLE_KEY, options || {}, target, propertyKey);
 
     descriptor.value = async function (...args: any[]) {
-      const auditLogService = (this as any).auditLogService || (global as any).auditLogService;
+      const auditLogService =
+        this.auditLogService || (global as any).auditLogService;
 
       if (!auditLogService) {
-        console.warn(`@Auditable: AuditLogService not available for ${target.constructor.name}.${propertyKey}`);
+        console.warn(
+          `@Auditable: AuditLogService not available for ${target.constructor.name}.${propertyKey}`,
+        );
         return originalMethod.apply(this, args);
       }
 
@@ -38,19 +48,23 @@ export function Auditable(options?: {
 
         // Log successful execution
         const auditData = {
-          userId: (this as any).currentUserId || (args[0] as any)?.userId,
+          userId: this.currentUserId || args[0]?.userId,
           eventType: options?.eventType || AuditEventType.LOGIN,
           severity: options?.severity || AuditSeverity.INFO,
           entityType: options?.entityType || target.constructor.name,
           entityId: this.extractEntityId(args, result),
-          beforeState: options?.logParameters ? { parameters: this.sanitizeParameters(args) } : undefined,
-          afterState: options?.logResult ? { result: this.sanitizeResult(result) } : undefined,
+          beforeState: options?.logParameters
+            ? { parameters: this.sanitizeParameters(args) }
+            : undefined,
+          afterState: options?.logResult
+            ? { result: this.sanitizeResult(result) }
+            : undefined,
           metadata: {
             method: propertyKey,
             class: target.constructor.name,
             executionTime: Date.now() - startTime,
           },
-          requestId: (this as any).requestId,
+          requestId: this.requestId,
         };
 
         await auditLogService.log(auditData);
@@ -61,19 +75,21 @@ export function Auditable(options?: {
 
         // Log failed execution
         const auditData = {
-          userId: (this as any).currentUserId || (args[0] as any)?.userId,
+          userId: this.currentUserId || args[0]?.userId,
           eventType: options?.eventType || AuditEventType.SUSPICIOUS_ACTIVITY,
           severity: AuditSeverity.WARNING,
           entityType: options?.entityType || target.constructor.name,
           entityId: this.extractEntityId(args, result),
-          beforeState: options?.logParameters ? { parameters: this.sanitizeParameters(args) } : undefined,
+          beforeState: options?.logParameters
+            ? { parameters: this.sanitizeParameters(args) }
+            : undefined,
           metadata: {
             method: propertyKey,
             class: target.constructor.name,
             executionTime: Date.now() - startTime,
             error: error.message,
           },
-          requestId: (this as any).requestId,
+          requestId: this.requestId,
         };
 
         await auditLogService.log(auditData);
@@ -108,7 +124,7 @@ export class AuditableHelper {
   }
 
   static sanitizeParameters(args: any[]): any[] {
-    return args.map(arg => {
+    return args.map((arg) => {
       if (arg && typeof arg === 'object') {
         const sanitized = { ...arg };
         // Remove sensitive fields

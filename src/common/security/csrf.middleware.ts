@@ -4,7 +4,11 @@ import * as crypto from 'crypto';
 const TOKEN_HEADER = 'x-csrf-token';
 const TOKEN_COOKIE = 'csrf_token';
 
-export function csrfMiddleware(req: Request, res: Response, next: NextFunction) {
+export function csrfMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
   const method = req.method.toUpperCase();
   const unsafe = ['POST', 'PUT', 'PATCH', 'DELETE'];
 

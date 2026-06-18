@@ -58,6 +58,15 @@ export class User {
   @Column('simple-array', { nullable: true, select: false })
   mfaRecoveryCodes: string[];
 
+  @Column({ default: false })
+  isSuspended: boolean;
+
+  @Column({ nullable: true })
+  suspensionReason: string | null;
+
+  @Column({ nullable: true })
+  suspendedAt: Date | null;
+
   @UpdateDateColumn()
   lastTradeDate: Date;
 
@@ -70,10 +79,12 @@ export class User {
   @BeforeInsert()
   @BeforeUpdate()
   validateRoleSeparation(): void {
-    const normalizedRoles = normalizeRoleValues(this.roles?.length ? this.roles : this.role);
+    const normalizedRoles = normalizeRoleValues(
+      this.roles?.length ? this.roles : this.role,
+    );
     assertNoGovernanceKycRoleConflict(normalizedRoles);
 
     this.roles = normalizedRoles as UserRole[];
-    this.role = (this.role ?? this.roles[0] ?? UserRole.USER) as UserRole;
+    this.role = this.role ?? this.roles[0] ?? UserRole.USER;
   }
 }

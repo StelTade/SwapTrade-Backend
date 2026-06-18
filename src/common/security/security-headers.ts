@@ -7,10 +7,10 @@ export function configureSecurityHeaders(app: INestApplication) {
       contentSecurityPolicy: {
         useDefaults: true,
         directives: {
-          "default-src": ["'self'"],
-          "img-src": ["'self'", "data:"],
-          "script-src": ["'self'"],
-          "style-src": ["'self'", "'unsafe-inline'"],
+          'default-src': ["'self'"],
+          'img-src': ["'self'", 'data:'],
+          'script-src': ["'self'"],
+          'style-src': ["'self'", "'unsafe-inline'"],
         },
       },
       frameguard: { action: 'deny' },
@@ -21,6 +21,6 @@ export function configureSecurityHeaders(app: INestApplication) {
       },
       referrerPolicy: { policy: 'no-referrer' },
       xssFilter: true,
-    }) as any,
+    }),
   );
 }

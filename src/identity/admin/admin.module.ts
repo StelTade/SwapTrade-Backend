@@ -1,14 +1,22 @@
 import { Module } from '@nestjs/common';
-import { AdminModule as OriginalAdminModule } from '../../admin/admin.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { User } from '../../user/entities/user.entity';
+import { RolesModule } from '../roles/roles.module';
+import { PermissionsModule } from '../permissions/permissions.module';
+import { RoleManagementService } from './services/role-management.service';
+import { IdentityAdminController } from './admin.controller';
+import { AuditService } from '../../common/logging/audit_service';
+import { LoggingModule } from '../../common/logging/logging_module';
 
-/**
- * Identity Admin Facade Module
- *
- * Wraps the original AdminModule from src/admin/.
- * Provides: AdminService, AdminController, WaitlistService
- */
 @Module({
-  imports: [OriginalAdminModule],
-  exports: [OriginalAdminModule],
+  imports: [
+    TypeOrmModule.forFeature([User]),
+    RolesModule,
+    PermissionsModule,
+    LoggingModule,
+  ],
+  controllers: [IdentityAdminController],
+  providers: [RoleManagementService, AuditService],
+  exports: [RoleManagementService],
 })
 export class IdentityAdminModule {}

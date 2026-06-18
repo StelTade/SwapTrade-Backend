@@ -15,9 +15,7 @@ import { ERROR_CODES } from '../constants/error-codes';
 
 @Catch()
 export class AppExceptionFilter implements ExceptionFilter {
-  constructor(
-    @Optional() private readonly i18n?: I18nService,
-  ) {}
+  constructor(@Optional() private readonly i18n?: I18nService) {}
 
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
@@ -32,13 +30,16 @@ export class AppExceptionFilter implements ExceptionFilter {
     // Handle StructuredException (prioritize)
     if (exception instanceof StructuredException) {
       status = exception.httpStatus;
-      errorResponse = this.normalizeStructuredExceptionResponse(exception, request);
+      errorResponse = this.normalizeStructuredExceptionResponse(
+        exception,
+        request,
+      );
       errorCode = exception.code;
     }
     // Handle standard HttpException
     else if (exception instanceof HttpException) {
       const httpStatus = exception.getStatus();
-      status = httpStatus as HttpStatus;
+      status = httpStatus;
       errorResponse = this.normalizeHttpExceptionResponse(
         exception,
         request,
@@ -89,7 +90,9 @@ export class AppExceptionFilter implements ExceptionFilter {
     // Translate message if I18nService is available
     if (this.i18n) {
       try {
-        const translated = this.i18n.translate(`common.ERROR.${errorCode}`, { lang }) as string;
+        const translated = this.i18n.translate(`common.ERROR.${errorCode}`, {
+          lang,
+        });
         if (translated && !translated.startsWith('common.ERROR.')) {
           errorResponse.error.message = translated;
         }
@@ -111,7 +114,7 @@ export class AppExceptionFilter implements ExceptionFilter {
     exception: StructuredException,
     request: Request,
   ): any {
-    const errorDef = ErrorCodeRegistry.getErrorDefinition(exception.code as any);
+    const errorDef = ErrorCodeRegistry.getErrorDefinition(exception.code);
 
     return {
       success: false,
@@ -153,7 +156,7 @@ export class AppExceptionFilter implements ExceptionFilter {
       details = responseObj.details || responseObj.error;
     }
 
-    const errorDef = ErrorCodeRegistry.getErrorDefinition(code as any);
+    const errorDef = ErrorCodeRegistry.getErrorDefinition(code);
 
     return {
       success: false,
@@ -246,7 +249,7 @@ export class AppExceptionFilter implements ExceptionFilter {
       response.error = {};
     }
 
-    const errorDef = ErrorCodeRegistry.getErrorDefinition(errorCode as any);
+    const errorDef = ErrorCodeRegistry.getErrorDefinition(errorCode);
 
     // Set default values if missing
     response.success = false;

@@ -15,7 +15,7 @@ export class TradesService {
 
   async executeTrade(tradeData: any) {
     const startTime = Date.now();
-    
+
     try {
       this.logger.log('Executing trade', {
         userId: tradeData.userId,
@@ -63,12 +63,11 @@ export class TradesService {
     // Simulated trade execution
     return {
       id: 'trade-123',
-      executionPrice: 100.50,
+      executionPrice: 100.5,
       status: 'FILLED',
     };
   }
 }
-
 
 // Example 2: Balance Service with Audit Logging
 // src/balances/balances.service.ts
@@ -126,7 +125,6 @@ export class BalancesService {
   }
 }
 
-
 // Example 3: Auth Service with Login Audit
 // src/auth/auth.service.ts
 import { Injectable } from '@nestjs/common';
@@ -143,7 +141,7 @@ export class AuthService {
   async login(email: string, password: string, req: any) {
     try {
       const user = await this.validateUser(email, password);
-      
+
       if (!user) {
         // Log failed attempt
         this.auditService.logLoginAttempt(
@@ -152,7 +150,7 @@ export class AuthService {
           req.ip,
           req.headers['user-agent'],
         );
-        
+
         throw new Error('Invalid credentials');
       }
 
@@ -165,7 +163,7 @@ export class AuthService {
       );
 
       this.logger.log('User logged in', { userId: user.id });
-      
+
       return this.generateToken(user);
     } catch (error) {
       this.logger.error('Login failed', error.stack, { email });
@@ -183,7 +181,6 @@ export class AuthService {
   }
 }
 
-
 // Example 4: Database Query with Performance Logging
 // src/common/database/query.interceptor.ts
 import { Injectable } from '@nestjs/common';
@@ -193,22 +190,24 @@ import { MetricsService } from './logging/metrics_service';
 export class QueryPerformanceTracker {
   constructor(private readonly metricsService: MetricsService) {}
 
-  async trackQuery<T>(queryName: string, queryFn: () => Promise<T>): Promise<T> {
+  async trackQuery<T>(
+    queryName: string,
+    queryFn: () => Promise<T>,
+  ): Promise<T> {
     const startTime = Date.now();
-    
+
     try {
       const result = await queryFn();
       const duration = Date.now() - startTime;
-      
+
       this.metricsService.recordQueryDuration(queryName, duration);
-      
+
       return result;
     } catch (error) {
       throw error;
     }
   }
 }
-
 
 // Example 5: Using Context in Custom Decorators
 // src/common/decorators/log-execution.decorator.ts

@@ -1,6 +1,6 @@
 /**
  * Integration tests for Rate Limiting System
- * 
+ *
  * Tests the complete rate limiting implementation including:
  * - Distributed rate limiting across multiple instances
  * - Redis integration (when available)
@@ -34,9 +34,9 @@ describe('RateLimiting Integration', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-    .overrideProvider('RedisService')
-    .useValue(mockRedisService)
-    .compile();
+      .overrideProvider('RedisService')
+      .useValue(mockRedisService)
+      .compile();
 
     app = moduleFixture.createNestApplication();
     await app.init();
@@ -49,18 +49,18 @@ describe('RateLimiting Integration', () => {
   describe('Global Rate Limiting Integration', () => {
     it('should enforce global rate limit across requests', async () => {
       const promises = [];
-      
+
       // Make 100 requests (should all succeed)
       for (let i = 0; i < 100; i++) {
         promises.push(
           request(app.getHttpServer())
             .get('/health') // Using health endpoint which bypasses rate limiting in our config
-            .expect(200)
+            .expect(200),
         );
       }
-      
+
       await Promise.all(promises);
-      
+
       // 101st request should be rate limited
       // Note: This test assumes rate limiting middleware is active
       /*
@@ -78,50 +78,52 @@ describe('RateLimiting Integration', () => {
   describe('Endpoint-Specific Rate Limiting', () => {
     it('should enforce trading endpoint limits', async () => {
       const promises = [];
-      
+
       // Make 10 trading requests (should all succeed)
       for (let i = 0; i < 10; i++) {
         promises.push(
           request(app.getHttpServer())
             .post('/trading/order')
-            .send({ /* mock order data */ })
-            .expect(401) // Will fail due to auth, but not rate limiting
+            .send({
+              /* mock order data */
+            })
+            .expect(401), // Will fail due to auth, but not rate limiting
         );
       }
-      
+
       await Promise.all(promises);
-      
+
       // 11th request would be rate limited if middleware was active
     });
 
     it('should enforce bidding endpoint limits', async () => {
       const promises = [];
-      
+
       // Make 20 bidding requests
       for (let i = 0; i < 20; i++) {
         promises.push(
           request(app.getHttpServer())
             .post('/bidding/create')
-            .send({ /* mock bid data */ })
-            .expect(401)
+            .send({
+              /* mock bid data */
+            })
+            .expect(401),
         );
       }
-      
+
       await Promise.all(promises);
     });
 
     it('should enforce balance endpoint limits', async () => {
       const promises = [];
-      
+
       // Make 50 balance requests
       for (let i = 0; i < 50; i++) {
         promises.push(
-          request(app.getHttpServer())
-            .get('/balance/check')
-            .expect(401)
+          request(app.getHttpServer()).get('/balance/check').expect(401),
         );
       }
-      
+
       await Promise.all(promises);
     });
   });
@@ -206,15 +208,11 @@ describe('RateLimiting Integration', () => {
     });
 
     it('should bypass rate limiting for metrics endpoints', async () => {
-      return request(app.getHttpServer())
-        .get('/metrics')
-        .expect(404); // Metrics endpoint might not exist, but shouldn't be rate limited
+      return request(app.getHttpServer()).get('/metrics').expect(404); // Metrics endpoint might not exist, but shouldn't be rate limited
     });
 
     it('should bypass rate limiting for API documentation', async () => {
-      return request(app.getHttpServer())
-        .get('/api/docs')
-        .expect(200);
+      return request(app.getHttpServer()).get('/api/docs').expect(200);
     });
   });
 
@@ -233,8 +231,10 @@ describe('RateLimiting Integration', () => {
 
     it('should handle Redis connection failures gracefully', async () => {
       // Mock Redis failure
-      mockRedisClient.get.mockRejectedValue(new Error('Redis connection failed'));
-      
+      mockRedisClient.get.mockRejectedValue(
+        new Error('Redis connection failed'),
+      );
+
       /*
       return request(app.getHttpServer())
         .get('/api/test')
@@ -280,16 +280,16 @@ describe('RateLimiting Integration', () => {
   describe('Performance', () => {
     it('should process rate limit checks quickly (< 5ms)', async () => {
       const startTime = process.hrtime.bigint();
-      
+
       /*
       await request(app.getHttpServer())
         .get('/api/test')
         .expect(200);
       */
-      
+
       const endTime = process.hrtime.bigint();
       const durationMs = Number(endTime - startTime) / 1000000;
-      
+
       // This assertion would be checked when actual rate limiting is active
       // expect(durationMs).toBeLessThan(5);
     });

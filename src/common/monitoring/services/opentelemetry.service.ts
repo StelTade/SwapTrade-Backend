@@ -27,7 +27,7 @@ export class OpenTelemetryService implements OnModuleInit, OnModuleDestroy {
       headers: {},
       serviceName: process.env.OTEL_SERVICE_NAME || 'swaptrade-backend',
       serviceVersion: process.env.APP_VERSION || '1.0.0',
-      environment: process.env.NODE_ENV || 'development'
+      environment: process.env.NODE_ENV || 'development',
     };
   }
 
@@ -39,8 +39,10 @@ export class OpenTelemetryService implements OnModuleInit, OnModuleDestroy {
     const sdk = new NodeSDK({
       resource: new Resource({
         [SemanticResourceAttributes.SERVICE_NAME]: this.config.serviceName,
-        [SemanticResourceAttributes.SERVICE_VERSION]: this.config.serviceVersion,
-        [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: this.config.environment,
+        [SemanticResourceAttributes.SERVICE_VERSION]:
+          this.config.serviceVersion,
+        [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]:
+          this.config.environment,
       }),
       traceExporter: this.createTraceExporter(),
       sampler: this.createSampler(),
@@ -52,7 +54,7 @@ export class OpenTelemetryService implements OnModuleInit, OnModuleDestroy {
   private createTraceExporter() {
     // Configure based on environment
     const exporterType = process.env.OTEL_EXPORTER_TYPE || 'console';
-    
+
     switch (exporterType) {
       case 'jaeger':
         return this.createJaegerExporter();
@@ -68,7 +70,8 @@ export class OpenTelemetryService implements OnModuleInit, OnModuleDestroy {
   private createJaegerExporter() {
     const { JaegerExporter } = require('@opentelemetry/exporter-jaeger');
     return new JaegerExporter({
-      endpoint: process.env.JAEGER_ENDPOINT || 'http://localhost:14268/api/traces',
+      endpoint:
+        process.env.JAEGER_ENDPOINT || 'http://localhost:14268/api/traces',
     });
   }
 
@@ -82,7 +85,9 @@ export class OpenTelemetryService implements OnModuleInit, OnModuleDestroy {
   private createOTLPExporter() {
     const { OTLPTraceExporter } = require('@opentelemetry/exporter-otlp-http');
     return new OTLPTraceExporter({
-      url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://localhost:4318/v1/traces',
+      url:
+        process.env.OTEL_EXPORTER_OTLP_ENDPOINT ||
+        'http://localhost:4318/v1/traces',
       headers: this.config.headers,
     });
   }
@@ -93,7 +98,9 @@ export class OpenTelemetryService implements OnModuleInit, OnModuleDestroy {
   }
 
   private createSampler() {
-    const { TraceIdRatioBasedSampler } = require('@opentelemetry/sdk-trace-base');
+    const {
+      TraceIdRatioBasedSampler,
+    } = require('@opentelemetry/sdk-trace-base');
     return new TraceIdRatioBasedSampler(this.config.samplingRate);
   }
 
@@ -110,14 +117,18 @@ export class OpenTelemetryService implements OnModuleInit, OnModuleDestroy {
   }
 
   // Tracing methods
-  startSpan(name: string, kind?: SpanKind, attributes?: Record<string, string>): Span {
+  startSpan(
+    name: string,
+    kind?: SpanKind,
+    attributes?: Record<string, string>,
+  ): Span {
     return this.tracer.startSpan(name, {
       kind: kind || SpanKind.INTERNAL,
       attributes: {
         ...attributes,
         'service.name': this.config.serviceName,
         'service.version': this.config.serviceVersion,
-        'environment': this.config.environment,
+        environment: this.config.environment,
       },
     });
   }
@@ -126,10 +137,10 @@ export class OpenTelemetryService implements OnModuleInit, OnModuleDestroy {
     name: string,
     fn: (span: Span) => Promise<T>,
     kind?: SpanKind,
-    attributes?: Record<string, string>
+    attributes?: Record<string, string>,
   ): Promise<T> {
     const span = this.startSpan(name, kind, attributes);
-    
+
     try {
       const result = await fn(span);
       span.setStatus({ code: SpanStatusCode.OK });
@@ -150,10 +161,10 @@ export class OpenTelemetryService implements OnModuleInit, OnModuleDestroy {
     name: string,
     fn: (span: Span) => T,
     kind?: SpanKind,
-    attributes?: Record<string, string>
+    attributes?: Record<string, string>,
   ): T {
     const span = this.startSpan(name, kind, attributes);
-    
+
     try {
       const result = fn(span);
       span.setStatus({ code: SpanStatusCode.OK });
@@ -195,7 +206,7 @@ export class OpenTelemetryService implements OnModuleInit, OnModuleDestroy {
     url: string,
     statusCode: number,
     duration: number,
-    headers?: Record<string, string>
+    headers?: Record<string, string>,
   ): void {
     const span = this.startSpan('http.request', SpanKind.CLIENT, {
       'http.method': method,
@@ -219,7 +230,7 @@ export class OpenTelemetryService implements OnModuleInit, OnModuleDestroy {
     statusCode: number,
     duration: number,
     userId?: string,
-    headers?: Record<string, string>
+    headers?: Record<string, string>,
   ): void {
     const span = this.startSpan('http.response', SpanKind.SERVER, {
       'http.method': method,
@@ -246,7 +257,7 @@ export class OpenTelemetryService implements OnModuleInit, OnModuleDestroy {
     query: string,
     database: string,
     duration: number,
-    error?: Error
+    error?: Error,
   ): void {
     const span = this.startSpan('database.query', SpanKind.CLIENT, {
       'db.system': database,
@@ -271,7 +282,7 @@ export class OpenTelemetryService implements OnModuleInit, OnModuleDestroy {
     userId?: string,
     amount?: number,
     currency?: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, any>,
   ): Span {
     const attributes: Record<string, string> = {
       'business.operation': operation,
@@ -295,7 +306,11 @@ export class OpenTelemetryService implements OnModuleInit, OnModuleDestroy {
       });
     }
 
-    return this.startSpan(`business.${operation}`, SpanKind.INTERNAL, attributes);
+    return this.startSpan(
+      `business.${operation}`,
+      SpanKind.INTERNAL,
+      attributes,
+    );
   }
 
   // External service tracing
@@ -304,14 +319,18 @@ export class OpenTelemetryService implements OnModuleInit, OnModuleDestroy {
     operation: string,
     duration: number,
     success: boolean,
-    error?: Error
+    error?: Error,
   ): void {
-    const span = this.startSpan(`external.${serviceName}.${operation}`, SpanKind.CLIENT, {
-      'external.service': serviceName,
-      'external.operation': operation,
-      'external.duration_ms': duration.toString(),
-      'external.success': success.toString(),
-    });
+    const span = this.startSpan(
+      `external.${serviceName}.${operation}`,
+      SpanKind.CLIENT,
+      {
+        'external.service': serviceName,
+        'external.operation': operation,
+        'external.duration_ms': duration.toString(),
+        'external.success': success.toString(),
+      },
+    );
 
     if (!success && error) {
       span.setStatus({
@@ -330,7 +349,7 @@ export class OpenTelemetryService implements OnModuleInit, OnModuleDestroy {
     messageId: string,
     duration: number,
     success: boolean,
-    error?: Error
+    error?: Error,
   ): void {
     const span = this.startSpan('message.processing', SpanKind.CONSUMER, {
       'messaging.system': queue,
@@ -359,7 +378,7 @@ export class OpenTelemetryService implements OnModuleInit, OnModuleDestroy {
 
     const spanContext = span.spanContext();
     return {
-      'traceparent': `00-${spanContext.traceId}-${spanContext.spanId}-01`,
+      traceparent: `00-${spanContext.traceId}-${spanContext.spanId}-01`,
       'x-trace-id': spanContext.traceId,
       'x-span-id': spanContext.spanId,
     };

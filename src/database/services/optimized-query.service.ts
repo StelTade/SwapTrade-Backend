@@ -25,7 +25,7 @@ export interface PaginatedResult<T> {
 @Injectable()
 export class OptimizedQueryService {
   private readonly logger = new Logger(OptimizedQueryService.name);
-  
+
   constructor(
     @InjectRepository(Trade)
     private readonly tradeRepository: Repository<Trade>,
@@ -47,15 +47,19 @@ export class OptimizedQueryService {
     asset?: string,
   ): Promise<PaginatedResult<Trade>> {
     const startTime = Date.now();
-    const cacheKey = this.cacheService.buildKey('user_trades:{{userId}}:{{limit}}:{{cursor}}:{{asset}}', {
-      userId: userId.toString(),
-      limit: limit.toString(),
-      cursor: cursor || '0',
-      asset: asset || 'all',
-    });
+    const cacheKey = this.cacheService.buildKey(
+      'user_trades:{{userId}}:{{limit}}:{{cursor}}:{{asset}}',
+      {
+        userId: userId.toString(),
+        limit: limit.toString(),
+        cursor: cursor || '0',
+        asset: asset || 'all',
+      },
+    );
 
     // Try cache first
-    const cached = await this.cacheService.get<PaginatedResult<Trade>>(cacheKey);
+    const cached =
+      await this.cacheService.get<PaginatedResult<Trade>>(cacheKey);
     if (cached) {
       return cached;
     }
@@ -71,8 +75,8 @@ export class OptimizedQueryService {
     }
 
     if (cursor) {
-      queryBuilder = queryBuilder.andWhere('trade.timestamp < :cursor', { 
-        cursor: new Date(parseInt(cursor)) 
+      queryBuilder = queryBuilder.andWhere('trade.timestamp < :cursor', {
+        cursor: new Date(parseInt(cursor)),
       });
     }
 
@@ -81,7 +85,9 @@ export class OptimizedQueryService {
 
     const hasMore = trades.length > limit;
     const data = hasMore ? trades.slice(0, -1) : trades;
-    const nextCursor = hasMore ? data[data.length - 1].timestamp.getTime().toString() : undefined;
+    const nextCursor = hasMore
+      ? data[data.length - 1].timestamp.getTime().toString()
+      : undefined;
 
     const result: PaginatedResult<Trade> = {
       data,
@@ -95,7 +101,9 @@ export class OptimizedQueryService {
     // Cache for 30 seconds
     await this.cacheService.set(cacheKey, result, 30);
 
-    this.logger.debug(`User trade history query executed in ${executionTime}ms`);
+    this.logger.debug(
+      `User trade history query executed in ${executionTime}ms`,
+    );
     return result;
   }
 
@@ -107,10 +115,13 @@ export class OptimizedQueryService {
     timeWindow: '1h' | '24h' | '7d' | '30d' = '24h',
   ): Promise<any> {
     const startTime = Date.now();
-    const cacheKey = this.cacheService.buildKey('market_agg:{{assets}}:{{timeWindow}}', {
-      assets: assets.join(','),
-      timeWindow,
-    });
+    const cacheKey = this.cacheService.buildKey(
+      'market_agg:{{assets}}:{{timeWindow}}',
+      {
+        assets: assets.join(','),
+        timeWindow,
+      },
+    );
 
     const cached = await this.cacheService.get(cacheKey);
     if (cached) {
@@ -148,7 +159,9 @@ export class OptimizedQueryService {
     // Cache market data for 60 seconds
     await this.cacheService.set(cacheKey, result, 60);
 
-    this.logger.debug(`Market aggregation query executed in ${executionTime}ms`);
+    this.logger.debug(
+      `Market aggregation query executed in ${executionTime}ms`,
+    );
     return result;
   }
 
@@ -196,16 +209,27 @@ export class OptimizedQueryService {
     const result = {
       userId,
       assets: portfolio,
-      totalValue: portfolio.reduce((sum, asset) => sum + parseFloat(asset.totalCurrentValue || 0), 0),
-      totalInvested: portfolio.reduce((sum, asset) => sum + parseFloat(asset.totalInvested || 0), 0),
-      totalPnL: portfolio.reduce((sum, asset) => sum + parseFloat(asset.unrealizedPnL || 0), 0),
+      totalValue: portfolio.reduce(
+        (sum, asset) => sum + parseFloat(asset.totalCurrentValue || 0),
+        0,
+      ),
+      totalInvested: portfolio.reduce(
+        (sum, asset) => sum + parseFloat(asset.totalInvested || 0),
+        0,
+      ),
+      totalPnL: portfolio.reduce(
+        (sum, asset) => sum + parseFloat(asset.unrealizedPnL || 0),
+        0,
+      ),
       lastUpdated: new Date(),
     };
 
     // Cache portfolio for 120 seconds
     await this.cacheService.set(cacheKey, result, 120);
 
-    this.logger.debug(`Portfolio snapshot query executed in ${executionTime}ms`);
+    this.logger.debug(
+      `Portfolio snapshot query executed in ${executionTime}ms`,
+    );
     return result;
   }
 
@@ -259,14 +283,19 @@ export class OptimizedQueryService {
     // Cache stats for 10 seconds
     await this.cacheService.set(cacheKey, result, 10);
 
-    this.logger.debug(`Trading statistics query executed in ${executionTime}ms`);
+    this.logger.debug(
+      `Trading statistics query executed in ${executionTime}ms`,
+    );
     return result;
   }
 
   /**
    * Optimized top traders leaderboard
    */
-  async getTopTraders(limit: number = 100, period: '24h' | '7d' | '30d' = '24h'): Promise<any> {
+  async getTopTraders(
+    limit: number = 100,
+    period: '24h' | '7d' | '30d' = '24h',
+  ): Promise<any> {
     const startTime = Date.now();
     const cacheKey = `top_traders:${limit}:${period}`;
 
@@ -322,7 +351,7 @@ export class OptimizedQueryService {
    */
   async batchInsertTrades(trades: Partial<Trade>[]): Promise<void> {
     const startTime = Date.now();
-    
+
     // Use TypeORM's bulk insert for better performance
     await this.tradeRepository
       .createQueryBuilder()
@@ -332,17 +361,35 @@ export class OptimizedQueryService {
       .execute();
 
     const executionTime = Date.now() - startTime;
-    this.logger.debug(`Batch insert of ${trades.length} trades executed in ${executionTime}ms`);
+    this.logger.debug(
+      `Batch insert of ${trades.length} trades executed in ${executionTime}ms`,
+    );
 
     // Invalidate relevant caches
-    const affectedUsers = [...new Set(trades.map(t => t.userId).filter((id): id is number => id !== undefined))];
-    const affectedAssets = [...new Set(trades.map(t => t.asset).filter((asset): asset is string => asset !== undefined))];
+    const affectedUsers = [
+      ...new Set(
+        trades
+          .map((t) => t.userId)
+          .filter((id): id is number => id !== undefined),
+      ),
+    ];
+    const affectedAssets = [
+      ...new Set(
+        trades
+          .map((t) => t.asset)
+          .filter((asset): asset is string => asset !== undefined),
+      ),
+    ];
 
     await Promise.all([
       this.cacheService.invalidate('trading_stats:*'),
       this.cacheService.invalidate('market_agg:*'),
-      ...affectedUsers.map(userId => this.cacheService.invalidateTradeRelatedCaches(userId, '')),
-      ...affectedAssets.map(asset => this.cacheService.invalidateMarketPriceCache(asset)),
+      ...affectedUsers.map((userId) =>
+        this.cacheService.invalidateTradeRelatedCaches(userId, ''),
+      ),
+      ...affectedAssets.map((asset) =>
+        this.cacheService.invalidateMarketPriceCache(asset),
+      ),
     ]);
   }
 
@@ -351,7 +398,7 @@ export class OptimizedQueryService {
    */
   async getQueryPerformanceHealth(): Promise<any> {
     const startTime = Date.now();
-    
+
     // Test query performance on critical paths
     const testQueries = [
       this.tradeRepository.count(),

@@ -9,11 +9,7 @@ import { MonitoringModule as OriginalMonitoringModule } from '../../common/monit
  *           HealthService, MetricsController, MonitoringInterceptor
  */
 @Module({
-  imports: [
-    OriginalMonitoringModule,
-  ],
-  exports: [
-    OriginalMonitoringModule,
-  ],
+  imports: [OriginalMonitoringModule],
+  exports: [OriginalMonitoringModule],
 })
 export class InfrastructureMonitoringModule {}

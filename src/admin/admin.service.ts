@@ -1,9 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource }  from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { AuditLog } from '../common/security/audit-log.entity';
-import { AdjustPointsDto }         from './dto/adjust-points.dto';
-import { ReferralQueryDto }        from './dto/referral-query.dto';
+import { AdjustPointsDto } from './dto/adjust-points.dto';
+import { ReferralQueryDto } from './dto/referral-query.dto';
 
 @Injectable()
 export class AdminService {
@@ -59,7 +59,13 @@ export class AdminService {
     payload?: object,
   ): Promise<void> {
     await this.auditRepo.save(
-      this.auditRepo.create({ userId: adminId, eventType: action as any, entityType: targetType, entityId: targetId, metadata: payload }),
+      this.auditRepo.create({
+        userId: adminId,
+        eventType: action as any,
+        entityType: targetType,
+        entityId: targetId,
+        metadata: payload,
+      }),
     );
   }
 
@@ -67,7 +73,7 @@ export class AdminService {
   // async getReferralStats(): Promise<any> {
   //   const totalReferrals = await this.referralRepo.count();
   //   const verifiedReferrals = await this.referralRepo.count({ where: { status: 'verified' } });
-    
+
   //   const topReferrers = await this.referralRepo.createQueryBuilder('r')
   //     .select('r.referrer_id', 'referrerId')
   //     .addSelect('COUNT(r.id)', 'count')

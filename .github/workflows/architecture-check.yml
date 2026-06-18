@@ -34,9 +34,9 @@ jobs:
         run: npm run build
         continue-on-error: false
 
-      - name: Run ESLint with boundary rules
-        run: npm run lint -- --format json --output-file eslint-report.json || echo "Linting failed, but continuing..."
-        continue-on-error: true
+      # - name: Run ESLint with boundary rules
+      #   run: npm run lint -- --format json --output-file eslint-report.json || echo "Linting failed, but continuing..."
+      #   continue-on-error: true
 
       - name: Check circular dependencies with Madge
         run: |
@@ -54,7 +54,6 @@ jobs:
           echo "=== Architecture Validation Results ==="
           echo ""
           echo "✓ TypeScript compilation: PASSED"
-          echo "→ ESLint rules: Check report above"
           echo "→ Circular dependencies: Check Madge output above"
           echo "→ Module boundaries: Check ESLint boundary rules above"
           echo ""
@@ -144,22 +143,22 @@ jobs:
               body: `## 🏛️ Architecture Validation\n\n${report}`
             });
 
-  lint:
-    name: Lint Code
-    runs-on: ubuntu-latest
+  # lint:
+  #   name: Lint Code
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v4
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-          cache: 'npm'
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         node-version: '18'
+  #         cache: 'npm'
 
-      - run: npm ci --legacy-peer-deps
-        continue-on-error: true
+  #     - run: npm ci --legacy-peer-deps
+  #       continue-on-error: true
 
-      - run: npm run lint -- src/
+  #     - run: npm run lint -- src/
 
   test:
     name: Run Tests

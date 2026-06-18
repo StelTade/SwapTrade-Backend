@@ -7,9 +7,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable, tap } from 'rxjs';
-import {
-  INVALIDATE_CACHE_METADATA,
-} from '../decorators/cache-key.decorator';
+import { INVALIDATE_CACHE_METADATA } from '../decorators/cache-key.decorator';
 import { CacheInvalidationService } from '../cache/cache-invalidation.service';
 
 /**

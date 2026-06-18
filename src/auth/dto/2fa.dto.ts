@@ -2,7 +2,10 @@ import { IsString, IsOptional, IsPhoneNumber } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class TwoFADto {
-  @ApiProperty({ example: 'JBSWY3DPEHPK3PXP', description: 'TOTP secret or SMS code' })
+  @ApiProperty({
+    example: 'JBSWY3DPEHPK3PXP',
+    description: 'TOTP secret or SMS code',
+  })
   @IsString()
   code: string;
 }
@@ -12,7 +15,11 @@ export class Enable2FADto {
   @IsString()
   method: 'totp' | 'sms';
 
-  @ApiProperty({ example: '+1234567890', description: 'Phone number for SMS 2FA', required: false })
+  @ApiProperty({
+    example: '+1234567890',
+    description: 'Phone number for SMS 2FA',
+    required: false,
+  })
   @IsOptional()
   @IsPhoneNumber()
   phoneNumber?: string;

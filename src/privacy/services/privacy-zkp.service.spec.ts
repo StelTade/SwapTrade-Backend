@@ -53,7 +53,12 @@ describe('PrivacyZKPService', () => {
       const minAmount = '500';
       const challenge = service.generateServerChallenge();
 
-      const proof = service.generateBalanceProof(balance, coefficient, minAmount, challenge);
+      const proof = service.generateBalanceProof(
+        balance,
+        coefficient,
+        minAmount,
+        challenge,
+      );
 
       expect(proof).toBeDefined();
       expect(proof.commitment).toHaveLength(64);
@@ -70,7 +75,12 @@ describe('PrivacyZKPService', () => {
       const challenge = service.generateServerChallenge();
 
       expect(() =>
-        service.generateBalanceProof(balance, coefficient, minAmount, challenge),
+        service.generateBalanceProof(
+          balance,
+          coefficient,
+          minAmount,
+          challenge,
+        ),
       ).toThrow();
     });
 
@@ -80,7 +90,12 @@ describe('PrivacyZKPService', () => {
       const minAmount = '500';
       const challenge = service.generateServerChallenge();
 
-      const proof = service.generateBalanceProof(balance, coefficient, minAmount, challenge);
+      const proof = service.generateBalanceProof(
+        balance,
+        coefficient,
+        minAmount,
+        challenge,
+      );
       const isValid = service.verifyBalanceProof(
         proof.commitment,
         proof.proof,
@@ -98,7 +113,12 @@ describe('PrivacyZKPService', () => {
       const minAmount = '500';
       const challenge = service.generateServerChallenge();
 
-      const proof = service.generateBalanceProof(balance, coefficient, minAmount, challenge);
+      const proof = service.generateBalanceProof(
+        balance,
+        coefficient,
+        minAmount,
+        challenge,
+      );
       expect(proof).toBeDefined();
     });
   });
@@ -123,7 +143,9 @@ describe('PrivacyZKPService', () => {
       const minRange = '500';
       const maxRange = '1000';
 
-      expect(() => service.createRangeProof(balance, minRange, maxRange)).toThrow();
+      expect(() =>
+        service.createRangeProof(balance, minRange, maxRange),
+      ).toThrow();
     });
 
     it('should fail range proof if balance above max', () => {
@@ -131,7 +153,9 @@ describe('PrivacyZKPService', () => {
       const minRange = '500';
       const maxRange = '1000';
 
-      expect(() => service.createRangeProof(balance, minRange, maxRange)).toThrow();
+      expect(() =>
+        service.createRangeProof(balance, minRange, maxRange),
+      ).toThrow();
     });
 
     it('should verify valid range proof', () => {
@@ -194,7 +218,11 @@ describe('PrivacyZKPService', () => {
       const minAmount = '500';
       const validitySeconds = 3600;
 
-      const proof = service.createTimeLockedProof(balance, minAmount, validitySeconds);
+      const proof = service.createTimeLockedProof(
+        balance,
+        minAmount,
+        validitySeconds,
+      );
 
       expect(proof).toBeDefined();
       expect(proof.proof).toHaveLength(64);
@@ -212,7 +240,11 @@ describe('PrivacyZKPService', () => {
     it('should verify valid time-locked proof', () => {
       const proof = service.createTimeLockedProof('1000', '500', 3600);
 
-      const isValid = service.verifyTimeLockedProof(proof.proof, proof.issuedAt, proof.expiresAt);
+      const isValid = service.verifyTimeLockedProof(
+        proof.proof,
+        proof.issuedAt,
+        proof.expiresAt,
+      );
 
       expect(isValid).toBe(true);
     });
@@ -221,7 +253,11 @@ describe('PrivacyZKPService', () => {
       const pastTime = Date.now() - 10000; // 10 seconds ago
       const expiredTime = Date.now() - 1000; // Already expired
 
-      const isValid = service.verifyTimeLockedProof('somehash', pastTime, expiredTime);
+      const isValid = service.verifyTimeLockedProof(
+        'somehash',
+        pastTime,
+        expiredTime,
+      );
 
       expect(isValid).toBe(false);
     });
@@ -266,7 +302,12 @@ describe('PrivacyZKPService', () => {
       const minAmount = '1000';
       const challenge = service.generateServerChallenge();
 
-      const proof = service.generateBalanceProof(balance, coefficient, minAmount, challenge);
+      const proof = service.generateBalanceProof(
+        balance,
+        coefficient,
+        minAmount,
+        challenge,
+      );
 
       // Proof should not contain the actual balance
       expect(proof.proof).not.toContain(balance);

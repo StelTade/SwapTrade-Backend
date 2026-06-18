@@ -86,9 +86,14 @@ export class CircuitBreakerService {
       name,
     };
 
-    const fallbackFn = fallback || ((_error: Error, ...args: any[]) => ({ error: 'Service unavailable', args }));
+    const fallbackFn =
+      fallback ||
+      ((_error: Error, ...args: any[]) => ({
+        error: 'Service unavailable',
+        args,
+      }));
     const wrappedFn = fallback ? fn : fn;
-    
+
     const breaker = new CircuitBreaker<any, any>(wrappedFn, opossumOptions);
 
     // Setup event handlers
@@ -114,7 +119,9 @@ export class CircuitBreakerService {
     const breaker = this.breakers.get(name);
 
     if (!breaker) {
-      this.logger.warn(`Circuit breaker "${name}" not found, executing without protection`);
+      this.logger.warn(
+        `Circuit breaker "${name}" not found, executing without protection`,
+      );
       return fn(...args);
     }
 
@@ -203,7 +210,10 @@ export class CircuitBreakerService {
   /**
    * Setup event handlers for circuit breaker
    */
-  private setupBreakersEventHandlers(breaker: CircuitBreaker<any, any>, name: string): void {
+  private setupBreakersEventHandlers(
+    breaker: CircuitBreaker<any, any>,
+    name: string,
+  ): void {
     breaker.on('open', () => {
       const correlationId = this.correlationIdService.getCorrelationId();
       this.logger.warn(
@@ -224,7 +234,9 @@ export class CircuitBreakerService {
 
     breaker.on('close', () => {
       const correlationId = this.correlationIdService.getCorrelationId();
-      this.logger.log(`[${correlationId}] Circuit breaker "${name}" closed - service recovered`);
+      this.logger.log(
+        `[${correlationId}] Circuit breaker "${name}" closed - service recovered`,
+      );
       const metrics = this.metrics.get(name);
       if (metrics) {
         metrics.openedAt = undefined;

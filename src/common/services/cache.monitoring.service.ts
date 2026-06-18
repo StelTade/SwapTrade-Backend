@@ -21,7 +21,7 @@ export class CacheMonitoringService {
   }> {
     // Note: cache-manager-redis-store doesn't provide direct metrics
     // This is a simplified implementation
-    
+
     // For Redis, we can get info directly
     if ('store' in this.cacheManager) {
       const store: any = this.cacheManager['store'];
@@ -33,7 +33,7 @@ export class CacheMonitoringService {
             // Parse Redis INFO response to get metrics
             const memoryMatch = info.match(/used_memory:(\d+)/);
             const memoryUsage = memoryMatch ? parseInt(memoryMatch[1]) : 0;
-            
+
             return {
               hits: 0, // Placeholder - actual implementation would track this
               misses: 0, // Placeholder - actual implementation would track this
@@ -69,10 +69,10 @@ export class CacheMonitoringService {
       // Test cache connectivity by setting and getting a test value
       const testKey = `health-check-${Date.now()}`;
       const testValue = 'test-value';
-      
+
       await this.cacheManager.set(testKey, testValue, 10);
       const result = await this.cacheManager.get(testKey);
-      
+
       if (result === testValue) {
         return {
           status: 'healthy',

@@ -17,18 +17,18 @@ export class ValidationExceptionFilter implements ExceptionFilter {
     if (exception && exception.message && exception.getStatus) {
       // This is likely a validation error from class-validator
       const status = exception.getStatus();
-      
+
       if (status === HttpStatus.BAD_REQUEST) {
         // Extract validation errors
         const validationErrors = exception.getResponse();
-        
+
         // Format the response consistently
         const errorResponse = {
           error: 'Validation Failed',
           message: this.formatValidationErrors(
-            Array.isArray(validationErrors.message) 
-              ? validationErrors.message 
-              : [validationErrors.message]
+            Array.isArray(validationErrors.message)
+              ? validationErrors.message
+              : [validationErrors.message],
           ),
           statusCode: status,
         };
@@ -39,13 +39,12 @@ export class ValidationExceptionFilter implements ExceptionFilter {
     }
 
     // Handle general errors
-    const status =
-      exception.getStatus?.() || HttpStatus.INTERNAL_SERVER_ERROR;
+    const status = exception.getStatus?.() || HttpStatus.INTERNAL_SERVER_ERROR;
 
     const errorResponse = {
       error: exception.name || 'Internal Server Error',
-      message: Array.isArray(exception.message) 
-        ? exception.message 
+      message: Array.isArray(exception.message)
+        ? exception.message
         : [exception.message || 'An unexpected error occurred'],
       statusCode: status,
     };
@@ -63,11 +62,11 @@ export class ValidationExceptionFilter implements ExceptionFilter {
 
   private formatValidationErrors(errors: any[]): string[] {
     const messages: string[] = [];
-    
+
     if (Array.isArray(errors)) {
-      errors.forEach(error => {
+      errors.forEach((error) => {
         if (error.constraints) {
-          Object.values(error.constraints).forEach(msg => {
+          Object.values(error.constraints).forEach((msg) => {
             messages.push(String(msg));
           });
         }
@@ -76,7 +75,7 @@ export class ValidationExceptionFilter implements ExceptionFilter {
         }
       });
     }
-    
+
     return messages.length > 0 ? messages : ['Validation failed'];
   }
 }

@@ -13,7 +13,9 @@ export class IsPositiveAmountConstraint implements ValidatorConstraintInterface 
     }
     if (typeof amount === 'string') {
       const numValue = parseFloat(amount);
-      return !isNaN(numValue) && numValue >= 0 && /^\d+(\.\d{1,8})?$/.test(amount);
+      return (
+        !isNaN(numValue) && numValue >= 0 && /^\d+(\.\d{1,8})?$/.test(amount)
+      );
     }
     return false;
   }
@@ -24,7 +26,7 @@ export class IsPositiveAmountConstraint implements ValidatorConstraintInterface 
 }
 
 export function IsPositiveAmount(validationOptions?: any) {
-  return function (object: Object, propertyName: string) {
+  return function (object: object, propertyName: string) {
     const { registerDecorator } = require('class-validator');
     registerDecorator({
       target: object.constructor,

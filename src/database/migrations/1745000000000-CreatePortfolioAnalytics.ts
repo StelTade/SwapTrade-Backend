@@ -116,17 +116,27 @@ export class CreatePortfolioAnalytics1745000000000 implements MigrationInterface
     await queryRunner.query(`DROP INDEX IF EXISTS "IDX_benchmark_date"`);
     await queryRunner.query(`DROP INDEX IF EXISTS "IDX_benchmark_symbol"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "benchmark"`);
-    
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_performance_history_date"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_performance_history_period"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_performance_history_userId"`);
+
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_performance_history_date"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_performance_history_period"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_performance_history_userId"`,
+    );
     await queryRunner.query(`DROP TABLE IF EXISTS "performance_history"`);
-    
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_risk_metrics_calculatedAt"`);
+
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_risk_metrics_calculatedAt"`,
+    );
     await queryRunner.query(`DROP INDEX IF EXISTS "IDX_risk_metrics_userId"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "risk_metrics"`);
-    
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_portfolio_snapshot_userId_timestamp"`);
+
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_portfolio_snapshot_userId_timestamp"`,
+    );
     await queryRunner.query(`DROP TABLE IF EXISTS "portfolio_snapshot"`);
   }
 }

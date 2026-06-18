@@ -11,6 +11,6 @@ import { DidController } from './controllers/did.controller';
   imports: [TypeOrmModule.forFeature([DidDocument, VerifiableCredential])],
   controllers: [DidController],
   providers: [DidAuthService, VcIssuerService, ZkpVerifierService],
-  exports: [DidAuthService, VcIssuerService, ZkpVerifierService]
+  exports: [DidAuthService, VcIssuerService, ZkpVerifierService],
 })
 export class DidModule {}

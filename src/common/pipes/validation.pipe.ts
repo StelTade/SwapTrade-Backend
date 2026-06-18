@@ -14,10 +14,10 @@ export class ValidationPipe implements PipeTransform<any> {
     if (!metatype || !this.toValidate(metatype)) {
       return value;
     }
-    
+
     // Apply trim to string values for sanitization
     const sanitizedValue = this.sanitizeInput(value);
-    
+
     const object = plainToClass(metatype, sanitizedValue);
     const errors = await validate(object);
 
@@ -41,7 +41,7 @@ export class ValidationPipe implements PipeTransform<any> {
     if (typeof value === 'string') {
       return value.trim();
     } else if (Array.isArray(value)) {
-      return value.map(item => this.sanitizeInput(item));
+      return value.map((item) => this.sanitizeInput(item));
     } else if (value && typeof value === 'object') {
       const sanitized = {};
       for (const key in value) {
@@ -56,19 +56,19 @@ export class ValidationPipe implements PipeTransform<any> {
 
   private formatErrors(errors: ValidationError[]): string[] {
     const messages: string[] = [];
-    
-    errors.forEach(error => {
+
+    errors.forEach((error) => {
       if (error.constraints) {
-        Object.values(error.constraints).forEach(msg => {
-          messages.push(msg as string);
+        Object.values(error.constraints).forEach((msg) => {
+          messages.push(msg);
         });
       }
-      
+
       if (error.children && error.children.length > 0) {
         messages.push(...this.formatErrors(error.children));
       }
     });
-    
+
     return messages.length > 0 ? messages : ['Validation failed'];
   }
 }

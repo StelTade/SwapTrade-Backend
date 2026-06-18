@@ -1,5 +1,9 @@
-
-import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleInit,
+  OnModuleDestroy,
+} from '@nestjs/common';
 import { Cron, CronExpression, Interval } from '@nestjs/schedule';
 import { QueueService } from './queue.service';
 import { QueueMonitoringService } from './queue-monitoring.service';
@@ -201,10 +205,10 @@ export class SchedulerService implements OnModuleInit {
 
     try {
       const warmingResult = await this.cacheWarming.forceWarmCache();
-      
+
       this.logger.log(
         `Cache warming completed: ${warmingResult.totalKeysWarmed} keys warmed, ` +
-        `${warmingResult.successCount} successful, ${warmingResult.failureCount} failed`,
+          `${warmingResult.successCount} successful, ${warmingResult.failureCount} failed`,
       );
 
       await this.recordTaskExecution('cache-warming', startTime);
@@ -222,7 +226,7 @@ export class SchedulerService implements OnModuleInit {
     } catch (error) {
       this.logger.error('Failed to perform cache warming:', error);
       await this.recordTaskExecution('cache-warming', startTime, error);
-      
+
       // Add alert notification
       await this.queueService.addNotificationJob({
         userId: 'admin',
@@ -272,7 +276,7 @@ export class SchedulerService implements OnModuleInit {
 
     try {
       // Check queue health for all queues
-      const queueNames: QueueName[] = Object.values(QueueName) as QueueName[];
+      const queueNames: QueueName[] = Object.values(QueueName);
       const unhealthyQueues: string[] = [];
 
       for (const queueName of queueNames) {
@@ -320,9 +324,7 @@ export class SchedulerService implements OnModuleInit {
 
   private async getAdminEmails(): Promise<string[]> {
     // In production, fetch from database or config
-    return [
-      process.env.ADMIN_EMAIL || 'admin@swaptrade.com',
-    ].filter(Boolean);
+    return [process.env.ADMIN_EMAIL || 'admin@swaptrade.com'].filter(Boolean);
   }
 
   // ==================== Manual Trigger Methods ====================
@@ -344,7 +346,7 @@ export class SchedulerService implements OnModuleInit {
     format: 'pdf' | 'csv' | 'xlsx' = 'pdf',
   ): Promise<void> {
     this.logger.log(`Triggering custom report for ${email}`);
-    
+
     await this.queueService.addReportJob({
       reportType: 'custom',
       startDate,
@@ -359,7 +361,7 @@ export class SchedulerService implements OnModuleInit {
     const result = await this.cacheWarming.forceWarmCache();
     this.logger.log(
       `Cache warming completed: ${result.totalKeysWarmed} keys, ` +
-      `${result.successCount} success, ${result.failureCount} failed`,
+        `${result.successCount} success, ${result.failureCount} failed`,
     );
   }
 
@@ -372,14 +374,46 @@ export class SchedulerService implements OnModuleInit {
     return {
       status: 'running',
       scheduledJobs: [
-        { name: 'cache-warming', schedule: '*/30 * * * *', description: 'Cache warming every 30 minutes' },
-        { name: 'daily-report-generation', schedule: '0 2 * * *', description: 'Daily reports at 2 AM' },
-        { name: 'portfolio-optimization', schedule: '0 1 * * *', description: 'Portfolio optimization at 1 AM' },
-        { name: 'weekly-cleanup', schedule: '0 3 * * 0', description: 'Weekly cleanup on Sunday 3 AM' },
-        { name: 'hourly-temp-cleanup', schedule: '0 * * * *', description: 'Hourly temp file cleanup' },
-        { name: 'session-cleanup', schedule: '*/30 * * * *', description: 'Session cleanup every 30 minutes' },
-        { name: 'system-health-check', schedule: '*/5 * * * *', description: 'System health check every 5 minutes' },
-        { name: 'monthly-report-generation', schedule: '0 1 1 * *', description: 'Monthly reports on 1st at 1 AM' },
+        {
+          name: 'cache-warming',
+          schedule: '*/30 * * * *',
+          description: 'Cache warming every 30 minutes',
+        },
+        {
+          name: 'daily-report-generation',
+          schedule: '0 2 * * *',
+          description: 'Daily reports at 2 AM',
+        },
+        {
+          name: 'portfolio-optimization',
+          schedule: '0 1 * * *',
+          description: 'Portfolio optimization at 1 AM',
+        },
+        {
+          name: 'weekly-cleanup',
+          schedule: '0 3 * * 0',
+          description: 'Weekly cleanup on Sunday 3 AM',
+        },
+        {
+          name: 'hourly-temp-cleanup',
+          schedule: '0 * * * *',
+          description: 'Hourly temp file cleanup',
+        },
+        {
+          name: 'session-cleanup',
+          schedule: '*/30 * * * *',
+          description: 'Session cleanup every 30 minutes',
+        },
+        {
+          name: 'system-health-check',
+          schedule: '*/5 * * * *',
+          description: 'System health check every 5 minutes',
+        },
+        {
+          name: 'monthly-report-generation',
+          schedule: '0 1 1 * *',
+          description: 'Monthly reports on 1st at 1 AM',
+        },
       ],
     };
   }

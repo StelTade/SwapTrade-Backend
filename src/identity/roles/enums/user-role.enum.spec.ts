@@ -48,13 +48,13 @@ describe('UserRole Enum', () => {
   });
 
   describe('Enum integrity', () => {
-    it('should have exactly 6 roles', () => {
-      expect(Object.keys(UserRole).length).toBe(6);
+    it('should have exactly 10 roles', () => {
+      expect(Object.keys(UserRole).length).toBe(10);
     });
 
     it('should have matching descriptions count', () => {
       expect(Object.keys(ROLE_DESCRIPTIONS).length).toBe(
-        Object.keys(UserRole).length
+        Object.keys(UserRole).length,
       );
     });
   });

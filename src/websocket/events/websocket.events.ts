@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { WebSocketService } from '../services/websocket.service';
-import type { 
+import type {
   OrderBookUpdate,
   TradeExecuted,
   OrderUpdate,
   BalanceUpdate,
   PortfolioUpdate,
-  MarketDataUpdate
+  MarketDataUpdate,
 } from '../interfaces/websocket.interfaces';
 
 @Injectable()
@@ -46,12 +46,18 @@ export class WebSocketEvents {
 
   @OnEvent('user.achievement.unlocked')
   handleUserAchievement(data: { userId: string; achievement: any }) {
-    this.websocketService.broadcastUserAchievement(data.userId, data.achievement);
+    this.websocketService.broadcastUserAchievement(
+      data.userId,
+      data.achievement,
+    );
   }
 
   @OnEvent('user.tier.progressed')
   handleUserTierProgress(data: { userId: string; tierProgress: any }) {
-    this.websocketService.broadcastUserTierProgress(data.userId, data.tierProgress);
+    this.websocketService.broadcastUserTierProgress(
+      data.userId,
+      data.tierProgress,
+    );
   }
 
   @OnEvent('system.status.changed')

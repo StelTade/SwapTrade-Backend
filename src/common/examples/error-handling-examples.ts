@@ -28,16 +28,13 @@ export class ResilientExternalApiClient {
   }
 
   private setupCircuitBreaker(): void {
-    this.circuitBreakerService.register(
-      this.callExternalAPI.bind(this),
-      {
-        name: 'external-dex-api',
-        timeout: 5000,
-        errorThresholdPercentage: 50,
-        volumeThreshold: 10,
-        fallback: () => this.getFallbackData(),
-      },
-    );
+    this.circuitBreakerService.register(this.callExternalAPI.bind(this), {
+      name: 'external-dex-api',
+      timeout: 5000,
+      errorThresholdPercentage: 50,
+      volumeThreshold: 10,
+      fallback: () => this.getFallbackData(),
+    });
   }
 
   async getTokenPrice(tokenAddress: string): Promise<any> {
@@ -200,25 +197,22 @@ export class ResilientJobProcessor {
 
   private setupDLQMonitoring(): void {
     // Monitor DLQ messages
-    this.deadLetterQueueService.onDLQMessage(
-      'notifications',
-      (message) => {
-        this.logger.error(
-          `Critical: Notification failed - ${message.functionName}`,
-          message,
-        );
+    this.deadLetterQueueService.onDLQMessage('notifications', (message) => {
+      this.logger.error(
+        `Critical: Notification failed - ${message.functionName}`,
+        message,
+      );
 
-        // Send alert to monitoring service
-        this.errorMonitoringService.recordError(
-          new Error(message.error.message),
-          {
-            correlationId: message.correlationId,
-            endpoint: 'job-processor',
-            severity: 'HIGH' as any,
-          },
-        );
-      },
-    );
+      // Send alert to monitoring service
+      this.errorMonitoringService.recordError(
+        new Error(message.error.message),
+        {
+          correlationId: message.correlationId,
+          endpoint: 'job-processor',
+          severity: 'HIGH' as any,
+        },
+      );
+    });
   }
 
   async processNotification(jobData: any): Promise<void> {
@@ -288,14 +282,11 @@ export class ResilientSwapService {
   }
 
   private setupExternalServices(): void {
-    this.circuitBreakerService.register(
-      this.callDexAPI.bind(this),
-      {
-        name: 'dex-swap',
-        timeout: 3000,
-        errorThresholdPercentage: 50,
-      },
-    );
+    this.circuitBreakerService.register(this.callDexAPI.bind(this), {
+      name: 'dex-swap',
+      timeout: 3000,
+      errorThresholdPercentage: 50,
+    });
   }
 
   private setupDLQ(): void {
@@ -321,20 +312,33 @@ export class ResilientSwapService {
       {
         name: 'lockBalance',
         action: () =>
-          this.lockUserBalance(swapData.userId, swapData.fromToken, swapData.amount),
+          this.lockUserBalance(
+            swapData.userId,
+            swapData.fromToken,
+            swapData.amount,
+          ),
         compensation: (lockId) =>
           this.unlockBalance(swapData.userId, swapData.fromToken, lockId),
       },
       {
         name: 'executeSwap',
         action: () =>
-          this.executeSwapViaCircuitBreaker(swapData.fromToken, swapData.toToken, swapData.amount),
+          this.executeSwapViaCircuitBreaker(
+            swapData.fromToken,
+            swapData.toToken,
+            swapData.amount,
+          ),
         compensation: (swapId) => this.reverseSwap(swapId),
       },
       {
         name: 'updateBalance',
         action: () =>
-          this.updateUserBalances(swapData.userId, swapData.fromToken, swapData.toToken, swapData.amount),
+          this.updateUserBalances(
+            swapData.userId,
+            swapData.fromToken,
+            swapData.toToken,
+            swapData.amount,
+          ),
         compensation: () =>
           this.revertBalances(swapData.userId, swapData.fromToken),
       },
@@ -344,7 +348,10 @@ export class ResilientSwapService {
       },
     ];
 
-    const result = await this.sagaService.executeSaga(`swap-${swapData.userId}`, steps);
+    const result = await this.sagaService.executeSaga(
+      `swap-${swapData.userId}`,
+      steps,
+    );
 
     if (!result.success) {
       const dlqData = {
@@ -398,9 +405,8 @@ export class ResilientSwapService {
     toToken: string,
     amount: number,
   ): Promise<string> {
-    return this.circuitBreakerService.execute(
-      'dex-swap',
-      () => this.callDexAPI(fromToken, toToken, amount),
+    return this.circuitBreakerService.execute('dex-swap', () =>
+      this.callDexAPI(fromToken, toToken, amount),
     );
   }
 
@@ -426,7 +432,10 @@ export class ResilientSwapService {
     // Update balances
   }
 
-  private async revertBalances(userId: string, fromToken: string): Promise<void> {
+  private async revertBalances(
+    userId: string,
+    fromToken: string,
+  ): Promise<void> {
     // Revert balances
   }
 

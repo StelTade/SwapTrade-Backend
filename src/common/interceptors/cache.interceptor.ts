@@ -18,7 +18,10 @@ export class CacheInterceptor implements NestInterceptor {
     private reflector: Reflector,
   ) {}
 
-  async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
+  async intercept(
+    context: ExecutionContext,
+    next: CallHandler,
+  ): Promise<Observable<any>> {
     const cacheKey = this.generateCacheKey(context);
     const ttl = this.reflector.get<number>('cache_ttl', context.getHandler());
 
@@ -27,7 +30,7 @@ export class CacheInterceptor implements NestInterceptor {
     }
 
     // Try to get from cache
-    let value = await this.cacheManager.get(cacheKey);
+    const value = await this.cacheManager.get(cacheKey);
 
     if (value !== undefined && value !== null) {
       // Return cached value as observable

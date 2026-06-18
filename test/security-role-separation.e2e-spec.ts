@@ -27,7 +27,7 @@ describe('Role separation integration', () => {
 
     app = moduleRef.createNestApplication();
     app.use((req, _res, next) => {
-      (req as any).user = {
+      req.user = {
         id: Number(req.header('x-user-id')),
         roles: String(req.header('x-roles') ?? '')
           .split(',')
