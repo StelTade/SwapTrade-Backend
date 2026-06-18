@@ -43,6 +43,23 @@ export const ROLE_HIERARCHY: Record<UserRole, UserRole[]> = {
 };
 
 /**
+ * Role priority levels (higher = more privileged)
+ * Used for access control comparisons
+ */
+export const ROLE_PRIORITY: Record<UserRole, number> = {
+  [UserRole.SUPER_ADMIN]: 110,
+  [UserRole.ADMIN]: 100,
+  [UserRole.COMPLIANCE_OFFICER]: 85,
+  [UserRole.GOVERNANCE_OPERATOR]: 80,
+  [UserRole.KYC_GOVERNANCE]: 70,
+  [UserRole.SUPPORT_AGENT]: 65,
+  [UserRole.STAFF]: 60,
+  [UserRole.KYC_OPERATOR]: 40,
+  [UserRole.TRADER]: 30,
+  [UserRole.USER]: 20,
+};
+
+/**
  * Role separation constraints
  * Roles that cannot be assigned together (mutually exclusive)
  * Used to enforce business rules around governance vs KYC specialization

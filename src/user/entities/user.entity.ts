@@ -79,6 +79,18 @@ export class User {
 
   // ─── MFA (mirrored from Auth for quick reads, source of truth is Auth) ─
   @Column({ default: false })
+  isSuspended: boolean;
+
+  @Column({ nullable: true, type: 'timestamp' })
+  suspendedAt: Date;
+
+  @Column({ nullable: true })
+  suspensionReason: string;
+
+  @Column({ nullable: true, type: 'timestamp' })
+  suspensionExpiresAt: Date;
+
+  @Column({ default: false })
   mfaEnabled: boolean;
 
   @Column({ nullable: true, select: false })

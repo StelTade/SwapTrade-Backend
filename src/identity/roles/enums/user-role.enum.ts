@@ -20,6 +20,10 @@ export enum UserRole {
   USER = 'USER',
   STAFF = 'STAFF',
 
+  // Trading roles
+  TRADER = 'TRADER',
+  USER = 'USER',
+
   // Specialized governance roles
   GOVERNANCE_OPERATOR = 'GOVERNANCE_OPERATOR',
 
