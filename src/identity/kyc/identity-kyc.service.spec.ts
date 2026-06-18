@@ -60,12 +60,12 @@ describe('IdentityKycService', () => {
     expect(events.emit).not.toHaveBeenCalled();
   });
 
-  it('delegates to APPROVED status on approveKyc', async () => {
+  it('delegates to VERIFIED status on approveKyc', async () => {
     const { service, kycService } = makeService();
     await service.approveKyc(2, makeOperator(), 'all good');
     expect(kycService.updateStatus).toHaveBeenCalledWith(
       2,
-      KycStatus.APPROVED,
+      KycStatus.VERIFIED,
       makeOperator(),
       'all good',
     );
