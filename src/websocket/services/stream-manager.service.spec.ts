@@ -8,10 +8,7 @@ describe('StreamManagerService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        StreamManagerService,
-        EventEmitter2,
-      ],
+      providers: [StreamManagerService, EventEmitter2],
     }).compile();
 
     service = module.get<StreamManagerService>(StreamManagerService);
@@ -48,7 +45,7 @@ describe('StreamManagerService', () => {
     it('should publish message to stream', () => {
       service.createStream({ name: 'test-stream' });
       service.subscribeToStream('test-stream', 'client-1');
-      
+
       let emitted = false;
       eventEmitter.on('websocket.stream.test-stream', () => {
         emitted = true;
@@ -63,7 +60,7 @@ describe('StreamManagerService', () => {
     it('should return stats for all streams', () => {
       service.createStream({ name: 'stream-1' });
       service.createStream({ name: 'stream-2' });
-      
+
       const stats = service.getStreamStats();
       expect(Array.isArray(stats)).toBe(true);
       expect((stats as any[]).length).toBe(2);
@@ -75,7 +72,9 @@ describe('ConnectionManagerService', () => {
   let service: any;
 
   beforeEach(async () => {
-    const { ConnectionManagerService } = require('./connection-manager.service');
+    const {
+      ConnectionManagerService,
+    } = require('./connection-manager.service');
     service = new ConnectionManagerService();
   });
 
@@ -94,10 +93,10 @@ describe('ConnectionManagerService', () => {
   describe('handleReconnection', () => {
     it('should return increasing backoff times', () => {
       service.registerConnection('client-1');
-      
+
       const backoff1 = service.handleReconnection('client-1');
       const backoff2 = service.handleReconnection('client-1');
-      
+
       expect(backoff2).toBeGreaterThan(backoff1);
     });
   });

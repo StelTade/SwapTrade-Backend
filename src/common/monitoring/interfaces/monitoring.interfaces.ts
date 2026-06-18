@@ -31,7 +31,7 @@ export enum LogLevel {
   WARN = 'warn',
   INFO = 'info',
   DEBUG = 'debug',
-  TRACE = 'trace'
+  TRACE = 'trace',
 }
 
 export interface MetricDefinition {
@@ -46,7 +46,7 @@ export enum MetricType {
   COUNTER = 'counter',
   GAUGE = 'gauge',
   HISTOGRAM = 'histogram',
-  SUMMARY = 'summary'
+  SUMMARY = 'summary',
 }
 
 export interface BusinessMetrics {

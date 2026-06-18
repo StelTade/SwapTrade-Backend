@@ -1,5 +1,8 @@
 import { IsOptional, IsEnum, IsObject, IsString } from 'class-validator';
-import { ComplianceFlag, AuditAction } from '../entities/privacy-audit-log.entity';
+import {
+  ComplianceFlag,
+  AuditAction,
+} from '../entities/privacy-audit-log.entity';
 
 export class CreatePrivacyAuditLogDto {
   @IsString()

@@ -12,7 +12,13 @@ describe('SecurityEventLoggerService', () => {
 
   describe('logKycUpdate', () => {
     it('should call auditLogService.log with KYC_UPDATE metadata', async () => {
-      await service.logKycUpdate('actor-1', 'user-2', { status: 'pending' }, { status: 'approved' }, '1.2.3.4');
+      await service.logKycUpdate(
+        'actor-1',
+        'user-2',
+        { status: 'pending' },
+        { status: 'approved' },
+        '1.2.3.4',
+      );
       expect(mockLog).toHaveBeenCalledTimes(1);
       const arg = mockLog.mock.calls[0][0];
       expect(arg.entityType).toBe('kyc');
@@ -34,7 +40,9 @@ describe('SecurityEventLoggerService', () => {
 
   describe('logGovernanceAction', () => {
     it('should log governance actions with WARNING severity', async () => {
-      await service.logGovernanceAction('admin-1', 'PROPOSAL_CREATED', { proposalId: 'p-1' });
+      await service.logGovernanceAction('admin-1', 'PROPOSAL_CREATED', {
+        proposalId: 'p-1',
+      });
       const arg = mockLog.mock.calls[0][0];
       expect(arg.severity).toBe(AuditSeverity.WARNING);
       expect(arg.entityType).toBe('governance');
@@ -44,14 +52,24 @@ describe('SecurityEventLoggerService', () => {
 
   describe('logAuthEvent', () => {
     it('should log successful auth with INFO severity', async () => {
-      await service.logAuthEvent('user-1', AuditEventType.LOGIN, true, '127.0.0.1');
+      await service.logAuthEvent(
+        'user-1',
+        AuditEventType.LOGIN,
+        true,
+        '127.0.0.1',
+      );
       const arg = mockLog.mock.calls[0][0];
       expect(arg.severity).toBe(AuditSeverity.INFO);
       expect(arg.metadata?.success).toBe(true);
     });
 
     it('should log failed auth with WARNING severity', async () => {
-      await service.logAuthEvent('user-1', AuditEventType.LOGIN, false, '127.0.0.1');
+      await service.logAuthEvent(
+        'user-1',
+        AuditEventType.LOGIN,
+        false,
+        '127.0.0.1',
+      );
       const arg = mockLog.mock.calls[0][0];
       expect(arg.severity).toBe(AuditSeverity.WARNING);
       expect(arg.metadata?.success).toBe(false);
@@ -60,7 +78,12 @@ describe('SecurityEventLoggerService', () => {
 
   describe('logSensitiveDataAccess', () => {
     it('should log sensitive data access with actor info', async () => {
-      await service.logSensitiveDataAccess('admin-1', 'user', 'user-42', '10.0.0.1');
+      await service.logSensitiveDataAccess(
+        'admin-1',
+        'user',
+        'user-42',
+        '10.0.0.1',
+      );
       const arg = mockLog.mock.calls[0][0];
       expect(arg.entityType).toBe('user');
       expect(arg.entityId).toBe('user-42');

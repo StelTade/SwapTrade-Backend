@@ -1,6 +1,6 @@
 /**
  * Rate Limiting Configuration
- * 
+ *
  * This file defines the rate limiting rules for the API
  */
 
@@ -14,28 +14,28 @@ export const RATE_LIMIT_CONFIG = {
   GLOBAL: {
     limit: 100,
     windowMs: 15 * 60 * 1000, // 15 minutes
-    name: 'global'
+    name: 'global',
   },
   TRADING: {
     limit: 10,
     windowMs: 60 * 1000, // 1 minute
-    name: 'trading'
+    name: 'trading',
   },
   BOT_TRADING: {
     limit: 5,
     windowMs: 60 * 1000, // 1 minute
-    name: 'bot_trading'
+    name: 'bot_trading',
   },
   BIDDING: {
     limit: 20,
     windowMs: 60 * 1000, // 1 minute
-    name: 'bidding'
+    name: 'bidding',
   },
   BALANCE: {
     limit: 50,
     windowMs: 60 * 1000, // 1 minute
-    name: 'balance'
-  }
+    name: 'balance',
+  },
 };
 
 // Endpoint path mappings for rate limiting
@@ -49,7 +49,7 @@ export const ENDPOINT_RATE_LIMIT_MAP = {
   '/balance': RATE_LIMIT_CONFIG.BALANCE,
   '/wallet': RATE_LIMIT_CONFIG.BALANCE,
   // Default to global for all other endpoints
-  'default': RATE_LIMIT_CONFIG.GLOBAL
+  default: RATE_LIMIT_CONFIG.GLOBAL,
 };
 
 // User role multipliers for premium users
@@ -65,7 +65,7 @@ export const RATE_LIMIT_HEADERS = {
   LIMIT: 'X-RateLimit-Limit',
   REMAINING: 'X-RateLimit-Remaining',
   RESET: 'X-RateLimit-Reset',
-  RETRY_AFTER: 'Retry-After'
+  RETRY_AFTER: 'Retry-After',
 };
 
 // Bypass paths (no rate limiting)
@@ -73,7 +73,7 @@ export const BYPASS_PATHS = [
   '/health',
   '/metrics',
   '/api/docs',
-  '/favicon.ico'
+  '/favicon.ico',
 ];
 
 // Environment-specific configurations
@@ -81,16 +81,16 @@ export const ENVIRONMENT_CONFIG = {
   development: {
     enabled: true,
     logViolations: true,
-    storeType: 'memory' // or 'redis'
+    storeType: 'memory', // or 'redis'
   },
   production: {
     enabled: true,
     logViolations: true,
-    storeType: 'redis'
+    storeType: 'redis',
   },
   test: {
     enabled: false,
     logViolations: false,
-    storeType: 'memory'
-  }
+    storeType: 'memory',
+  },
 };

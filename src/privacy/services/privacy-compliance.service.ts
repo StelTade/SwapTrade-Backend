@@ -29,7 +29,9 @@ export class PrivacyComplianceService {
    * @param createDto Audit log creation DTO
    * @returns Created audit log
    */
-  async createAuditLog(createDto: CreatePrivacyAuditLogDto): Promise<PrivacyAuditLog> {
+  async createAuditLog(
+    createDto: CreatePrivacyAuditLogDto,
+  ): Promise<PrivacyAuditLog> {
     const auditLog = new PrivacyAuditLog();
     auditLog.id = uuidv4();
     auditLog.pseudonymousIdHash = createDto.pseudonymousIdHash;
@@ -66,7 +68,9 @@ export class PrivacyComplianceService {
   ): Promise<PrivacyAuditLog[]> {
     const query = this.auditLogRepository
       .createQueryBuilder('audit')
-      .where('audit.pseudonymousIdHash = :pseudonymousIdHash', { pseudonymousIdHash });
+      .where('audit.pseudonymousIdHash = :pseudonymousIdHash', {
+        pseudonymousIdHash,
+      });
 
     if (action) {
       query.andWhere('audit.action = :action', { action });
@@ -119,12 +123,18 @@ export class PrivacyComplianceService {
     }
 
     // Check for high frequency
-    if (transactionData.previousOrders && transactionData.previousOrders > 100) {
+    if (
+      transactionData.previousOrders &&
+      transactionData.previousOrders > 100
+    ) {
       flags.push(ComplianceFlag.HIGH_FREQUENCY);
     }
 
     // Check for pattern matching
-    if (transactionData.pattern && this.isKnownSuspiciousPattern(transactionData.pattern)) {
+    if (
+      transactionData.pattern &&
+      this.isKnownSuspiciousPattern(transactionData.pattern)
+    ) {
       flags.push(ComplianceFlag.PATTERN_MATCH);
     }
 
@@ -201,7 +211,10 @@ export class PrivacyComplianceService {
    * @param accessLog Access details
    * @returns Updated audit log
    */
-  async logAuditAccess(auditId: string, accessLog: AuditAccessLogDto): Promise<PrivacyAuditLog> {
+  async logAuditAccess(
+    auditId: string,
+    accessLog: AuditAccessLogDto,
+  ): Promise<PrivacyAuditLog> {
     const auditEntry = await this.getAuditLogById(auditId);
 
     if (!auditEntry) {
@@ -228,10 +241,16 @@ export class PrivacyComplianceService {
    * @param endDate End date
    * @returns Array of audit logs
    */
-  async getAuditLogsByDateRange(startDate: Date, endDate: Date): Promise<PrivacyAuditLog[]> {
+  async getAuditLogsByDateRange(
+    startDate: Date,
+    endDate: Date,
+  ): Promise<PrivacyAuditLog[]> {
     return await this.auditLogRepository
       .createQueryBuilder('audit')
-      .where('audit.createdAt BETWEEN :startDate AND :endDate', { startDate, endDate })
+      .where('audit.createdAt BETWEEN :startDate AND :endDate', {
+        startDate,
+        endDate,
+      })
       .orderBy('audit.createdAt', 'DESC')
       .getMany();
   }
@@ -241,7 +260,9 @@ export class PrivacyComplianceService {
    * @param riskLevel Minimum risk level
    * @returns Array of audit logs
    */
-  async getHighRiskLogs(riskLevel: 'HIGH' | 'CRITICAL'): Promise<PrivacyAuditLog[]> {
+  async getHighRiskLogs(
+    riskLevel: 'HIGH' | 'CRITICAL',
+  ): Promise<PrivacyAuditLog[]> {
     const logs = await this.auditLogRepository.find({
       order: { createdAt: 'DESC' },
     });
@@ -251,7 +272,10 @@ export class PrivacyComplianceService {
       if (riskLevel === 'CRITICAL') {
         return log.riskAssessment.riskLevel === 'CRITICAL';
       }
-      return log.riskAssessment.riskLevel === 'CRITICAL' || log.riskAssessment.riskLevel === 'HIGH';
+      return (
+        log.riskAssessment.riskLevel === 'CRITICAL' ||
+        log.riskAssessment.riskLevel === 'HIGH'
+      );
     });
   }
 
@@ -260,12 +284,16 @@ export class PrivacyComplianceService {
    * @param flag Compliance flag to filter by
    * @returns Array of audit logs
    */
-  async getLogsByComplianceFlag(flag: ComplianceFlag): Promise<PrivacyAuditLog[]> {
+  async getLogsByComplianceFlag(
+    flag: ComplianceFlag,
+  ): Promise<PrivacyAuditLog[]> {
     const logs = await this.auditLogRepository.find({
       order: { createdAt: 'DESC' },
     });
 
-    return logs.filter((log) => log.complianceFlags && log.complianceFlags.includes(flag));
+    return logs.filter(
+      (log) => log.complianceFlags && log.complianceFlags.includes(flag),
+    );
   }
 
   /**
@@ -274,7 +302,10 @@ export class PrivacyComplianceService {
    * @param endDate End date
    * @returns Compliance report
    */
-  async generateComplianceReport(startDate: Date, endDate: Date): Promise<{
+  async generateComplianceReport(
+    startDate: Date,
+    endDate: Date,
+  ): Promise<{
     totalAudits: number;
     highRiskCount: number;
     criticalRiskCount: number;
@@ -303,7 +334,7 @@ export class PrivacyComplianceService {
       .slice(0, 5)
       .map(([flag, count]) => ({
         flag: flag as ComplianceFlag,
-        count: count as number,
+        count: count,
       }));
 
     return {
@@ -365,7 +396,10 @@ export class PrivacyComplianceService {
    * @param includeEncrypted Whether to include encrypted details
    * @returns Response DTO
    */
-  toResponseDto(auditLog: PrivacyAuditLog, includeEncrypted: boolean = false): PrivacyAuditLogResponseDto {
+  toResponseDto(
+    auditLog: PrivacyAuditLog,
+    includeEncrypted: boolean = false,
+  ): PrivacyAuditLogResponseDto {
     return {
       id: auditLog.id,
       action: auditLog.action,
@@ -394,9 +428,9 @@ export class PrivacyComplianceService {
     cutoffDate.setDate(cutoffDate.getDate() - olderThanDays);
 
     const result = await this.auditLogRepository.delete({
-      createdAt: (<any>{
+      createdAt: <any>{
         $lt: cutoffDate,
-      }),
+      },
     });
 
     return result.affected || 0;

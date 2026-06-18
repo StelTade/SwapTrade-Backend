@@ -194,7 +194,9 @@ export class QueueService {
         ...options,
         priority: this.getPriority(data.priority),
       });
-      this.logger.log(`Notification job added: ${job.id} for user ${data.userId}`);
+      this.logger.log(
+        `Notification job added: ${job.id} for user ${data.userId}`,
+      );
       return job;
     } catch (error) {
       this.logger.error('Failed to add notification job:', error);
@@ -236,7 +238,10 @@ export class QueueService {
     }
   }
 
-  async sendWelcomeEmail(email: string, name: string): Promise<Job<EmailJobData>> {
+  async sendWelcomeEmail(
+    email: string,
+    name: string,
+  ): Promise<Job<EmailJobData>> {
     return this.addEmailJob({
       to: email,
       subject: 'Welcome to SwapTrade!',
@@ -293,7 +298,10 @@ export class QueueService {
     options?: JobOptions,
   ): Promise<Job<CleanupJobData>> {
     try {
-      const job = await this.cleanupQueue.add(data, { ...options, priority: 10 });
+      const job = await this.cleanupQueue.add(data, {
+        ...options,
+        priority: 10,
+      });
       this.logger.log(`Cleanup job added: ${job.id} type=${data.type}`);
       return job;
     } catch (error) {
@@ -423,12 +431,18 @@ export class QueueService {
     if (!queue) return [];
 
     switch (status) {
-      case 'active':    return queue.getActive(_start, _end);
-      case 'waiting':   return queue.getWaiting(_start, _end);
-      case 'completed': return queue.getCompleted(_start, _end);
-      case 'failed':    return queue.getFailed(_start, _end);
-      case 'delayed':   return queue.getDelayed(_start, _end);
-      default:          return [];
+      case 'active':
+        return queue.getActive(_start, _end);
+      case 'waiting':
+        return queue.getWaiting(_start, _end);
+      case 'completed':
+        return queue.getCompleted(_start, _end);
+      case 'failed':
+        return queue.getFailed(_start, _end);
+      case 'delayed':
+        return queue.getDelayed(_start, _end);
+      default:
+        return [];
     }
   }
 
@@ -438,32 +452,48 @@ export class QueueService {
 
   private getQueue(queueName: QueueName): Queue {
     switch (queueName) {
-      case QueueName.NOTIFICATIONS: return this.notificationQueue;
-      case QueueName.EMAILS:        return this.emailQueue;
-      case QueueName.REPORTS:       return this.reportQueue;
-      case QueueName.CLEANUP:       return this.cleanupQueue;
-      case QueueName.SWAPS:         return this.swapQueue;
-      default: throw new Error(`Unknown queue: ${queueName}`);
+      case QueueName.NOTIFICATIONS:
+        return this.notificationQueue;
+      case QueueName.EMAILS:
+        return this.emailQueue;
+      case QueueName.REPORTS:
+        return this.reportQueue;
+      case QueueName.CLEANUP:
+        return this.cleanupQueue;
+      case QueueName.SWAPS:
+        return this.swapQueue;
+      default:
+        throw new Error(`Unknown queue: ${queueName}`);
     }
   }
 
   private getQueueInstance(queueName: string): Queue | null {
     switch (queueName) {
-      case 'notification': return this.notificationQueue;
-      case 'email':        return this.emailQueue;
-      case 'report':       return this.reportQueue;
-      case 'cleanup':      return this.cleanupQueue;
-      case 'swaps':        return this.swapQueue;
-      default:             return null;
+      case 'notification':
+        return this.notificationQueue;
+      case 'email':
+        return this.emailQueue;
+      case 'report':
+        return this.reportQueue;
+      case 'cleanup':
+        return this.cleanupQueue;
+      case 'swaps':
+        return this.swapQueue;
+      default:
+        return null;
     }
   }
 
   private getPriority(priority?: 'high' | 'normal' | 'low'): number {
     switch (priority) {
-      case 'high':   return 1;
-      case 'normal': return 5;
-      case 'low':    return 10;
-      default:       return 5;
+      case 'high':
+        return 1;
+      case 'normal':
+        return 5;
+      case 'low':
+        return 10;
+      default:
+        return 5;
     }
   }
 }

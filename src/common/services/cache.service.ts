@@ -106,7 +106,9 @@ export class CacheService {
       this.trackInvalidation(entityType);
       this.metricsService?.recordCacheEviction();
     } catch (err) {
-      this.logger.warn(`Pattern invalidation failed for "${pattern}": ${err.message}`);
+      this.logger.warn(
+        `Pattern invalidation failed for "${pattern}": ${err.message}`,
+      );
     }
   }
 
@@ -123,9 +125,7 @@ export class CacheService {
       ? this.expandWithDependencies(keys)
       : keys;
 
-    await Promise.allSettled(
-      expanded.map((key) => this.del(key)),
-    );
+    await Promise.allSettled(expanded.map((key) => this.del(key)));
 
     this.trackInvalidation(entityType, expanded.length);
   }
@@ -209,14 +209,13 @@ export class CacheService {
   /**
    * Invalidate all trade-related caches after a trade is executed.
    */
-  async invalidateTradeRelatedCaches(userId: number | string, asset: string): Promise<void> {
+  async invalidateTradeRelatedCaches(
+    userId: number | string,
+    asset: string,
+  ): Promise<void> {
     const uid = userId.toString();
     await this.invalidateKeys(
-      [
-        `user_balances:${uid}`,
-        `portfolio:${uid}`,
-        `market_price:${asset}`,
-      ],
+      [`user_balances:${uid}`, `portfolio:${uid}`, `market_price:${asset}`],
       'Trade',
     );
   }
@@ -224,7 +223,10 @@ export class CacheService {
   /**
    * Invalidate all bid-related caches after a bid is created.
    */
-  async invalidateBidRelatedCaches(userId: number | string, asset: string): Promise<void> {
+  async invalidateBidRelatedCaches(
+    userId: number | string,
+    asset: string,
+  ): Promise<void> {
     const uid = userId.toString();
     await this.invalidateKeys(
       [`user_balances:${uid}`, `portfolio:${uid}`],
@@ -241,14 +243,15 @@ export class CacheService {
    * Shape is backward-compatible with the existing CacheHitMissMetrics interface.
    * The optional `invalidationsByEntity` field is additive.
    */
-  getCacheMetrics(): CacheHitMissMetrics & { invalidationsByEntity: Record<string, number> } {
+  getCacheMetrics(): CacheHitMissMetrics & {
+    invalidationsByEntity: Record<string, number>;
+  } {
     const total = this.hits + this.misses;
     const hitRate = total > 0 ? (this.hits / total) * 100 : 0;
 
     const warmedTotal = this.warmedHits + this.warmedMisses;
-    const warmedHitRate = warmedTotal > 0
-      ? (this.warmedHits / warmedTotal) * 100
-      : 0;
+    const warmedHitRate =
+      warmedTotal > 0 ? (this.warmedHits / warmedTotal) * 100 : 0;
 
     return {
       hits: this.hits,
@@ -294,7 +297,10 @@ export class CacheService {
    * Use Redis SCAN + pipeline DEL for efficient pattern-based deletion.
    * This avoids KEYS which blocks the event loop on large keyspaces.
    */
-  private async redisPatternDelete(client: Redis, pattern: string): Promise<void> {
+  private async redisPatternDelete(
+    client: Redis,
+    pattern: string,
+  ): Promise<void> {
     const redisGlob = pattern.endsWith('*') ? pattern : `${pattern}*`;
     let cursor = '0';
     let totalDeleted = 0;

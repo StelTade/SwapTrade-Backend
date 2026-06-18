@@ -12,7 +12,11 @@
  */
 export enum UserRole {
   // Platform-wide roles
+  SUPER_ADMIN = 'SUPER_ADMIN',
   ADMIN = 'ADMIN',
+  COMPLIANCE_OFFICER = 'COMPLIANCE_OFFICER',
+  SUPPORT_AGENT = 'SUPPORT_AGENT',
+  TRADER = 'TRADER',
   USER = 'USER',
   STAFF = 'STAFF',
 
@@ -29,11 +33,17 @@ export enum UserRole {
  * Used for UI display and documentation
  */
 export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
+  [UserRole.SUPER_ADMIN]: 'Super Administrator - Complete system root access',
   [UserRole.ADMIN]: 'Administrator - Full system access',
+  [UserRole.COMPLIANCE_OFFICER]:
+    'Compliance Officer - Regulatory monitoring and enforcement',
+  [UserRole.SUPPORT_AGENT]:
+    'Support Agent - User assistance and account troubleshooting',
+  [UserRole.TRADER]:
+    'Trader - Advanced trading capabilities and portfolio management',
   [UserRole.USER]: 'Standard user - Trading and account access',
   [UserRole.STAFF]: 'Staff member - Support and monitoring',
-  [UserRole.GOVERNANCE_OPERATOR]:
-    'Governance operator - Policy enforcement',
+  [UserRole.GOVERNANCE_OPERATOR]: 'Governance operator - Policy enforcement',
   [UserRole.KYC_OPERATOR]: 'KYC operator - Document review',
   [UserRole.KYC_GOVERNANCE]: 'KYC governance - Process oversight',
 };

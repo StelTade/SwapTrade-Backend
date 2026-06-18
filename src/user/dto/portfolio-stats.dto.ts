@@ -1,5 +1,11 @@
-
-import { IsString, IsNumber, IsDate, IsOptional, ArrayMinSize, ValidateNested } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsDate,
+  IsOptional,
+  ArrayMinSize,
+  ValidateNested,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsAssetType } from '../../common/validation';
@@ -39,12 +45,18 @@ export class PortfolioStatsDto {
   @IsNumber()
   totalTradeVolume: number;
 
-  @ApiPropertyOptional({ example: '2026-01-22T10:30:00Z', description: 'Date of last trade (nullable)' })
+  @ApiPropertyOptional({
+    example: '2026-01-22T10:30:00Z',
+    description: 'Date of last trade (nullable)',
+  })
   @IsDate()
   @IsOptional()
   lastTradeDate: Date | null;
 
-  @ApiProperty({ type: [CurrentBalanceDto], description: 'Current balances for each asset' })
+  @ApiProperty({
+    type: [CurrentBalanceDto],
+    description: 'Current balances for each asset',
+  })
   @ArrayMinSize(0)
   @ValidateNested({ each: true })
   @Type(() => CurrentBalanceDto)

@@ -139,7 +139,7 @@ export class PerformanceMonitoringService implements OnModuleInit {
       },
     ];
 
-    defaultRules.forEach(rule => {
+    defaultRules.forEach((rule) => {
       this.alertRules.set(rule.id, rule);
     });
 
@@ -155,10 +155,10 @@ export class PerformanceMonitoringService implements OnModuleInit {
     try {
       // Get database metrics
       const dbMetrics = await this.getDatabaseMetrics();
-      
+
       // Get cache metrics
       const cacheMetrics = this.cacheService.getMetrics();
-      
+
       // Get system metrics (simplified)
       const systemMetrics = await this.getSystemMetrics();
 
@@ -212,23 +212,34 @@ export class PerformanceMonitoringService implements OnModuleInit {
 
       // Check if rule is triggered
       const metricValue = metrics[rule.metric] as number;
-      const isTriggered = this.evaluateCondition(metricValue, rule.operator, rule.threshold);
+      const isTriggered = this.evaluateCondition(
+        metricValue,
+        rule.operator,
+        rule.threshold,
+      );
 
       if (isTriggered) {
         // Check if condition has been met for the required duration
-        const recentMetrics = this.metrics.filter(m => 
-          m.timestamp >= new Date(now.getTime() - rule.duration * 1000)
+        const recentMetrics = this.metrics.filter(
+          (m) => m.timestamp >= new Date(now.getTime() - rule.duration * 1000),
         );
 
-        const allTriggered = recentMetrics.every(m => 
-          this.evaluateCondition(m[rule.metric] as number, rule.operator, rule.threshold)
+        const allTriggered = recentMetrics.every((m) =>
+          this.evaluateCondition(
+            m[rule.metric] as number,
+            rule.operator,
+            rule.threshold,
+          ),
         );
 
         if (allTriggered && recentMetrics.length > 0) {
           await this.triggerAlert(rule, metrics);
-          
+
           // Set cooldown
-          this.alertCooldowns.set(ruleId, new Date(now.getTime() + rule.cooldown * 1000));
+          this.alertCooldowns.set(
+            ruleId,
+            new Date(now.getTime() + rule.cooldown * 1000),
+          );
         }
       }
     }
@@ -237,7 +248,10 @@ export class PerformanceMonitoringService implements OnModuleInit {
   /**
    * Trigger an alert
    */
-  async triggerAlert(rule: AlertRule, metrics: PerformanceMetrics): Promise<void> {
+  async triggerAlert(
+    rule: AlertRule,
+    metrics: PerformanceMetrics,
+  ): Promise<void> {
     const alert: Alert = {
       id: `alert_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       ruleId: rule.id,
@@ -262,15 +276,17 @@ export class PerformanceMonitoringService implements OnModuleInit {
    * Get current performance metrics
    */
   getCurrentMetrics(): PerformanceMetrics | null {
-    return this.metrics.length > 0 ? this.metrics[this.metrics.length - 1] : null;
+    return this.metrics.length > 0
+      ? this.metrics[this.metrics.length - 1]
+      : null;
   }
 
   /**
    * Get metrics for a time range
    */
   getMetricsInRange(startTime: Date, endTime: Date): PerformanceMetrics[] {
-    return this.metrics.filter(m => 
-      m.timestamp >= startTime && m.timestamp <= endTime
+    return this.metrics.filter(
+      (m) => m.timestamp >= startTime && m.timestamp <= endTime,
     );
   }
 
@@ -278,7 +294,7 @@ export class PerformanceMonitoringService implements OnModuleInit {
    * Get active alerts
    */
   getActiveAlerts(): Alert[] {
-    return this.alerts.filter(alert => !alert.resolved);
+    return this.alerts.filter((alert) => !alert.resolved);
   }
 
   /**
@@ -292,7 +308,7 @@ export class PerformanceMonitoringService implements OnModuleInit {
    * Resolve an alert
    */
   resolveAlert(alertId: string): void {
-    const alert = this.alerts.find(a => a.id === alertId);
+    const alert = this.alerts.find((a) => a.id === alertId);
     if (alert && !alert.resolved) {
       alert.resolved = true;
       alert.resolvedAt = new Date();
@@ -303,7 +319,9 @@ export class PerformanceMonitoringService implements OnModuleInit {
   /**
    * Generate performance report
    */
-  generatePerformanceReport(period: 'hour' | 'day' | 'week' = 'hour'): PerformanceReport {
+  generatePerformanceReport(
+    period: 'hour' | 'day' | 'week' = 'hour',
+  ): PerformanceReport {
     const now = new Date();
     let startTime: Date;
 
@@ -320,13 +338,16 @@ export class PerformanceMonitoringService implements OnModuleInit {
     }
 
     const periodMetrics = this.getMetricsInRange(startTime, now);
-    const periodAlerts = this.alerts.filter(a => a.timestamp >= startTime);
+    const periodAlerts = this.alerts.filter((a) => a.timestamp >= startTime);
 
     const summary = {
-      avgResponseTime: this.calculateAverage(periodMetrics, 'queryResponseTime'),
+      avgResponseTime: this.calculateAverage(
+        periodMetrics,
+        'queryResponseTime',
+      ),
       avgCacheHitRate: this.calculateAverage(periodMetrics, 'cacheHitRate'),
       totalQueries: periodMetrics.reduce((sum, m) => sum + m.throughput, 0),
-      errorCount: periodAlerts.filter(a => a.severity === 'critical').length,
+      errorCount: periodAlerts.filter((a) => a.severity === 'critical').length,
       uptime: this.calculateUptime(periodMetrics),
     };
 
@@ -359,8 +380,10 @@ export class PerformanceMonitoringService implements OnModuleInit {
   async generateHourlyReport(): Promise<void> {
     try {
       const report = this.generatePerformanceReport('hour');
-      this.logger.log(`Hourly performance report generated: ${JSON.stringify(report.summary)}`);
-      
+      this.logger.log(
+        `Hourly performance report generated: ${JSON.stringify(report.summary)}`,
+      );
+
       // Store report for historical analysis
       await this.storePerformanceReport(report);
     } catch (error) {
@@ -441,13 +464,16 @@ export class PerformanceMonitoringService implements OnModuleInit {
   async getShardHealth(): Promise<any> {
     try {
       const shardHealth = await this.shardingService.getShardHealth();
-      const healthyShards = Object.values(shardHealth).filter((h: any) => h.status === 'healthy').length;
+      const healthyShards = Object.values(shardHealth).filter(
+        (h: any) => h.status === 'healthy',
+      ).length;
       const totalShards = Object.keys(shardHealth).length;
 
       return {
         healthyShards,
         totalShards,
-        shardHealthRatio: totalShards > 0 ? (healthyShards / totalShards) * 100 : 0,
+        shardHealthRatio:
+          totalShards > 0 ? (healthyShards / totalShards) * 100 : 0,
       };
     } catch (error) {
       return {
@@ -465,33 +491,51 @@ export class PerformanceMonitoringService implements OnModuleInit {
     const recentMetrics = this.metrics.slice(-10); // Last 10 metrics
     if (recentMetrics.length < 2) return 0;
 
-    const timeSpan = (recentMetrics[recentMetrics.length - 1].timestamp.getTime() - 
-                     recentMetrics[0].timestamp.getTime()) / 1000;
-    
+    const timeSpan =
+      (recentMetrics[recentMetrics.length - 1].timestamp.getTime() -
+        recentMetrics[0].timestamp.getTime()) /
+      1000;
+
     if (timeSpan === 0) return 0;
 
-    const totalQueries = recentMetrics.reduce((sum, m) => sum + m.throughput, 0);
+    const totalQueries = recentMetrics.reduce(
+      (sum, m) => sum + m.throughput,
+      0,
+    );
     return totalQueries / timeSpan;
   }
 
   /**
    * Evaluate alert condition
    */
-  private evaluateCondition(value: number, operator: string, threshold: number): boolean {
+  private evaluateCondition(
+    value: number,
+    operator: string,
+    threshold: number,
+  ): boolean {
     switch (operator) {
-      case '>': return value > threshold;
-      case '<': return value < threshold;
-      case '=': return value === threshold;
-      case '>=': return value >= threshold;
-      case '<=': return value <= threshold;
-      default: return false;
+      case '>':
+        return value > threshold;
+      case '<':
+        return value < threshold;
+      case '=':
+        return value === threshold;
+      case '>=':
+        return value >= threshold;
+      case '<=':
+        return value <= threshold;
+      default:
+        return false;
     }
   }
 
   /**
    * Calculate average of a metric across multiple data points
    */
-  private calculateAverage(metrics: PerformanceMetrics[], field: keyof PerformanceMetrics): number {
+  private calculateAverage(
+    metrics: PerformanceMetrics[],
+    field: keyof PerformanceMetrics,
+  ): number {
     if (metrics.length === 0) return 0;
     const sum = metrics.reduce((acc, m) => acc + (m[field] as number), 0);
     return sum / metrics.length;
@@ -502,13 +546,15 @@ export class PerformanceMonitoringService implements OnModuleInit {
    */
   private calculateUptime(metrics: PerformanceMetrics[]): number {
     if (metrics.length === 0) return 0;
-    
+
     // Simplified uptime calculation
     const expectedCollections = Math.floor(
-      (Date.now() - metrics[0].timestamp.getTime()) / 30000 // 30 second intervals
+      (Date.now() - metrics[0].timestamp.getTime()) / 30000, // 30 second intervals
     );
-    
-    return expectedCollections > 0 ? (metrics.length / expectedCollections) * 100 : 100;
+
+    return expectedCollections > 0
+      ? (metrics.length / expectedCollections) * 100
+      : 100;
   }
 
   /**
@@ -523,7 +569,9 @@ export class PerformanceMonitoringService implements OnModuleInit {
   /**
    * Store performance report for historical analysis
    */
-  private async storePerformanceReport(report: PerformanceReport): Promise<void> {
+  private async storePerformanceReport(
+    report: PerformanceReport,
+  ): Promise<void> {
     // Implement storage logic (database, file system, etc.)
     this.logger.log(`Performance report stored for period: ${report.period}`);
   }

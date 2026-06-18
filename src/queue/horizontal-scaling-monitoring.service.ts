@@ -249,7 +249,9 @@ export class HorizontalScalingMonitoringService {
     }
 
     if (options?.acknowledged !== undefined) {
-      filtered = filtered.filter((a) => a.acknowledged === options.acknowledged);
+      filtered = filtered.filter(
+        (a) => a.acknowledged === options.acknowledged,
+      );
     }
 
     // Sort by timestamp (newest first)
@@ -276,9 +278,9 @@ export class HorizontalScalingMonitoringService {
   clearOldAlerts(): void {
     const cutoffTime = Date.now() - 24 * 60 * 60 * 1000; // 24 hours
     const beforeCount = this.alerts.length;
-    
+
     this.alerts = this.alerts.filter((a) => a.timestamp.getTime() > cutoffTime);
-    
+
     const removedCount = beforeCount - this.alerts.length;
     if (removedCount > 0) {
       this.logger.debug(`Cleared ${removedCount} old alerts`);
@@ -346,7 +348,10 @@ export class HorizontalScalingMonitoringService {
     }
 
     // Check ordering partitions
-    if (metrics.ordering.totalPartitions > this.config.ordering.maxPartitions * 0.9) {
+    if (
+      metrics.ordering.totalPartitions >
+      this.config.ordering.maxPartitions * 0.9
+    ) {
       this.createAlert(
         AlertLevel.WARNING,
         'ordering',
@@ -437,8 +442,10 @@ export class HorizontalScalingMonitoringService {
     return {
       totalAlerts: this.alerts.length,
       unacknowledgedAlerts: this.getUnacknowledgedAlertsCount(),
-      criticalAlerts: this.alerts.filter((a) => a.level === AlertLevel.CRITICAL).length,
-      warningAlerts: this.alerts.filter((a) => a.level === AlertLevel.WARNING).length,
+      criticalAlerts: this.alerts.filter((a) => a.level === AlertLevel.CRITICAL)
+        .length,
+      warningAlerts: this.alerts.filter((a) => a.level === AlertLevel.WARNING)
+        .length,
       infoAlerts: this.alerts.filter((a) => a.level === AlertLevel.INFO).length,
       metricsHistorySize: this.metricsHistory.length,
     };

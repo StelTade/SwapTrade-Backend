@@ -23,8 +23,8 @@ const defaultMonitoringConfig: MonitoringConfig = {
       enabled: true,
       path: './logs/app.log',
       maxSize: '100MB',
-      maxFiles: 10
-    }
+      maxFiles: 10,
+    },
   },
   tracing: {
     enabled: process.env.TRACING_ENABLED === 'true' || false,
@@ -33,36 +33,34 @@ const defaultMonitoringConfig: MonitoringConfig = {
     headers: {},
     serviceName: 'swaptrade-backend',
     serviceVersion: process.env.APP_VERSION || '1.0.0',
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
   },
   metrics: {
     enabled: process.env.METRICS_ENABLED === 'true' || true,
     port: parseInt(process.env.METRICS_PORT || '9090', 10),
     path: process.env.METRICS_PATH || '/metrics',
-    collectDefaultMetrics: process.env.METRICS_COLLECT_DEFAULT === 'true' || true
+    collectDefaultMetrics:
+      process.env.METRICS_COLLECT_DEFAULT === 'true' || true,
   },
   health: {
     enabled: process.env.HEALTH_ENABLED === 'true' || true,
     path: process.env.HEALTH_PATH || '/health',
-    detailed: process.env.HEALTH_DETAILED === 'true' || true
+    detailed: process.env.HEALTH_DETAILED === 'true' || true,
   },
   alerting: {
     enabled: process.env.ALERTING_ENABLED === 'true' || false,
     webhookUrl: process.env.ALERTING_WEBHOOK_URL,
     slackWebhook: process.env.ALERTING_SLACK_WEBHOOK,
-    emailRecipients: process.env.ALERTING_EMAIL_RECIPIENTS?.split(',')
-  }
+    emailRecipients: process.env.ALERTING_EMAIL_RECIPIENTS?.split(','),
+  },
 };
 
 @Module({
-  controllers: [
-    HealthController,
-    MetricsController
-  ],
+  controllers: [HealthController, MetricsController],
   providers: [
     {
       provide: 'MONITORING_CONFIG',
-      useValue: defaultMonitoringConfig
+      useValue: defaultMonitoringConfig,
     },
     StructuredLoggerService,
     {
@@ -70,20 +68,20 @@ const defaultMonitoringConfig: MonitoringConfig = {
       useFactory: (config: MonitoringConfig) => {
         return new OpenTelemetryService(config?.tracing);
       },
-      inject: ['MONITORING_CONFIG']
+      inject: ['MONITORING_CONFIG'],
     },
     PrometheusService,
     HealthService,
     {
       provide: APP_INTERCEPTOR,
-      useClass: MonitoringInterceptor
-    }
+      useClass: MonitoringInterceptor,
+    },
   ],
   exports: [
     StructuredLoggerService,
     OpenTelemetryService,
     PrometheusService,
-    HealthService
-  ]
+    HealthService,
+  ],
 })
 export class MonitoringModule {}

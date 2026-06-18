@@ -122,7 +122,9 @@ describe('AppExceptionFilter - Deterministic Error Responses', () => {
 
       filter.catch(error, mockHost);
 
-      expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.INTERNAL_SERVER_ERROR);
+      expect(mockResponse.status).toHaveBeenCalledWith(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
       const callArgs = mockResponse.json.mock.calls[0][0];
       expect(callArgs.error.code).toBe('INTERNAL_SERVER_ERROR_500');
       expect(callArgs.success).toBe(false);
@@ -134,7 +136,9 @@ describe('AppExceptionFilter - Deterministic Error Responses', () => {
 
       filter.catch(unknownException, mockHost);
 
-      expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.INTERNAL_SERVER_ERROR);
+      expect(mockResponse.status).toHaveBeenCalledWith(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
       const callArgs = mockResponse.json.mock.calls[0][0];
       expect(callArgs.success).toBe(false);
       expect(callArgs.error.code).toBeDefined();
@@ -143,10 +147,7 @@ describe('AppExceptionFilter - Deterministic Error Responses', () => {
 
   describe('Deterministic Response Format', () => {
     it('should always include required fields', () => {
-      const exception = new StructuredException(
-        'TEST_ERROR',
-        'Test message',
-      );
+      const exception = new StructuredException('TEST_ERROR', 'Test message');
 
       filter.catch(exception, mockHost);
 
@@ -162,10 +163,7 @@ describe('AppExceptionFilter - Deterministic Error Responses', () => {
     });
 
     it('should use ISO 8601 timestamp format', () => {
-      const exception = new StructuredException(
-        'TEST_ERROR',
-        'Test message',
-      );
+      const exception = new StructuredException('TEST_ERROR', 'Test message');
 
       filter.catch(exception, mockHost);
 

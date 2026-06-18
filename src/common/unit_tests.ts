@@ -23,7 +23,7 @@ describe('LoggerService', () => {
   describe('Sensitive Data Masking', () => {
     it('should mask password fields', () => {
       const logSpy = jest.spyOn(service as any, 'maskSensitiveData');
-      
+
       const data = {
         username: 'testuser',
         password: 'secret123',
@@ -88,7 +88,7 @@ describe('LoggerService', () => {
       service.runWithContext(() => {
         service.setContext('correlationId', 'test-correlation-id');
         const context = (service as any).getContext();
-        
+
         expect(context.get('correlationId')).toBe('test-correlation-id');
       });
     });
@@ -145,7 +145,6 @@ describe('LoggerService', () => {
   });
 });
 
-
 // test/audit.service.spec.ts
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuditService } from './logging/audit_service';
@@ -181,7 +180,7 @@ describe('AuditService', () => {
         userId: 'user-456',
         symbol: 'AAPL',
         quantity: 100,
-        price: 150.50,
+        price: 150.5,
         side: 'BUY' as const,
         status: 'FILLED',
       };
@@ -196,14 +195,17 @@ describe('AuditService', () => {
         metadata: {
           symbol: 'AAPL',
           quantity: 100,
-          price: 150.50,
+          price: 150.5,
           side: 'BUY',
           totalValue: 15050,
           status: 'FILLED',
         },
       });
 
-      expect(loggerService.setContext).toHaveBeenCalledWith('tradeId', 'trade-123');
+      expect(loggerService.setContext).toHaveBeenCalledWith(
+        'tradeId',
+        'trade-123',
+      );
     });
 
     it('should log trade cancellation', () => {

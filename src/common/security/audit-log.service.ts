@@ -10,7 +10,12 @@ export class AuditLogService {
     private readonly auditRepo: Repository<AuditLog>,
   ) {}
 
-  async log(userId: string, eventType: AuditEventType, metadata: unknown | null, ipAddress: string | null) {
+  async log(
+    userId: string,
+    eventType: AuditEventType,
+    metadata: unknown | null,
+    ipAddress: string | null,
+  ) {
     const record = this.auditRepo.create({
       userId,
       eventType,

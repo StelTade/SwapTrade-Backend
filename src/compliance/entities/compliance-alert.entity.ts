@@ -1,6 +1,18 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  ManyToOne,
+  JoinColumn,
+  Index,
+} from 'typeorm';
 import { User } from '../../user/entities/user.entity';
-import { ComplianceRuleEntity, RuleSeverity, ActionType } from './compliance-rule.entity';
+import {
+  ComplianceRuleEntity,
+  RuleSeverity,
+  ActionType,
+} from './compliance-rule.entity';
 
 export enum AlertStatus {
   OPEN = 'open',
@@ -95,7 +107,13 @@ export class ComplianceAlertEntity {
   @Column({ name: 'risk_score', type: 'decimal', precision: 5, scale: 2 })
   riskScore: number;
 
-  @Column({ name: 'confidence_score', type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({
+    name: 'confidence_score',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    nullable: true,
+  })
   confidenceScore: number;
 
   @Column({ name: 'is_false_positive', default: false })

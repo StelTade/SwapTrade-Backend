@@ -16,10 +16,9 @@ export class PermissionsGuard implements CanActivate {
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
-    const requiredPermissions = this.reflector.get<RequiredPermission[] | undefined>(
-      PERMISSIONS_KEY,
-      context.getHandler(),
-    );
+    const requiredPermissions = this.reflector.get<
+      RequiredPermission[] | undefined
+    >(PERMISSIONS_KEY, context.getHandler());
 
     if (!requiredPermissions) {
       return true;

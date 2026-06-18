@@ -80,15 +80,19 @@ describe('RoleService', () => {
     });
 
     it('should return GOVERNANCE_OPERATOR from non-admin roles', () => {
-      const roles = [UserRole.USER, UserRole.STAFF, UserRole.GOVERNANCE_OPERATOR];
+      const roles = [
+        UserRole.USER,
+        UserRole.STAFF,
+        UserRole.GOVERNANCE_OPERATOR,
+      ];
       expect(service.getHighestPriorityRole(roles)).toBe(
-        UserRole.GOVERNANCE_OPERATOR
+        UserRole.GOVERNANCE_OPERATOR,
       );
     });
 
     it('should return single role', () => {
       expect(service.getHighestPriorityRole([UserRole.USER])).toBe(
-        UserRole.USER
+        UserRole.USER,
       );
     });
 
@@ -111,7 +115,11 @@ describe('RoleService', () => {
     });
 
     it('should identify highest priority as primary', () => {
-      const roles = [UserRole.USER, UserRole.STAFF, UserRole.GOVERNANCE_OPERATOR];
+      const roles = [
+        UserRole.USER,
+        UserRole.STAFF,
+        UserRole.GOVERNANCE_OPERATOR,
+      ];
       const context = service.createRoleContext(roles);
       expect(context.primaryRole).toBe(UserRole.GOVERNANCE_OPERATOR);
     });
@@ -192,14 +200,14 @@ describe('RoleService', () => {
 
     it('should return USER permissions', () => {
       const permissions = service.getAllUserPermissions([UserRole.USER]);
-      expect(permissions.has('TRADING_READ')).toBe(true);
-      expect(permissions.has('PORTFOLIO_READ')).toBe(true);
+      expect(permissions.has('trades.read')).toBe(true);
+      expect(permissions.has('accounts.read')).toBe(true);
     });
 
     it('should include inherited permissions', () => {
       const permissions = service.getAllUserPermissions([UserRole.STAFF]);
       expect(permissions.has('USER_READ')).toBe(true);
-      expect(permissions.has('TRADING_READ')).toBe(true);
+      expect(permissions.has('trades.read')).toBe(true);
     });
 
     it('should combine permissions from multiple roles', () => {
@@ -207,7 +215,7 @@ describe('RoleService', () => {
         UserRole.USER,
         UserRole.KYC_OPERATOR,
       ]);
-      expect(permissions.has('TRADING_READ')).toBe(true);
+      expect(permissions.has('trades.read')).toBe(true);
       expect(permissions.has('KYC_APPROVE')).toBe(true);
     });
 
@@ -225,15 +233,17 @@ describe('RoleService', () => {
     });
 
     it('should return true for USER with their permissions', () => {
-      expect(service.hasPermission([UserRole.USER], 'TRADING_READ')).toBe(true);
+      expect(service.hasPermission([UserRole.USER], 'trades.read')).toBe(true);
     });
 
     it('should return false for USER without specific permission', () => {
-      expect(service.hasPermission([UserRole.USER], 'POLICY_WRITE')).toBe(false);
+      expect(service.hasPermission([UserRole.USER], 'admin.access')).toBe(
+        false,
+      );
     });
 
     it('should check inherited role permissions', () => {
-      expect(service.hasPermission([UserRole.STAFF], 'TRADING_READ')).toBe(true);
+      expect(service.hasPermission([UserRole.STAFF], 'trades.read')).toBe(true);
     });
   });
 

@@ -1,6 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CacheStatisticsService } from '../services/cache-statistics.service';
-import { CacheCircuitBreaker, CircuitBreakerState } from '../services/cache-circuit-breaker.service';
+import {
+  CacheCircuitBreaker,
+  CircuitBreakerState,
+} from '../services/cache-circuit-breaker.service';
 
 /**
  * Test suite for advanced caching implementation
@@ -226,7 +229,8 @@ describe('Advanced Caching Implementation', () => {
       const stats = service.getStatistics();
 
       // Effectiveness: (100 - 30) / 100 = 70% reduction in cache misses
-      const improvementRatio = (withoutCacheMisses - stats.misses) / withoutCacheMisses;
+      const improvementRatio =
+        (withoutCacheMisses - stats.misses) / withoutCacheMisses;
       expect(improvementRatio).toBeGreaterThan(0.3);
     });
   });

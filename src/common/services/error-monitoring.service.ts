@@ -1,5 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ErrorCategorizer, ErrorCategory, ErrorSeverity } from '../exceptions/error-categorizer';
+import {
+  ErrorCategorizer,
+  ErrorCategory,
+  ErrorSeverity,
+} from '../exceptions/error-categorizer';
 
 /**
  * Error event for monitoring
@@ -88,8 +92,10 @@ export class ErrorMonitoringService {
     const errorsByCode: Record<string, number> = {};
 
     for (const event of this.errorEvents) {
-      errorsByCategory[event.category] = (errorsByCategory[event.category] || 0) + 1;
-      errorsBySeverity[event.severity] = (errorsBySeverity[event.severity] || 0) + 1;
+      errorsByCategory[event.category] =
+        (errorsByCategory[event.category] || 0) + 1;
+      errorsBySeverity[event.severity] =
+        (errorsBySeverity[event.severity] || 0) + 1;
       errorsByCode[event.errorCode] = (errorsByCode[event.errorCode] || 0) + 1;
     }
 
@@ -186,9 +192,10 @@ export class ErrorMonitoringService {
     const now = Date.now();
 
     for (const event of this.errorEvents) {
-      const intervalStart = Math.floor(
-        (event.timestamp.getTime() - now) / intervalMs,
-      ) * intervalMs + now;
+      const intervalStart =
+        Math.floor((event.timestamp.getTime() - now) / intervalMs) *
+          intervalMs +
+        now;
       const key = new Date(intervalStart).toISOString();
 
       trend[key] = (trend[key] || 0) + 1;

@@ -218,7 +218,9 @@ export function getErrorDetails(code: string) {
  */
 export function categorizeError(code: string): ErrorCategory {
   if (code.startsWith('AUTH_')) {
-    return code === 'AUTH_003' ? ErrorCategory.AUTHORIZATION : ErrorCategory.AUTHENTICATION;
+    return code === 'AUTH_003'
+      ? ErrorCategory.AUTHORIZATION
+      : ErrorCategory.AUTHENTICATION;
   }
   if (code.startsWith('VAL_')) return ErrorCategory.VALIDATION;
   if (code.startsWith('RLM_')) return ErrorCategory.RATE_LIMIT;

@@ -33,7 +33,7 @@ export class LoggingInterceptor implements NestInterceptor {
     return next.handle().pipe(
       tap((data) => {
         const duration = Date.now() - startTime;
-        
+
         // Log successful execution
         this.logger.debug(`Completed ${controller}.${handler}`, {
           method,
@@ -53,31 +53,29 @@ export class LoggingInterceptor implements NestInterceptor {
       }),
       catchError((error) => {
         const duration = Date.now() - startTime;
-        
+
         // Determine error details
-        const status = error instanceof HttpException 
-          ? error.getStatus() 
-          : HttpStatus.INTERNAL_SERVER_ERROR;
-        
-        const errorResponse = error instanceof HttpException
-          ? error.getResponse()
-          : { message: error.message };
+        const status =
+          error instanceof HttpException
+            ? error.getStatus()
+            : HttpStatus.INTERNAL_SERVER_ERROR;
+
+        const errorResponse =
+          error instanceof HttpException
+            ? error.getResponse()
+            : { message: error.message };
 
         // Log error with full context
-        this.logger.error(
-          `Error in ${controller}.${handler}`,
-          error.stack,
-          {
-            method,
-            url,
-            controller,
-            handler,
-            duration,
-            statusCode: status,
-            error: errorResponse,
-            errorName: error.name,
-          },
-        );
+        this.logger.error(`Error in ${controller}.${handler}`, error.stack, {
+          method,
+          url,
+          controller,
+          handler,
+          duration,
+          statusCode: status,
+          error: errorResponse,
+          errorName: error.name,
+        });
 
         // Log error metric
         this.logger.metric('handler.error', 1, {

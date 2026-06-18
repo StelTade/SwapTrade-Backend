@@ -60,7 +60,8 @@ export class QueryOptimizationService {
       `,
       parameters: ['userId', 'startDate', 'endDate', 'limit'],
       indexes: ['IDX_trades_user_asset_time', 'IDX_trades_user_recent'],
-      optimization: 'Use composite index on (userId, timestamp) with DESC order',
+      optimization:
+        'Use composite index on (userId, timestamp) with DESC order',
     });
 
     // Market data aggregation pattern
@@ -102,7 +103,10 @@ export class QueryOptimizationService {
         ORDER BY b.totalTradeVolume DESC
       `,
       parameters: ['userId'],
-      indexes: ['IDX_balance_user_asset_composite', 'IDX_balance_portfolio_covering'],
+      indexes: [
+        'IDX_balance_user_asset_composite',
+        'IDX_balance_portfolio_covering',
+      ],
       optimization: 'Use covering index to include all required columns',
     });
 
@@ -136,25 +140,37 @@ export class QueryOptimizationService {
     parameters: any[] = [],
   ): Promise<QueryOptimizationResult> {
     const startTime = Date.now();
-    
+
     // Execute original query and capture execution plan
     const originalPlan = await this.analyzeQueryExecution(query, parameters);
-    
+
     // Generate optimized query
     const optimizedQuery = await this.generateOptimizedQuery(query, parameters);
-    
+
     // Execute optimized query and capture execution plan
-    const optimizedPlan = await this.analyzeQueryExecution(optimizedQuery.query, optimizedQuery.parameters);
-    
+    const optimizedPlan = await this.analyzeQueryExecution(
+      optimizedQuery.query,
+      optimizedQuery.parameters,
+    );
+
     const executionTime = Date.now() - startTime;
 
     return {
       originalPlan,
       optimizedPlan,
       improvement: {
-        timeReduction: ((originalPlan.executionTime - optimizedPlan.executionTime) / originalPlan.executionTime) * 100,
-        costReduction: ((originalPlan.estimatedCost - optimizedPlan.estimatedCost) / originalPlan.estimatedCost) * 100,
-        indexImprovement: this.compareIndexUsage(originalPlan.indexUsage, optimizedPlan.indexUsage),
+        timeReduction:
+          ((originalPlan.executionTime - optimizedPlan.executionTime) /
+            originalPlan.executionTime) *
+          100,
+        costReduction:
+          ((originalPlan.estimatedCost - optimizedPlan.estimatedCost) /
+            originalPlan.estimatedCost) *
+          100,
+        indexImprovement: this.compareIndexUsage(
+          originalPlan.indexUsage,
+          optimizedPlan.indexUsage,
+        ),
       },
     };
   }
@@ -162,21 +178,27 @@ export class QueryOptimizationService {
   /**
    * Analyze query execution plan
    */
-  async analyzeQueryExecution(query: string, parameters: any[]): Promise<QueryExecutionPlan> {
+  async analyzeQueryExecution(
+    query: string,
+    parameters: any[],
+  ): Promise<QueryExecutionPlan> {
     const startTime = Date.now();
-    
+
     try {
       // For SQLite, we'll use EXPLAIN QUERY PLAN
       const explainQuery = `EXPLAIN QUERY PLAN ${query}`;
-      const explainResult = await this.dataSource.query(explainQuery, parameters);
-      
+      const explainResult = await this.dataSource.query(
+        explainQuery,
+        parameters,
+      );
+
       // Execute the actual query to get timing and row count
       const result = await this.dataSource.query(query, parameters);
       const executionTime = Date.now() - startTime;
-      
+
       // Parse execution plan
       const indexUsage = this.parseIndexUsage(explainResult);
-      
+
       return {
         id: this.generatePlanId(),
         query,
@@ -205,7 +227,10 @@ export class QueryOptimizationService {
   /**
    * Generate optimized query based on patterns
    */
-  async generateOptimizedQuery(originalQuery: string, parameters: any[]): Promise<{ query: string; parameters: any[] }> {
+  async generateOptimizedQuery(
+    originalQuery: string,
+    parameters: any[],
+  ): Promise<{ query: string; parameters: any[] }> {
     // Check if query matches any known patterns
     for (const [patternName, pattern] of this.queryPatterns) {
       if (this.queryMatchesPattern(originalQuery, pattern)) {
@@ -242,7 +267,11 @@ export class QueryOptimizationService {
       endDate?: Date;
       asset?: string;
     } = {},
-  ): Promise<{ trades: Trade[]; total: number; executionPlan: QueryExecutionPlan }> {
+  ): Promise<{
+    trades: Trade[];
+    total: number;
+    executionPlan: QueryExecutionPlan;
+  }> {
     const { limit = 50, offset = 0, startDate, endDate, asset } = options;
 
     let queryBuilder = this.dataSource
@@ -254,11 +283,15 @@ export class QueryOptimizationService {
       .skip(offset);
 
     if (startDate) {
-      queryBuilder = queryBuilder.andWhere('trade.timestamp >= :startDate', { startDate });
+      queryBuilder = queryBuilder.andWhere('trade.timestamp >= :startDate', {
+        startDate,
+      });
     }
 
     if (endDate) {
-      queryBuilder = queryBuilder.andWhere('trade.timestamp <= :endDate', { endDate });
+      queryBuilder = queryBuilder.andWhere('trade.timestamp <= :endDate', {
+        endDate,
+      });
     }
 
     if (asset) {
@@ -275,7 +308,10 @@ export class QueryOptimizationService {
     // Analyze execution
     const query = queryBuilder.getQuery();
     const parameters = queryBuilder.getParameters();
-    const executionPlan = await this.analyzeQueryExecution(query, Object.values(parameters) || []);
+    const executionPlan = await this.analyzeQueryExecution(
+      query,
+      Object.values(parameters) || [],
+    );
 
     return { trades, total, executionPlan };
   }
@@ -328,7 +364,7 @@ export class QueryOptimizationService {
     for (const { query, parameters = [] } of queries) {
       const executionPlan = await this.analyzeQueryExecution(query, parameters);
       const result = await this.dataSource.query(query, parameters);
-      
+
       results.push({ result, executionPlan });
     }
 
@@ -340,14 +376,16 @@ export class QueryOptimizationService {
    */
   async monitorQueryPerformance(queryId: string): Promise<any> {
     const plans = this.executionPlans.get(queryId) || [];
-    
+
     if (plans.length === 0) {
       return { error: 'No execution plans found for query' };
     }
 
     const latestPlan = plans[plans.length - 1];
-    const avgExecutionTime = plans.reduce((sum, plan) => sum + plan.executionTime, 0) / plans.length;
-    const avgRows = plans.reduce((sum, plan) => sum + plan.actualRows, 0) / plans.length;
+    const avgExecutionTime =
+      plans.reduce((sum, plan) => sum + plan.executionTime, 0) / plans.length;
+    const avgRows =
+      plans.reduce((sum, plan) => sum + plan.actualRows, 0) / plans.length;
 
     return {
       queryId,
@@ -367,7 +405,7 @@ export class QueryOptimizationService {
 
     for (const [patternName, pattern] of this.queryPatterns) {
       const plans = this.executionPlans.get(patternName) || [];
-      const indexUsage = plans.flatMap(plan => plan.indexUsage);
+      const indexUsage = plans.flatMap((plan) => plan.indexUsage);
       const indexFrequency = {};
 
       for (const index of indexUsage) {
@@ -388,15 +426,23 @@ export class QueryOptimizationService {
   private queryMatchesPattern(query: string, pattern: QueryPattern): boolean {
     // Simplified pattern matching - in production, use more sophisticated matching
     const normalizedQuery = query.toLowerCase().replace(/\s+/g, ' ').trim();
-    const normalizedPattern = pattern.template.toLowerCase().replace(/\s+/g, ' ').trim();
-    
-    return normalizedQuery.includes(normalizedPattern.split('from')[1]?.split('where')[0] || '');
+    const normalizedPattern = pattern.template
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    return normalizedQuery.includes(
+      normalizedPattern.split('from')[1]?.split('where')[0] || '',
+    );
   }
 
-  private applyPatternOptimization(pattern: QueryPattern, parameters: any[]): { query: string; parameters: any[] } {
+  private applyPatternOptimization(
+    pattern: QueryPattern,
+    parameters: any[],
+  ): { query: string; parameters: any[] } {
     // Apply pattern-specific optimizations
-    let optimizedQuery = pattern.template;
-    
+    const optimizedQuery = pattern.template;
+
     // Add index hints if supported
     if (pattern.indexes.length > 0) {
       // This would be database-specific
@@ -406,16 +452,25 @@ export class QueryOptimizationService {
     return { query: optimizedQuery, parameters };
   }
 
-  private applyGeneralOptimizations(query: string, parameters: any[]): { query: string; parameters: any[] } {
+  private applyGeneralOptimizations(
+    query: string,
+    parameters: any[],
+  ): { query: string; parameters: any[] } {
     let optimizedQuery = query;
 
     // Add LIMIT if not present for large result sets
-    if (!optimizedQuery.toLowerCase().includes('limit') && !optimizedQuery.toLowerCase().includes('top')) {
+    if (
+      !optimizedQuery.toLowerCase().includes('limit') &&
+      !optimizedQuery.toLowerCase().includes('top')
+    ) {
       optimizedQuery += ' LIMIT 1000';
     }
 
     // Ensure proper ordering for pagination
-    if (!optimizedQuery.toLowerCase().includes('order by') && optimizedQuery.toLowerCase().includes('limit')) {
+    if (
+      !optimizedQuery.toLowerCase().includes('order by') &&
+      optimizedQuery.toLowerCase().includes('limit')
+    ) {
       optimizedQuery += ' ORDER BY id DESC';
     }
 
@@ -424,7 +479,7 @@ export class QueryOptimizationService {
 
   private parseIndexUsage(explainResult: any[]): string[] {
     const indexes: string[] = [];
-    
+
     for (const row of explainResult) {
       if (row.detail && row.detail.includes('USING INDEX')) {
         const indexMatch = row.detail.match(/USING INDEX (\w+)/);
@@ -449,7 +504,7 @@ export class QueryOptimizationService {
 
   private compareIndexUsage(original: string[], optimized: string[]): string[] {
     const improvements = [] as string[];
-    
+
     for (const index of optimized) {
       if (!original.includes(index)) {
         improvements.push(`Added index usage: ${index}`);
@@ -469,7 +524,9 @@ export class QueryOptimizationService {
     return `plan_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 
-  private calculatePerformanceTrend(plans: QueryExecutionPlan[]): 'improving' | 'degrading' | 'stable' {
+  private calculatePerformanceTrend(
+    plans: QueryExecutionPlan[],
+  ): 'improving' | 'degrading' | 'stable' {
     if (plans.length < 2) return 'stable';
 
     const recent = plans.slice(-5);
@@ -477,8 +534,10 @@ export class QueryOptimizationService {
 
     if (older.length === 0) return 'stable';
 
-    const recentAvg = recent.reduce((sum, plan) => sum + plan.executionTime, 0) / recent.length;
-    const olderAvg = older.reduce((sum, plan) => sum + plan.executionTime, 0) / older.length;
+    const recentAvg =
+      recent.reduce((sum, plan) => sum + plan.executionTime, 0) / recent.length;
+    const olderAvg =
+      older.reduce((sum, plan) => sum + plan.executionTime, 0) / older.length;
 
     const improvement = ((olderAvg - recentAvg) / olderAvg) * 100;
 

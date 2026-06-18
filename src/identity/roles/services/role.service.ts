@@ -74,7 +74,7 @@ export class RoleService {
     return roles.reduce((highest, current) =>
       this.getRolePriority(current) > this.getRolePriority(highest)
         ? current
-        : highest
+        : highest,
     );
   }
 
@@ -101,9 +101,10 @@ export class RoleService {
    * @param roles - Array of roles to validate
    * @returns Validation result with error details
    */
-  validateRoleCombination(
-    roles: UserRole[]
-  ): { valid: boolean; errors: string[] } {
+  validateRoleCombination(roles: UserRole[]): {
+    valid: boolean;
+    errors: string[];
+  } {
     const errors: string[] = [];
 
     // Check for duplicates
@@ -119,9 +120,7 @@ export class RoleService {
         const role2 = roles[j];
 
         if (!areRolesCompatible(role1, role2)) {
-          errors.push(
-            `Role ${role1} is incompatible with ${role2}`
-          );
+          errors.push(`Role ${role1} is incompatible with ${role2}`);
         }
       }
     }
@@ -207,7 +206,7 @@ export class RoleService {
    */
   sortByPriority(roles: UserRole[]): UserRole[] {
     return [...roles].sort(
-      (a, b) => this.getRolePriority(b) - this.getRolePriority(a)
+      (a, b) => this.getRolePriority(b) - this.getRolePriority(a),
     );
   }
 }

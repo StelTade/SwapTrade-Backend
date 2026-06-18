@@ -153,9 +153,7 @@ export class DeadLetterQueueService {
     const itemIndex = items.findIndex((i) => i.jobId === jobId);
 
     if (itemIndex === -1) {
-      this.logger.warn(
-        `DLQ item ${jobId} not found in queue ${queueName}`,
-      );
+      this.logger.warn(`DLQ item ${jobId} not found in queue ${queueName}`);
       return false;
     }
 
@@ -184,10 +182,7 @@ export class DeadLetterQueueService {
 
       return true;
     } catch (error) {
-      this.logger.error(
-        `Failed to recover DLQ job ${jobId}:`,
-        error.stack,
-      );
+      this.logger.error(`Failed to recover DLQ job ${jobId}:`, error.stack);
       return false;
     }
   }
@@ -204,9 +199,7 @@ export class DeadLetterQueueService {
     }
 
     items.splice(itemIndex, 1);
-    this.logger.log(
-      `Removed DLQ item ${jobId} from queue ${queueName}`,
-    );
+    this.logger.log(`Removed DLQ item ${jobId} from queue ${queueName}`);
 
     return true;
   }
@@ -283,23 +276,26 @@ export class DeadLetterQueueService {
 
   private startCleanupJob(): void {
     // Clean up old DLQ items periodically
-    setInterval(() => {
-      const cutoffTime = Date.now() - this.dlqConfig.maxAge;
+    setInterval(
+      () => {
+        const cutoffTime = Date.now() - this.dlqConfig.maxAge;
 
-      for (const [queueName, items] of this.dlqItems) {
-        const beforeCount = items.length;
-        const filtered = items.filter((item) =>
-          item.failedAt.getTime() > cutoffTime
-        );
-        this.dlqItems.set(queueName, filtered);
-
-        if (filtered.length < beforeCount) {
-          this.logger.debug(
-            `Cleaned up ${beforeCount - filtered.length} old DLQ items from ${queueName}`,
+        for (const [queueName, items] of this.dlqItems) {
+          const beforeCount = items.length;
+          const filtered = items.filter(
+            (item) => item.failedAt.getTime() > cutoffTime,
           );
+          this.dlqItems.set(queueName, filtered);
+
+          if (filtered.length < beforeCount) {
+            this.logger.debug(
+              `Cleaned up ${beforeCount - filtered.length} old DLQ items from ${queueName}`,
+            );
+          }
         }
-      }
-    }, 60 * 60 * 1000); // Run every hour
+      },
+      60 * 60 * 1000,
+    ); // Run every hour
   }
 
   private getQueueByName(queueName: string): Queue | null {

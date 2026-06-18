@@ -10,7 +10,8 @@ export class LoggingMiddleware implements NestMiddleware {
 
   use(req: Request, res: Response, next: NextFunction): void {
     const startTime = Date.now();
-    const correlationId = req.headers['x-correlation-id'] as string || uuidv4();
+    const correlationId =
+      (req.headers['x-correlation-id'] as string) || uuidv4();
 
     // Store correlation ID in request and response headers
     req.headers['x-correlation-id'] = correlationId;
@@ -46,8 +47,12 @@ export class LoggingMiddleware implements NestMiddleware {
       // Log response when finished
       res.on('finish', () => {
         const duration = Date.now() - startTime;
-        const logLevel = res.statusCode >= 500 ? 'error' : 
-                        res.statusCode >= 400 ? 'warn' : 'log';
+        const logLevel =
+          res.statusCode >= 500
+            ? 'error'
+            : res.statusCode >= 400
+              ? 'warn'
+              : 'log';
 
         const logContext: any = {
           correlationId,

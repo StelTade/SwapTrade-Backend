@@ -16,7 +16,7 @@ describe('Error Handling Integration Tests', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    
+
     app.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,
@@ -47,15 +47,19 @@ describe('Error Handling Integration Tests', () => {
 
       expect(response.status).toBe(400);
       expect(response.body).toHaveProperty('success', false);
-      expect(response.body.error).toHaveProperty('code', 'INSUFFICIENT_BALANCE');
+      expect(response.body.error).toHaveProperty(
+        'code',
+        'INSUFFICIENT_BALANCE',
+      );
       expect(response.body.error).toHaveProperty('message');
       expect(response.body.error).toHaveProperty('timestamp');
       expect(response.body).toHaveProperty('metadata');
     });
 
     it('should handle ResourceNotFoundException correctly', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/api/users/nonexistent-user');
+      const response = await request(app.getHttpServer()).get(
+        '/api/users/nonexistent-user',
+      );
 
       expect(response.status).toBe(404);
       expect(response.body).toHaveProperty('success', false);
@@ -82,18 +86,19 @@ describe('Error Handling Integration Tests', () => {
         });
 
       expect(response.status).toBe(401);
-      expect(response.body.error).toHaveProperty('code', 'AUTHENTICATION_FAILED');
+      expect(response.body.error).toHaveProperty(
+        'code',
+        'AUTHENTICATION_FAILED',
+      );
     });
 
     it('should handle RateLimitExceededException correctly', async () => {
       // Make multiple requests to trigger rate limit
       const makeRequest = () =>
-        request(app.getHttpServer())
-          .post('/api/auth/login')
-          .send({
-            email: 'test@example.com',
-            password: 'password',
-          });
+        request(app.getHttpServer()).post('/api/auth/login').send({
+          email: 'test@example.com',
+          password: 'password',
+        });
 
       // Make requests until rate limit is hit
       let response;
@@ -103,7 +108,10 @@ describe('Error Handling Integration Tests', () => {
       }
 
       if (response.status === 429) {
-        expect(response.body.error).toHaveProperty('code', 'RATE_LIMIT_EXCEEDED');
+        expect(response.body.error).toHaveProperty(
+          'code',
+          'RATE_LIMIT_EXCEEDED',
+        );
         expect(response.body.metadata).toHaveProperty('retryAfter');
       }
     });
@@ -123,12 +131,10 @@ describe('Error Handling Integration Tests', () => {
 
     it('should handle ConflictException correctly', async () => {
       // Create a user
-      await request(app.getHttpServer())
-        .post('/api/users')
-        .send({
-          email: 'unique@example.com',
-          password: 'ValidPassword123',
-        });
+      await request(app.getHttpServer()).post('/api/users').send({
+        email: 'unique@example.com',
+        password: 'ValidPassword123',
+      });
 
       // Try to create again with same email
       const response = await request(app.getHttpServer())
@@ -145,8 +151,9 @@ describe('Error Handling Integration Tests', () => {
 
   describe('Error Response Format', () => {
     it('should return consistent error response format', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/api/users/invalid-id');
+      const response = await request(app.getHttpServer()).get(
+        '/api/users/invalid-id',
+      );
 
       expect(response.body).toHaveProperty('success', false);
       expect(response.body).toHaveProperty('error');
@@ -170,8 +177,9 @@ describe('Error Handling Integration Tests', () => {
     });
 
     it('should have valid ISO timestamp', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/api/users/invalid-id');
+      const response = await request(app.getHttpServer()).get(
+        '/api/users/invalid-id',
+      );
 
       const timestamp = response.body.error.timestamp;
       expect(() => new Date(timestamp).toISOString()).not.toThrow();
@@ -191,7 +199,7 @@ describe('Error Handling Integration Tests', () => {
       expect(response.status).toBe(400);
       expect(response.body.error).toHaveProperty('code', 'VALIDATION_FAILED');
       expect(response.body.error).toHaveProperty('validationErrors');
-      
+
       const errors = response.body.error.validationErrors;
       expect(typeof errors).toBe('object');
     });
@@ -207,8 +215,9 @@ describe('Error Handling Integration Tests', () => {
     });
 
     it('should return 401 for authentication errors', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/api/protected-endpoint');
+      const response = await request(app.getHttpServer()).get(
+        '/api/protected-endpoint',
+      );
 
       expect(response.status).toBe(401);
     });
@@ -223,8 +232,9 @@ describe('Error Handling Integration Tests', () => {
     });
 
     it('should return 404 for not found errors', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/api/users/nonexistent-id-12345');
+      const response = await request(app.getHttpServer()).get(
+        '/api/users/nonexistent-id-12345',
+      );
 
       expect(response.status).toBe(404);
     });
@@ -266,8 +276,9 @@ describe('Error Handling Integration Tests', () => {
   describe('Error Logging', () => {
     it('should log errors with proper context', async () => {
       // This test would check logs (requires spy on logger)
-      const response = await request(app.getHttpServer())
-        .get('/api/users/test-user-123');
+      const response = await request(app.getHttpServer()).get(
+        '/api/users/test-user-123',
+      );
 
       // Error should be logged with request context
       expect(response.status).toBe(404);

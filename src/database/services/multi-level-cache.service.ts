@@ -109,16 +109,28 @@ export class MultiLevelCacheService implements OnModuleInit {
    */
   async set<T>(key: string, value: T, ttl?: number): Promise<void> {
     const defaultTTLs = {
-      L1: 60,    // 1 minute
-      L2: 300,   // 5 minutes
-      L3: 3600,  // 1 hour
+      L1: 60, // 1 minute
+      L2: 300, // 5 minutes
+      L3: 3600, // 1 hour
     };
 
     const finalTTL = ttl || defaultTTLs.L3;
 
     await Promise.allSettled([
-      this.setToLevel('L1', this.l1Redis, key, value, Math.min(finalTTL, defaultTTLs.L1)),
-      this.setToLevel('L2', this.l2Redis, key, value, Math.min(finalTTL, defaultTTLs.L2)),
+      this.setToLevel(
+        'L1',
+        this.l1Redis,
+        key,
+        value,
+        Math.min(finalTTL, defaultTTLs.L1),
+      ),
+      this.setToLevel(
+        'L2',
+        this.l2Redis,
+        key,
+        value,
+        Math.min(finalTTL, defaultTTLs.L2),
+      ),
       this.setToLevel('L3', this.l3Redis, key, value, finalTTL),
     ]);
   }
@@ -156,7 +168,7 @@ export class MultiLevelCacheService implements OnModuleInit {
    */
   async warmupCriticalCache(): Promise<void> {
     this.logger.log('Starting cache warmup...');
-    
+
     const criticalKeys = [
       'market_price:BTC',
       'market_price:ETH',
@@ -183,14 +195,19 @@ export class MultiLevelCacheService implements OnModuleInit {
    * Get cache performance metrics
    */
   getMetrics(): CacheMetrics {
-    const totalHits = this.metrics.l1Hits + this.metrics.l2Hits + this.metrics.l3Hits;
-    const totalMisses = this.metrics.l1Misses + this.metrics.l2Misses + this.metrics.l3Misses;
+    const totalHits =
+      this.metrics.l1Hits + this.metrics.l2Hits + this.metrics.l3Hits;
+    const totalMisses =
+      this.metrics.l1Misses + this.metrics.l2Misses + this.metrics.l3Misses;
     const totalRequests = totalHits + totalMisses;
 
-    this.metrics.overallHitRate = totalRequests > 0 ? (totalHits / totalRequests) * 100 : 0;
-    this.metrics.averageResponseTime = this.responseTimes.length > 0
-      ? this.responseTimes.reduce((a, b) => a + b, 0) / this.responseTimes.length
-      : 0;
+    this.metrics.overallHitRate =
+      totalRequests > 0 ? (totalHits / totalRequests) * 100 : 0;
+    this.metrics.averageResponseTime =
+      this.responseTimes.length > 0
+        ? this.responseTimes.reduce((a, b) => a + b, 0) /
+          this.responseTimes.length
+        : 0;
 
     return { ...this.metrics };
   }
@@ -230,8 +247,10 @@ export class MultiLevelCacheService implements OnModuleInit {
       metrics: this.getMetrics(),
     };
 
-    const allHealthy = Object.values(details).slice(0, 3).every(status => status === 'healthy');
-    
+    const allHealthy = Object.values(details)
+      .slice(0, 3)
+      .every((status) => status === 'healthy');
+
     return {
       status: allHealthy ? 'healthy' : 'degraded',
       details,
@@ -267,7 +286,7 @@ export class MultiLevelCacheService implements OnModuleInit {
    */
   async getUserTrades(userId: number, limit: number = 50): Promise<any[]> {
     const cacheKey = `user_trades_list:${userId}:${limit}`;
-    
+
     let trades = await this.get<any[]>(cacheKey);
     if (trades) {
       return trades;
@@ -275,15 +294,15 @@ export class MultiLevelCacheService implements OnModuleInit {
 
     // Get trade IDs from Redis set
     const tradeIds = await this.l1Redis.smembers(`user_trades:${userId}`);
-    
+
     if (tradeIds.length === 0) {
       return [];
     }
 
     // Batch get trade data
-    const tradeKeys = tradeIds.map(id => `trade:${id}`);
+    const tradeKeys = tradeIds.map((id) => `trade:${id}`);
     const tradeResults = await Promise.all(
-      tradeKeys.map(key => this.get(key))
+      tradeKeys.map((key) => this.get(key)),
     );
 
     trades = tradeResults.filter(Boolean).slice(0, limit);
@@ -325,21 +344,34 @@ export class MultiLevelCacheService implements OnModuleInit {
     }
   }
 
-  private async scanAndDelete(redis: Redis, pattern: string, pipeline: any): Promise<void> {
+  private async scanAndDelete(
+    redis: Redis,
+    pattern: string,
+    pipeline: any,
+  ): Promise<void> {
     try {
       let cursor = '0';
       do {
-        const [nextCursor, keys] = await redis.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
+        const [nextCursor, keys] = await redis.scan(
+          cursor,
+          'MATCH',
+          pattern,
+          'COUNT',
+          100,
+        );
         cursor = nextCursor;
-        
+
         if (keys.length > 0) {
-          keys.forEach(key => pipeline.del(key));
+          keys.forEach((key) => pipeline.del(key));
         }
       } while (cursor !== '0');
 
       await pipeline.exec();
     } catch (error) {
-      this.logger.warn(`Error scanning and deleting pattern ${pattern}:`, error);
+      this.logger.warn(
+        `Error scanning and deleting pattern ${pattern}:`,
+        error,
+      );
     }
   }
 

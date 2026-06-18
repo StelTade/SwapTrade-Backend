@@ -18,7 +18,8 @@ import { ErrorLoggerService } from '../logging/error-logger.service';
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
   constructor(
-    @Optional() @Inject('ErrorLoggerService')
+    @Optional()
+    @Inject('ErrorLoggerService')
     private readonly errorLogger?: ErrorLoggerService,
   ) {}
 
@@ -41,7 +42,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       const exceptionResponse = exception.getResponse();
 
       // Format validation errors from class-validator
-      if (status === HttpStatus.BAD_REQUEST && this.isValidationError(exceptionResponse)) {
+      if (
+        status === HttpStatus.BAD_REQUEST &&
+        this.isValidationError(exceptionResponse)
+      ) {
         errorResponse = this.formatValidationError(exceptionResponse);
       } else {
         errorResponse = {
@@ -105,7 +109,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   private isValidationError(response: any): boolean {
     return (
       Array.isArray(response.message) &&
-      response.message.some((msg) => typeof msg === 'string' && msg.includes('is'))
+      response.message.some(
+        (msg) => typeof msg === 'string' && msg.includes('is'),
+      )
     );
   }
 
@@ -113,7 +119,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
    * Format validation errors into a consistent structure
    */
   private formatValidationError(response: any): any {
-    const errors = Array.isArray(response.message) ? response.message : [response.message];
+    const errors = Array.isArray(response.message)
+      ? response.message
+      : [response.message];
     const formattedErrors = {};
 
     errors.forEach((error) => {

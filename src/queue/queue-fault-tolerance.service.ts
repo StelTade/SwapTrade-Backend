@@ -76,7 +76,9 @@ export class QueueFaultToleranceService {
       // Service recovered, close the circuit
       breaker.state = CircuitBreakerState.CLOSED;
       breaker.lastStateChange = new Date();
-      this.logger.log(`Circuit breaker CLOSED for ${serviceId} (service recovered)`);
+      this.logger.log(
+        `Circuit breaker CLOSED for ${serviceId} (service recovered)`,
+      );
       this.eventEmitter.emit('circuit-breaker.closed', { serviceId });
     }
   }
@@ -92,15 +94,21 @@ export class QueueFaultToleranceService {
 
     if (breaker.state === CircuitBreakerState.CLOSED) {
       // Check if threshold exceeded
-      const failureRate = breaker.failureCount / (breaker.failureCount + breaker.successCount);
+      const failureRate =
+        breaker.failureCount / (breaker.failureCount + breaker.successCount);
       if (failureRate >= this.config.faultTolerance.circuitBreakerThreshold) {
         breaker.state = CircuitBreakerState.OPEN;
         breaker.lastStateChange = new Date();
         breaker.nextRetryTime = new Date(
           Date.now() + this.config.faultTolerance.circuitBreakerResetTimeoutMs,
         );
-        this.logger.warn(`Circuit breaker OPEN for ${serviceId} (failure rate: ${(failureRate * 100).toFixed(1)}%)`);
-        this.eventEmitter.emit('circuit-breaker.opened', { serviceId, failureRate });
+        this.logger.warn(
+          `Circuit breaker OPEN for ${serviceId} (failure rate: ${(failureRate * 100).toFixed(1)}%)`,
+        );
+        this.eventEmitter.emit('circuit-breaker.opened', {
+          serviceId,
+          failureRate,
+        });
       }
     } else if (breaker.state === CircuitBreakerState.HALF_OPEN) {
       // Failed during test, open again
@@ -109,7 +117,9 @@ export class QueueFaultToleranceService {
       breaker.nextRetryTime = new Date(
         Date.now() + this.config.faultTolerance.circuitBreakerResetTimeoutMs,
       );
-      this.logger.warn(`Circuit breaker OPEN for ${serviceId} (failed during half-open test)`);
+      this.logger.warn(
+        `Circuit breaker OPEN for ${serviceId} (failed during half-open test)`,
+      );
       this.eventEmitter.emit('circuit-breaker.opened', { serviceId });
     }
   }
@@ -133,7 +143,9 @@ export class QueueFaultToleranceService {
         if (breaker.nextRetryTime && new Date() >= breaker.nextRetryTime) {
           breaker.state = CircuitBreakerState.HALF_OPEN;
           breaker.lastStateChange = new Date();
-          this.logger.log(`Circuit breaker HALF_OPEN for ${serviceId} (testing recovery)`);
+          this.logger.log(
+            `Circuit breaker HALF_OPEN for ${serviceId} (testing recovery)`,
+          );
           this.eventEmitter.emit('circuit-breaker.half-open', { serviceId });
           return true;
         }
@@ -201,8 +213,10 @@ export class QueueFaultToleranceService {
 
     // Sort by priority
     targets.sort((a, b) => a.priority - b.priority);
-    
-    this.logger.log(`Failover target registered: ${targetId} for ${serviceId} (priority: ${priority})`);
+
+    this.logger.log(
+      `Failover target registered: ${targetId} for ${serviceId} (priority: ${priority})`,
+    );
   }
 
   /**
@@ -220,7 +234,9 @@ export class QueueFaultToleranceService {
     }
 
     targets.splice(index, 1);
-    this.logger.log(`Failover target unregistered: ${targetId} from ${serviceId}`);
+    this.logger.log(
+      `Failover target unregistered: ${targetId} from ${serviceId}`,
+    );
     return true;
   }
 
@@ -252,8 +268,13 @@ export class QueueFaultToleranceService {
       target.isAvailable = false;
       target.consecutiveFailures++;
       target.lastHealthCheck = new Date();
-      this.logger.warn(`Failover target marked unavailable: ${targetId} for ${serviceId}`);
-      this.eventEmitter.emit('failover.target-unavailable', { serviceId, targetId });
+      this.logger.warn(
+        `Failover target marked unavailable: ${targetId} for ${serviceId}`,
+      );
+      this.eventEmitter.emit('failover.target-unavailable', {
+        serviceId,
+        targetId,
+      });
     }
   }
 
@@ -271,8 +292,13 @@ export class QueueFaultToleranceService {
       target.isAvailable = true;
       target.consecutiveFailures = 0;
       target.lastHealthCheck = new Date();
-      this.logger.log(`Failover target marked available: ${targetId} for ${serviceId}`);
-      this.eventEmitter.emit('failover.target-available', { serviceId, targetId });
+      this.logger.log(
+        `Failover target marked available: ${targetId} for ${serviceId}`,
+      );
+      this.eventEmitter.emit('failover.target-available', {
+        serviceId,
+        targetId,
+      });
     }
   }
 
@@ -293,7 +319,7 @@ export class QueueFaultToleranceService {
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       const target = this.getNextFailoverTarget(serviceId);
-      
+
       if (!target) {
         this.logger.error(`No available failover targets for ${serviceId}`);
         break;
@@ -323,7 +349,9 @@ export class QueueFaultToleranceService {
       return fallback();
     }
 
-    throw lastError || new Error(`All failover attempts failed for ${serviceId}`);
+    throw (
+      lastError || new Error(`All failover attempts failed for ${serviceId}`)
+    );
   }
 
   // ==================== Retry Logic ====================
@@ -367,11 +395,17 @@ export class QueueFaultToleranceService {
    */
   healthCheck(): {
     healthy: boolean;
-    circuitBreakers: Record<string, { state: CircuitBreakerState; failureCount: number }>;
+    circuitBreakers: Record<
+      string,
+      { state: CircuitBreakerState; failureCount: number }
+    >;
     issues: string[];
   } {
     const issues: string[] = [];
-    const breakerStatuses: Record<string, { state: CircuitBreakerState; failureCount: number }> = {};
+    const breakerStatuses: Record<
+      string,
+      { state: CircuitBreakerState; failureCount: number }
+    > = {};
 
     for (const [serviceId, breaker] of this.circuitBreakers.entries()) {
       breakerStatuses[serviceId] = {

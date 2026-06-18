@@ -158,7 +158,11 @@ export class StreamManagerService {
     return subs ? Array.from(subs) : [];
   }
 
-  private bufferMessage(streamName: string, data: any, config: StreamConfig): void {
+  private bufferMessage(
+    streamName: string,
+    data: any,
+    config: StreamConfig,
+  ): void {
     const buffer = this.messageBuffers.get(streamName) || [];
     buffer.push(data);
     this.messageBuffers.set(streamName, buffer);
@@ -194,7 +198,7 @@ export class StreamManagerService {
 
   private emitMessage(streamName: string, data: any): void {
     this.lastMessageTime.set(streamName, Date.now());
-    
+
     this.eventEmitter.emit(`websocket.stream.${streamName}`, {
       streamName,
       data,
@@ -203,7 +207,9 @@ export class StreamManagerService {
 
     const subs = this.subscribers.get(streamName);
     if (subs) {
-      this.logger.debug(`Published to ${subs.size} subscribers on stream ${streamName}`);
+      this.logger.debug(
+        `Published to ${subs.size} subscribers on stream ${streamName}`,
+      );
     }
   }
 }

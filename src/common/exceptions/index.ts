@@ -87,13 +87,11 @@ export class UnauthorizedAccessException extends BaseException {
  * Exception thrown when user authentication fails
  */
 export class AuthenticationFailedException extends BaseException {
-  constructor(reason: string = 'Authentication failed', metadata?: Record<string, any>) {
-    super(
-      'AUTHENTICATION_FAILED',
-      reason,
-      HttpStatus.UNAUTHORIZED,
-      metadata,
-    );
+  constructor(
+    reason: string = 'Authentication failed',
+    metadata?: Record<string, any>,
+  ) {
+    super('AUTHENTICATION_FAILED', reason, HttpStatus.UNAUTHORIZED, metadata);
 
     Object.setPrototypeOf(this, AuthenticationFailedException.prototype);
   }
@@ -142,12 +140,7 @@ export class ValidationException extends BaseException {
  */
 export class ConflictException extends BaseException {
   constructor(message: string, metadata?: Record<string, any>) {
-    super(
-      'CONFLICT',
-      message,
-      HttpStatus.CONFLICT,
-      metadata,
-    );
+    super('CONFLICT', message, HttpStatus.CONFLICT, metadata);
 
     Object.setPrototypeOf(this, ConflictException.prototype);
   }
@@ -157,7 +150,11 @@ export class ConflictException extends BaseException {
  * Exception thrown for database operation errors
  */
 export class DatabaseException extends BaseException {
-  constructor(operation: string, reason: string, metadata?: Record<string, any>) {
+  constructor(
+    operation: string,
+    reason: string,
+    metadata?: Record<string, any>,
+  ) {
     super(
       'DATABASE_ERROR',
       `Database error during ${operation}: ${reason}`,
@@ -214,7 +211,11 @@ export class TimeoutException extends BaseException {
  * Exception thrown when user performs restricted operation
  */
 export class RestrictedOperationException extends BaseException {
-  constructor(operation: string, reason: string, metadata?: Record<string, any>) {
+  constructor(
+    operation: string,
+    reason: string,
+    metadata?: Record<string, any>,
+  ) {
     super(
       'RESTRICTED_OPERATION',
       `Operation '${operation}' is restricted: ${reason}`,

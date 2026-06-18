@@ -40,7 +40,7 @@ export class LoggerService implements NestLoggerService {
 
   constructor() {
     this.asyncLocalStorage = new AsyncLocalStorage();
-    
+
     const customFormat = winston.format.combine(
       winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }),
       winston.format.errors({ stack: true }),
@@ -108,8 +108,10 @@ export class LoggerService implements NestLoggerService {
 
     for (const key in masked) {
       const lowerKey = key.toLowerCase();
-      
-      if (LoggerService.sensitiveFields.some(field => lowerKey.includes(field))) {
+
+      if (
+        LoggerService.sensitiveFields.some((field) => lowerKey.includes(field))
+      ) {
         masked[key] = '***REDACTED***';
       } else if (typeof masked[key] === 'object' && masked[key] !== null) {
         masked[key] = this.maskSensitiveData(masked[key]);

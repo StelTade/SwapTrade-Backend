@@ -45,7 +45,8 @@ export class DatabaseShardingService {
     // User-based sharding for user-related data
     this.strategies.set('user', {
       name: 'user',
-      getShardKey: (data: any) => data.userId?.toString() || data.id?.toString(),
+      getShardKey: (data: any) =>
+        data.userId?.toString() || data.id?.toString(),
       getShard: (shardKey: string) => {
         const hash = this.hashString(shardKey);
         const shardIndex = hash % this.shards.size;
@@ -63,7 +64,8 @@ export class DatabaseShardingService {
       },
       getShard: (shardKey: string) => {
         const [year, month] = shardKey.split('-');
-        const timeHash = (parseInt(year) * 12 + parseInt(month)) % this.shards.size;
+        const timeHash =
+          (parseInt(year) * 12 + parseInt(month)) % this.shards.size;
         return Array.from(this.shards.keys())[timeHash];
       },
     });
@@ -106,10 +108,10 @@ export class DatabaseShardingService {
         });
 
         await dataSource.initialize();
-        
+
         this.shards.set(config.id, dataSource);
         this.shardConfigs.set(config.id, config);
-        
+
         this.logger.log(`Shard ${config.id} initialized successfully`);
       } catch (error) {
         this.logger.error(`Failed to initialize shard ${config.id}:`, error);
@@ -184,7 +186,9 @@ export class DatabaseShardingService {
 
         try {
           const repository = shard.getRepository(Trade); // Adjust entity type as needed
-          const shardResult = await queryBuilder(repository as unknown as Repository<T>);
+          const shardResult = await queryBuilder(
+            repository as unknown as Repository<T>,
+          );
           results.push(...shardResult);
         } catch (error) {
           this.logger.error(`Query failed on shard '${shardId}':`, error);
@@ -213,9 +217,11 @@ export class DatabaseShardingService {
 
     if (timeRange && strategy === 'time') {
       // Calculate shards for time range
-      const startKey = shardingStrategy.getShardKey({ timestamp: timeRange.start });
+      const startKey = shardingStrategy.getShardKey({
+        timestamp: timeRange.start,
+      });
       const endKey = shardingStrategy.getShardKey({ timestamp: timeRange.end });
-      
+
       // Get all shards in the time range
       const allShardIds = Array.from(this.shards.keys());
       for (const shardId of allShardIds) {
@@ -243,7 +249,11 @@ export class DatabaseShardingService {
   /**
    * Insert data into appropriate shard
    */
-  async insert<T extends ObjectLiteral>(entityClass: any, data: any, strategy: string = 'user'): Promise<T> {
+  async insert<T extends ObjectLiteral>(
+    entityClass: any,
+    data: any,
+    strategy: string = 'user',
+  ): Promise<T> {
     const repository = await this.getRepository<T>(entityClass, data, strategy);
     return await repository.save(data);
   }
@@ -273,13 +283,15 @@ export class DatabaseShardingService {
     }
 
     // Insert into each shard
-    const insertPromises = Array.from(dataByShard.entries()).map(async ([shardId, data]) => {
-      const shard = this.shards.get(shardId);
-      if (!shard) return;
+    const insertPromises = Array.from(dataByShard.entries()).map(
+      async ([shardId, data]) => {
+        const shard = this.shards.get(shardId);
+        if (!shard) return;
 
-      const repository = shard.getRepository(entityClass);
-      await repository.insert(data);
-    });
+        const repository = shard.getRepository(entityClass);
+        await repository.insert(data);
+      },
+    );
 
     await Promise.all(insertPromises);
   }
@@ -314,12 +326,14 @@ export class DatabaseShardingService {
     // Insert into target shard
     if (data.length > 0) {
       await toRepository.insert(data);
-      
+
       // Delete from source shard after successful migration
       await fromRepository.delete(filters);
     }
 
-    this.logger.log(`Migrated ${data.length} records from ${fromShardId} to ${toShardId}`);
+    this.logger.log(
+      `Migrated ${data.length} records from ${fromShardId} to ${toShardId}`,
+    );
   }
 
   /**
@@ -332,7 +346,7 @@ export class DatabaseShardingService {
       try {
         // Test connection
         await shard.query('SELECT 1');
-        
+
         // Get basic stats
         const tradeCount = await shard.getRepository(Trade).count();
         const balanceCount = await shard.getRepository(UserBalance).count();
@@ -360,7 +374,7 @@ export class DatabaseShardingService {
    */
   async rebalanceShards(): Promise<void> {
     this.logger.log('Starting shard rebalancing...');
-    
+
     const healthStatus = await this.getShardHealth();
     const shardLoads: Record<string, number> = {};
 
@@ -384,7 +398,9 @@ export class DatabaseShardingService {
       .filter(([_, load]) => load < avgLoad * 0.5)
       .map(([shardId, _]) => shardId);
 
-    this.logger.log(`Found ${overloadedShards.length} overloaded and ${underloadedShards.length} underloaded shards`);
+    this.logger.log(
+      `Found ${overloadedShards.length} overloaded and ${underloadedShards.length} underloaded shards`,
+    );
 
     // In a real implementation, you would move data from overloaded to underloaded shards
     // This is a placeholder for the rebalancing logic
@@ -402,7 +418,7 @@ export class DatabaseShardingService {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
     return Math.abs(hash);
@@ -413,7 +429,7 @@ export class DatabaseShardingService {
    */
   private consistentHash(key: string, nodes: string[]): string {
     if (nodes.length === 0) return '';
-    
+
     // Simple consistent hashing - in production, use a proper ring implementation
     const hash = this.hashString(key);
     const index = hash % nodes.length;

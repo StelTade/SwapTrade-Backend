@@ -1,4 +1,9 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+} from '@nestjs/common';
 import { AuditService } from '../logging/audit_service';
 
 @Injectable()
@@ -24,10 +29,12 @@ export class BalanceHistoryGuard implements CanActivate {
         currentUserId,
         false,
         request.ip,
-        request.get('User-Agent')
+        request.get('User-Agent'),
       );
 
-      throw new ForbiddenException('Access denied: Cannot view other users\' balance history');
+      throw new ForbiddenException(
+        "Access denied: Cannot view other users' balance history",
+      );
     }
 
     // Log authorized access
@@ -35,7 +42,7 @@ export class BalanceHistoryGuard implements CanActivate {
       currentUserId,
       true,
       request.ip,
-      request.get('User-Agent')
+      request.get('User-Agent'),
     );
 
     return true;

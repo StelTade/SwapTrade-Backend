@@ -37,7 +37,7 @@ export class MessageQueueService extends EventEmitter {
     failedMessages: 0,
     averageProcessingTime: 0,
     queueSize: 0,
-    messagesByPriority: { high: 0, medium: 0, low: 0 }
+    messagesByPriority: { high: 0, medium: 0, low: 0 },
   };
 
   constructor() {
@@ -52,7 +52,7 @@ export class MessageQueueService extends EventEmitter {
     room: string,
     event: string,
     data: any,
-    priority: 'high' | 'medium' | 'low' = 'medium'
+    priority: 'high' | 'medium' | 'low' = 'medium',
   ): string {
     if (this.messageQueue.length >= this.MAX_QUEUE_SIZE) {
       this.logger.warn('Message queue is full, dropping low priority messages');
@@ -67,7 +67,7 @@ export class MessageQueueService extends EventEmitter {
       priority,
       timestamp: new Date(),
       retryCount: 0,
-      maxRetries: priority === 'high' ? 3 : 2
+      maxRetries: priority === 'high' ? 3 : 2,
     };
 
     this.insertMessageByPriority(message);
@@ -97,7 +97,7 @@ export class MessageQueueService extends EventEmitter {
       failedMessages: 0,
       averageProcessingTime: 0,
       queueSize: 0,
-      messagesByPriority: { high: 0, medium: 0, low: 0 }
+      messagesByPriority: { high: 0, medium: 0, low: 0 },
     };
     this.logger.log('Message queue cleared');
   }
@@ -143,7 +143,7 @@ export class MessageQueueService extends EventEmitter {
     try {
       // Emit message for broadcasting
       this.emit('processMessage', message);
-      
+
       // Mark as processed
       this.processing.delete(message.id);
       this.stats.processedMessages++;
@@ -151,8 +151,9 @@ export class MessageQueueService extends EventEmitter {
       const processingTime = Date.now() - startTime;
       this.updateAverageProcessingTime(processingTime);
 
-      this.logger.debug(`Message processed: ${message.id} in ${processingTime}ms`);
-
+      this.logger.debug(
+        `Message processed: ${message.id} in ${processingTime}ms`,
+      );
     } catch (error) {
       this.processing.delete(message.id);
       message.retryCount++;
@@ -161,11 +162,16 @@ export class MessageQueueService extends EventEmitter {
         // Retry after delay
         setTimeout(() => {
           this.insertMessageByPriority(message);
-          this.logger.warn(`Retrying message: ${message.id} (attempt ${message.retryCount})`);
+          this.logger.warn(
+            `Retrying message: ${message.id} (attempt ${message.retryCount})`,
+          );
         }, this.RETRY_DELAY);
       } else {
         this.stats.failedMessages++;
-        this.logger.error(`Message failed after ${message.retryCount} retries: ${message.id}`, error);
+        this.logger.error(
+          `Message failed after ${message.retryCount} retries: ${message.id}`,
+          error,
+        );
       }
     }
   }
@@ -195,7 +201,7 @@ export class MessageQueueService extends EventEmitter {
    */
   private dropLowPriorityMessages(): void {
     const originalLength = this.messageQueue.length;
-    
+
     // Remove low priority messages from the end
     for (let i = this.messageQueue.length - 1; i >= 0; i--) {
       if (this.messageQueue[i].priority === 'low') {
@@ -215,10 +221,10 @@ export class MessageQueueService extends EventEmitter {
    */
   private updateStats(): void {
     this.stats.queueSize = this.messageQueue.length;
-    
+
     // Count by priority
     this.stats.messagesByPriority = { high: 0, medium: 0, low: 0 };
-    this.messageQueue.forEach(message => {
+    this.messageQueue.forEach((message) => {
       this.stats.messagesByPriority[message.priority]++;
     });
   }
@@ -230,8 +236,9 @@ export class MessageQueueService extends EventEmitter {
     if (this.stats.processedMessages === 1) {
       this.stats.averageProcessingTime = processingTime;
     } else {
-      this.stats.averageProcessingTime = 
-        (this.stats.averageProcessingTime * (this.stats.processedMessages - 1) + processingTime) / 
+      this.stats.averageProcessingTime =
+        (this.stats.averageProcessingTime * (this.stats.processedMessages - 1) +
+          processingTime) /
         this.stats.processedMessages;
     }
   }
@@ -247,9 +254,7 @@ export class MessageQueueService extends EventEmitter {
    * Get messages for specific room
    */
   getMessagesForRoom(room: string, limit: number = 100): QueuedMessage[] {
-    return this.messageQueue
-      .filter(msg => msg.room === room)
-      .slice(0, limit);
+    return this.messageQueue.filter((msg) => msg.room === room).slice(0, limit);
   }
 
   /**
@@ -257,7 +262,7 @@ export class MessageQueueService extends EventEmitter {
    */
   removeMessagesForRoom(room: string): number {
     const originalLength = this.messageQueue.length;
-    this.messageQueue = this.messageQueue.filter(msg => msg.room !== room);
+    this.messageQueue = this.messageQueue.filter((msg) => msg.room !== room);
     return originalLength - this.messageQueue.length;
   }
 }

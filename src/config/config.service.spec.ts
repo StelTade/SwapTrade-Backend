@@ -63,8 +63,12 @@ describe('ConfigService', () => {
 
   describe('Feature flags', () => {
     it('should check feature flags correctly', () => {
-      expect(typeof service.isFeatureEnabled('enableAdvancedCaching')).toBe('boolean');
-      expect(typeof service.isFeatureEnabled('enableHotReload')).toBe('boolean');
+      expect(typeof service.isFeatureEnabled('enableAdvancedCaching')).toBe(
+        'boolean',
+      );
+      expect(typeof service.isFeatureEnabled('enableHotReload')).toBe(
+        'boolean',
+      );
     });
 
     it('should have features configuration', () => {

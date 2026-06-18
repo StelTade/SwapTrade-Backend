@@ -11,13 +11,7 @@ import { HorizontalScalingModule } from '../../queue/horizontal-scaling.module';
  *           SchedulerFailoverService, HorizontalScaling services
  */
 @Module({
-  imports: [
-    OriginalQueueModule,
-    HorizontalScalingModule,
-  ],
-  exports: [
-    OriginalQueueModule,
-    HorizontalScalingModule,
-  ],
+  imports: [OriginalQueueModule, HorizontalScalingModule],
+  exports: [OriginalQueueModule, HorizontalScalingModule],
 })
 export class InfrastructureQueueModule {}

@@ -2,7 +2,9 @@ import { ErrorCodeRegistry } from '../error-code.registry';
 
 describe('ErrorCodeRegistry', () => {
   it('should get error definition by code', () => {
-    const definition = ErrorCodeRegistry.getErrorDefinition('AUTH_TOKEN_EXPIRED_401');
+    const definition = ErrorCodeRegistry.getErrorDefinition(
+      'AUTH_TOKEN_EXPIRED_401',
+    );
 
     expect(definition).toBeDefined();
     expect(definition?.code).toBe('AUTH_TOKEN_EXPIRED_401');
@@ -12,7 +14,8 @@ describe('ErrorCodeRegistry', () => {
   });
 
   it('should return null for non-existent code', () => {
-    const definition = ErrorCodeRegistry.getErrorDefinition('NON_EXISTENT_CODE');
+    const definition =
+      ErrorCodeRegistry.getErrorDefinition('NON_EXISTENT_CODE');
 
     expect(definition).toBeUndefined();
   });
@@ -53,7 +56,7 @@ describe('ErrorCodeRegistry', () => {
     expect(sortedCodes.length).toBeGreaterThan(0);
 
     // Check that codes are sorted by category
-    const categories = sortedCodes.map(item => item.definition.category);
+    const categories = sortedCodes.map((item) => item.definition.category);
     const sortedCategories = [...categories].sort();
 
     expect(categories).toEqual(sortedCategories);

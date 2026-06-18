@@ -68,7 +68,10 @@ export class UserStatusChangedEvent {
 // ─── Legacy User Domain Events (keep for backward-compat) ─────────────────────
 
 export class UserCreatedEvent {
-  constructor(public userId: string, public email: string) {}
+  constructor(
+    public userId: string,
+    public email: string,
+  ) {}
 }
 
 export class UserUpdatedEvent {
@@ -96,7 +99,10 @@ export class BalanceRecalculationRequestedEvent {
 }
 
 export class BalanceRecalculatedEvent {
-  constructor(public userId: string, public totalValue: number) {}
+  constructor(
+    public userId: string,
+    public totalValue: number,
+  ) {}
 }
 
 // Trading Domain Events
@@ -135,7 +141,10 @@ export class PortfolioUpdatedEvent {
 }
 
 export class PortfolioRebalancedEvent {
-  constructor(public userId: string, public newAllocation: unknown) {}
+  constructor(
+    public userId: string,
+    public newAllocation: unknown,
+  ) {}
 }
 
 // Risk Domain Events

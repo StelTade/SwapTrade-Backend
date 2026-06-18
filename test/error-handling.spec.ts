@@ -7,7 +7,10 @@ import { ErrorMonitoringService } from 'src/common/services/error-monitoring.ser
 import { RetryService } from 'src/common/services/retry.service';
 import { SagaService, type SagaStep } from 'src/common/services/saga.service';
 import { DeadLetterQueueService } from 'src/common/services/dead-letter-queue.service';
-import { ErrorCategorizer, ErrorCategory } from 'src/common/exceptions/error-categorizer';
+import {
+  ErrorCategorizer,
+  ErrorCategory,
+} from 'src/common/exceptions/error-categorizer';
 
 describe('Error Handling System', () => {
   let correlationIdService: CorrelationIdService;
@@ -31,13 +34,20 @@ describe('Error Handling System', () => {
       ],
     }).compile();
 
-    correlationIdService = module.get<CorrelationIdService>(CorrelationIdService);
-    circuitBreakerService = module.get<CircuitBreakerService>(CircuitBreakerService);
+    correlationIdService =
+      module.get<CorrelationIdService>(CorrelationIdService);
+    circuitBreakerService = module.get<CircuitBreakerService>(
+      CircuitBreakerService,
+    );
     retryService = module.get<RetryService>(RetryService);
     bulkheadService = module.get<BulkheadService>(BulkheadService);
-    deadLetterQueueService = module.get<DeadLetterQueueService>(DeadLetterQueueService);
+    deadLetterQueueService = module.get<DeadLetterQueueService>(
+      DeadLetterQueueService,
+    );
     sagaService = module.get<SagaService>(SagaService);
-    errorMonitoringService = module.get<ErrorMonitoringService>(ErrorMonitoringService);
+    errorMonitoringService = module.get<ErrorMonitoringService>(
+      ErrorMonitoringService,
+    );
   });
 
   describe('CorrelationIdService', () => {
@@ -55,7 +65,9 @@ describe('Error Handling System', () => {
       const context = correlationIdService.createContext('user456');
 
       correlationIdService.setContext(context, () => {
-        expect(correlationIdService.getCorrelationId()).toBe(context.correlationId);
+        expect(correlationIdService.getCorrelationId()).toBe(
+          context.correlationId,
+        );
         expect(correlationIdService.getTraceId()).toBe(context.traceId);
         expect(correlationIdService.getUserId()).toBe('user456');
       });
@@ -81,7 +93,10 @@ describe('Error Handling System', () => {
         'x-request-id': 'test-request',
       };
 
-      const context = correlationIdService.createContextFromHeaders(headers, 'user001');
+      const context = correlationIdService.createContextFromHeaders(
+        headers,
+        'user001',
+      );
 
       expect(context.correlationId).toBe('test-correlation');
       expect(context.traceId).toBe('test-trace');
@@ -206,10 +221,7 @@ describe('Error Handling System', () => {
         name: 'success-breaker',
       });
 
-      const result = await circuitBreakerService.execute(
-        'success-breaker',
-        fn,
-      );
+      const result = await circuitBreakerService.execute('success-breaker', fn);
 
       expect(result).toBe('success');
     });
@@ -435,7 +447,10 @@ describe('Error Handling System', () => {
         },
       ];
 
-      const result = await sagaService.executeParallelSteps('parallel-saga', steps);
+      const result = await sagaService.executeParallelSteps(
+        'parallel-saga',
+        steps,
+      );
 
       expect(result.success).toBe(true);
       expect(result.completedSteps.length).toBe(3);

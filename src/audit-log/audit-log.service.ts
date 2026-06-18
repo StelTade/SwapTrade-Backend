@@ -235,7 +235,7 @@ export class AuditLogService {
         log.previousChecksum || '',
         log.createdAt.toISOString(),
       ];
-      csvRows.push(row.map(field => `"${field}"`).join(','));
+      csvRows.push(row.map((field) => `"${field}"`).join(','));
     }
 
     return csvRows.join('\n');

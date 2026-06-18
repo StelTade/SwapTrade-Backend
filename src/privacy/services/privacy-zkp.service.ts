@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import * as crypto from 'crypto';
 
 /**
@@ -37,7 +41,10 @@ export class PrivacyZKPService {
   createBalanceCommitment(balance: string, nonce?: string): BalanceCommitment {
     const usedNonce = nonce || this.generateNonce();
     const combined = `${balance}:${usedNonce}`;
-    const commitment = crypto.createHash('sha256').update(combined).digest('hex');
+    const commitment = crypto
+      .createHash('sha256')
+      .update(combined)
+      .digest('hex');
 
     return {
       commitment,
@@ -68,7 +75,9 @@ export class PrivacyZKPService {
       const challengeNum = BigInt(challenge);
 
       if (balanceNum < minNum) {
-        throw new BadRequestException('Balance is insufficient to generate valid proof');
+        throw new BadRequestException(
+          'Balance is insufficient to generate valid proof',
+        );
       }
 
       // Generate a witness (random value)
@@ -268,7 +277,9 @@ export class PrivacyZKPService {
     const balanceNum = BigInt(balance);
 
     if (balanceNum <= 0n) {
-      throw new BadRequestException('Balance must be positive to generate non-zero proof');
+      throw new BadRequestException(
+        'Balance must be positive to generate non-zero proof',
+      );
     }
 
     const proof = crypto

@@ -1,7 +1,11 @@
 import { Injectable, Inject, Optional } from '@nestjs/common';
 import { Request } from 'express';
 import { LoggerService } from './logger_service';
-import { categorizeError, getErrorDetails, ErrorCategory } from '../exceptions/error-codes';
+import {
+  categorizeError,
+  getErrorDetails,
+  ErrorCategory,
+} from '../exceptions/error-codes';
 import { ConfigService } from '../../config/config.service';
 import { AuditLogService } from '../security/audit-log.service';
 import { AuditSeverity, AuditEventType } from '../security/audit-log.entity';
@@ -32,7 +36,8 @@ export interface ErrorLog {
 @Injectable()
 export class ErrorLoggerService {
   constructor(
-    @Optional() @Inject('LoggerService')
+    @Optional()
+    @Inject('LoggerService')
     private readonly logger?: LoggerService,
     private readonly configService?: ConfigService,
     @Optional() private readonly auditLogger?: AuditLogService,
@@ -59,19 +64,15 @@ export class ErrorLoggerService {
 
       // Log to logger service if available
       if (this.logger) {
-        this.logger.error(
-          'Application Error',
-          errorLog.stack,
-          {
-            correlationId: errorLog.correlationId,
-            userId: errorLog.userId,
-            method: errorLog.method,
-            url: errorLog.url,
-            statusCode: errorLog.statusCode,
-            errorCode: errorLog.errorCode,
-            errorCategory: errorLog.errorCategory,
-          },
-        );
+        this.logger.error('Application Error', errorLog.stack, {
+          correlationId: errorLog.correlationId,
+          userId: errorLog.userId,
+          method: errorLog.method,
+          url: errorLog.url,
+          statusCode: errorLog.statusCode,
+          errorCode: errorLog.errorCode,
+          errorCategory: errorLog.errorCategory,
+        });
       }
 
       // Always log to console as fallback
@@ -86,16 +87,22 @@ export class ErrorLoggerService {
       }
 
       // Audit critical security errors
-      if (this.auditLogger && (statusCode === 401 || statusCode === 403 || statusCode >= 500)) {
-        this.auditLogger.log(
-          {
-          eventType: AuditEventType.SUSPICIOUS_ACTIVITY,
-          severity: statusCode >= 500 ? AuditSeverity.CRITICAL : AuditSeverity.WARNING,
-          metadata: { errorCode, statusCode, message: errorLog.message },
-          userId: errorLog.userId,
-          ipAddress: (request as any)?.ip,
-        } as any).catch((e: any) => console.error('Failed to audit error', e));
-
+      if (
+        this.auditLogger &&
+        (statusCode === 401 || statusCode === 403 || statusCode >= 500)
+      ) {
+        this.auditLogger
+          .log({
+            eventType: AuditEventType.SUSPICIOUS_ACTIVITY,
+            severity:
+              statusCode >= 500
+                ? AuditSeverity.CRITICAL
+                : AuditSeverity.WARNING,
+            metadata: { errorCode, statusCode, message: errorLog.message },
+            userId: errorLog.userId,
+            ipAddress: (request as any)?.ip,
+          } as any)
+          .catch((e: any) => console.error('Failed to audit error', e));
       }
     } catch (loggingError) {
       console.error('Error while logging error:', loggingError);
@@ -118,8 +125,8 @@ export class ErrorLoggerService {
     // Extract error code from custom exception or use provided
     const code =
       errorCode ||
-      (error?.errorCode) ||
-      (error?.response?.error?.code) ||
+      error?.errorCode ||
+      error?.response?.error?.code ||
       'UNKNOWN_ERROR';
 
     const errorDetails = getErrorDetails(code);
@@ -244,7 +251,11 @@ export class ErrorLoggerService {
 
     const sanitizeObject = (obj: any) => {
       for (const key in obj) {
-        if (sensitiveFields.some((field) => key.toLowerCase().includes(field.toLowerCase()))) {
+        if (
+          sensitiveFields.some((field) =>
+            key.toLowerCase().includes(field.toLowerCase()),
+          )
+        ) {
           obj[key] = '[REDACTED]';
         } else if (typeof obj[key] === 'object' && obj[key] !== null) {
           sanitizeObject(obj[key]);
@@ -279,7 +290,10 @@ export class ErrorLoggerService {
       );
     }
 
-    console.error('⚠️ UNHANDLED PROMISE REJECTION:', JSON.stringify(errorLog, null, 2));
+    console.error(
+      '⚠️ UNHANDLED PROMISE REJECTION:',
+      JSON.stringify(errorLog, null, 2),
+    );
     this.alertCriticalError(errorLog);
   }
 
@@ -299,11 +313,9 @@ export class ErrorLoggerService {
     };
 
     if (this.logger) {
-      this.logger.error(
-        'Uncaught Exception',
-        error.stack,
-        { errorCode: 'UNCAUGHT_EXCEPTION' },
-      );
+      this.logger.error('Uncaught Exception', error.stack, {
+        errorCode: 'UNCAUGHT_EXCEPTION',
+      });
     }
 
     console.error('⚠️ UNCAUGHT EXCEPTION:', JSON.stringify(errorLog, null, 2));

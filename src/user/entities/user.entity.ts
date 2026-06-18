@@ -101,10 +101,12 @@ export class User {
   @BeforeInsert()
   @BeforeUpdate()
   validateRoleSeparation(): void {
-    const normalizedRoles = normalizeRoleValues(this.roles?.length ? this.roles : this.role);
+    const normalizedRoles = normalizeRoleValues(
+      this.roles?.length ? this.roles : this.role,
+    );
     assertNoGovernanceKycRoleConflict(normalizedRoles);
 
     this.roles = normalizedRoles as UserRole[];
-    this.role = (this.role ?? this.roles[0] ?? UserRole.USER) as UserRole;
+    this.role = this.role ?? this.roles[0] ?? UserRole.USER;
   }
 }

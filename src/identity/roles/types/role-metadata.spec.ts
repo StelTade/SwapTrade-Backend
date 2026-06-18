@@ -26,13 +26,13 @@ describe('Role Metadata', () => {
 
     it('should have correct priority order', () => {
       expect(ROLE_METADATA[UserRole.ADMIN].priority).toBeGreaterThan(
-        ROLE_METADATA[UserRole.GOVERNANCE_OPERATOR].priority
+        ROLE_METADATA[UserRole.GOVERNANCE_OPERATOR].priority,
       );
-      expect(ROLE_METADATA[UserRole.GOVERNANCE_OPERATOR].priority).toBeGreaterThan(
-        ROLE_METADATA[UserRole.STAFF].priority
-      );
+      expect(
+        ROLE_METADATA[UserRole.GOVERNANCE_OPERATOR].priority,
+      ).toBeGreaterThan(ROLE_METADATA[UserRole.STAFF].priority);
       expect(ROLE_METADATA[UserRole.STAFF].priority).toBeGreaterThan(
-        ROLE_METADATA[UserRole.USER].priority
+        ROLE_METADATA[UserRole.USER].priority,
       );
     });
 
@@ -42,16 +42,20 @@ describe('Role Metadata', () => {
 
     it('should have max user constraints where applicable', () => {
       expect(ROLE_METADATA[UserRole.ADMIN].constraints?.maxUsers).toBeLessThan(
-        ROLE_METADATA[UserRole.STAFF].constraints?.maxUsers || Infinity
+        ROLE_METADATA[UserRole.STAFF].constraints?.maxUsers || Infinity,
       );
     });
   });
 
   describe('getRoleMetadata', () => {
     it('should return correct metadata for each role', () => {
+      const superAdminMetadata = getRoleMetadata(UserRole.SUPER_ADMIN);
+      expect(superAdminMetadata.name).toBe(UserRole.SUPER_ADMIN);
+      expect(superAdminMetadata.priority).toBe(200);
+
       const adminMetadata = getRoleMetadata(UserRole.ADMIN);
       expect(adminMetadata.name).toBe(UserRole.ADMIN);
-      expect(adminMetadata.priority).toBe(100);
+      expect(adminMetadata.priority).toBe(150);
 
       const userMetadata = getRoleMetadata(UserRole.USER);
       expect(userMetadata.name).toBe(UserRole.USER);
@@ -72,8 +76,8 @@ describe('Role Metadata', () => {
     });
 
     it('should return true for User with their permissions', () => {
-      expect(roleHasPermission(UserRole.USER, 'TRADING_READ')).toBe(true);
-      expect(roleHasPermission(UserRole.USER, 'PORTFOLIO_READ')).toBe(true);
+      expect(roleHasPermission(UserRole.USER, 'trades.read')).toBe(true);
+      expect(roleHasPermission(UserRole.USER, 'accounts.read')).toBe(true);
     });
 
     it('should return false for User without permissions', () => {
@@ -82,12 +86,18 @@ describe('Role Metadata', () => {
     });
 
     it('should return true for KYC_OPERATOR with KYC permissions', () => {
-      expect(roleHasPermission(UserRole.KYC_OPERATOR, 'KYC_APPROVE')).toBe(true);
-      expect(roleHasPermission(UserRole.KYC_OPERATOR, 'DOCUMENT_VIEW')).toBe(true);
+      expect(roleHasPermission(UserRole.KYC_OPERATOR, 'KYC_APPROVE')).toBe(
+        true,
+      );
+      expect(roleHasPermission(UserRole.KYC_OPERATOR, 'DOCUMENT_VIEW')).toBe(
+        true,
+      );
     });
 
     it('should return false for KYC_OPERATOR with governance permissions', () => {
-      expect(roleHasPermission(UserRole.KYC_OPERATOR, 'POLICY_WRITE')).toBe(false);
+      expect(roleHasPermission(UserRole.KYC_OPERATOR, 'POLICY_WRITE')).toBe(
+        false,
+      );
     });
   });
 
@@ -99,8 +109,8 @@ describe('Role Metadata', () => {
 
     it('should return basic User permissions', () => {
       const permissions = getAllRolePermissions(UserRole.USER, []);
-      expect(permissions.has('TRADING_READ')).toBe(true);
-      expect(permissions.has('PORTFOLIO_READ')).toBe(true);
+      expect(permissions.has('trades.read')).toBe(true);
+      expect(permissions.has('accounts.read')).toBe(true);
       expect(permissions.size).toBeGreaterThan(0);
     });
 
@@ -109,7 +119,7 @@ describe('Role Metadata', () => {
         UserRole.USER,
       ]);
       expect(permissions.has('USER_READ')).toBe(true);
-      expect(permissions.has('TRADING_READ')).toBe(true); // From USER
+      expect(permissions.has('trades.read')).toBe(true); // From USER
     });
 
     it('should not have duplicates', () => {
@@ -129,7 +139,7 @@ describe('Role Metadata', () => {
       ]);
       // Should have both KYC and USER permissions
       expect(permissions.has('KYC_APPROVE')).toBe(true);
-      expect(permissions.has('TRADING_READ')).toBe(true);
+      expect(permissions.has('trades.read')).toBe(true);
     });
   });
 
@@ -138,8 +148,10 @@ describe('Role Metadata', () => {
       Object.values(ROLE_METADATA).forEach((metadata) => {
         metadata.permissions.forEach((perm) => {
           if (perm !== '*') {
-            // All non-wildcard permissions should be UPPERCASE_WITH_UNDERSCORES
-            expect(perm).toMatch(/^[A-Z_]+$/);
+            // All non-wildcard permissions should be either:
+            // 1. UPPERCASE_WITH_UNDERSCORES (legacy format for governance/kyc roles)
+            // 2. dot.separated.lowercase (domain.action format for modern permissions)
+            expect(perm).toMatch(/^[A-Za-z._]+$/);
           }
         });
       });

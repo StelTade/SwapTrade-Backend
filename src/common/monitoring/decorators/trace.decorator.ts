@@ -10,7 +10,10 @@ export interface TraceOptions {
   ignoreExceptions?: boolean[];
 }
 
-export const Trace = (options?: TraceOptions) => SetMetadata(TRACE_METADATA_KEY, options);
+export const Trace = (options?: TraceOptions) =>
+  SetMetadata(TRACE_METADATA_KEY, options);
 
-export const TraceMethod = (methodName?: string, attributes?: Record<string, string>) => 
-  SetMetadata(TRACE_METADATA_KEY, { name: methodName, attributes });
+export const TraceMethod = (
+  methodName?: string,
+  attributes?: Record<string, string>,
+) => SetMetadata(TRACE_METADATA_KEY, { name: methodName, attributes });

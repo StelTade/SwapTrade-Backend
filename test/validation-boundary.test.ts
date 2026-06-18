@@ -13,7 +13,7 @@ describe('Validation Boundary Tests', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    
+
     // Configure validation pipe for testing
     app.useGlobalPipes(
       new ValidationPipe({
@@ -23,7 +23,7 @@ describe('Validation Boundary Tests', () => {
         disableErrorMessages: false,
       }),
     );
-    
+
     await app.init();
   });
 
@@ -40,11 +40,15 @@ describe('Validation Boundary Tests', () => {
           password: 'ValidPass123!',
         })
         .expect(400)
-        .then(response => {
+        .then((response) => {
           expect(response.body).toHaveProperty('statusCode', 400);
           expect(response.body).toHaveProperty('error', 'Bad Request');
           expect(Array.isArray(response.body.message)).toBe(true);
-          expect(response.body.message.some(msg => msg.includes('email') && msg.includes('Invalid'))).toBe(true);
+          expect(
+            response.body.message.some(
+              (msg) => msg.includes('email') && msg.includes('Invalid'),
+            ),
+          ).toBe(true);
         });
     });
 
@@ -56,11 +60,15 @@ describe('Validation Boundary Tests', () => {
           password: 'ValidPass123!',
         })
         .expect(400)
-        .then(response => {
+        .then((response) => {
           expect(response.body).toHaveProperty('statusCode', 400);
           expect(response.body).toHaveProperty('error', 'Bad Request');
           expect(Array.isArray(response.body.message)).toBe(true);
-          expect(response.body.message.some(msg => msg.includes('Invalid email format'))).toBe(true);
+          expect(
+            response.body.message.some((msg) =>
+              msg.includes('Invalid email format'),
+            ),
+          ).toBe(true);
         });
     });
 
@@ -72,11 +80,15 @@ describe('Validation Boundary Tests', () => {
           password: 'weak',
         })
         .expect(400)
-        .then(response => {
+        .then((response) => {
           expect(response.body).toHaveProperty('statusCode', 400);
           expect(response.body).toHaveProperty('error', 'Bad Request');
           expect(Array.isArray(response.body.message)).toBe(true);
-          expect(response.body.message.some(msg => msg.includes('password') && msg.includes('8 characters'))).toBe(true);
+          expect(
+            response.body.message.some(
+              (msg) => msg.includes('password') && msg.includes('8 characters'),
+            ),
+          ).toBe(true);
         });
     });
 
@@ -99,10 +111,10 @@ describe('Validation Boundary Tests', () => {
           userId: -1, // Invalid negative user ID
           assetId: 1,
           amount: 100,
-          reason: 'Test deposit'
+          reason: 'Test deposit',
         })
         .expect(400)
-        .then(response => {
+        .then((response) => {
           expect(response.body).toHaveProperty('statusCode', 400);
           expect(response.body).toHaveProperty('error', 'Bad Request');
           expect(Array.isArray(response.body.message)).toBe(true);
@@ -111,17 +123,17 @@ describe('Validation Boundary Tests', () => {
 
     it('should reject balance update with oversized reason', async () => {
       const oversizedReason = 'a'.repeat(300); // Exceeds max length of 255
-      
+
       return request(app.getHttpServer())
         .post('/balance/update')
         .send({
           userId: 1,
           assetId: 1,
           amount: 100,
-          reason: oversizedReason
+          reason: oversizedReason,
         })
         .expect(400)
-        .then(response => {
+        .then((response) => {
           expect(response.body).toHaveProperty('statusCode', 400);
           expect(response.body).toHaveProperty('error', 'Bad Request');
           expect(Array.isArray(response.body.message)).toBe(true);
@@ -135,11 +147,12 @@ describe('Validation Boundary Tests', () => {
         .post('/portfolio/update')
         .send({
           userId: 1,
-          asset: 'INVALID_ASSET_NAME_WITH_TOO_MANY_CHARACTERS_THAT_EXCEEDS_LIMIT', // Too long
-          balance: 1000
+          asset:
+            'INVALID_ASSET_NAME_WITH_TOO_MANY_CHARACTERS_THAT_EXCEEDS_LIMIT', // Too long
+          balance: 1000,
         })
         .expect(400)
-        .then(response => {
+        .then((response) => {
           expect(response.body).toHaveProperty('statusCode', 400);
           expect(response.body).toHaveProperty('error', 'Bad Request');
           expect(Array.isArray(response.body.message)).toBe(true);
@@ -152,7 +165,7 @@ describe('Validation Boundary Tests', () => {
         .send({
           userId: 1,
           asset: 'BTC',
-          balance: 1000
+          balance: 1000,
         })
         .expect(201); // Assuming successful update returns 201
     });
@@ -167,10 +180,10 @@ describe('Validation Boundary Tests', () => {
           asset: 'BTC',
           type: 'BUY',
           amount: -10, // Negative amount not allowed
-          price: 50000
+          price: 50000,
         })
         .expect(400)
-        .then(response => {
+        .then((response) => {
           expect(response.body).toHaveProperty('statusCode', 400);
           expect(response.body).toHaveProperty('error', 'Bad Request');
           expect(Array.isArray(response.body.message)).toBe(true);
@@ -185,10 +198,10 @@ describe('Validation Boundary Tests', () => {
           asset: 'BTC',
           type: 'BUY',
           amount: 0, // Zero amount not allowed
-          price: 50000
+          price: 50000,
         })
         .expect(400)
-        .then(response => {
+        .then((response) => {
           expect(response.body).toHaveProperty('statusCode', 400);
           expect(response.body).toHaveProperty('error', 'Bad Request');
           expect(Array.isArray(response.body.message)).toBe(true);
@@ -206,14 +219,18 @@ describe('Validation Boundary Tests', () => {
           username: '  spacedusername  ', // Has leading/trailing spaces
           email: ' spaced@example.com ',
         })
-        .then(response => {
+        .then((response) => {
           // The validation should succeed if trimming worked properly
           // The actual trimming behavior would be verified in the controller
           if (response.status === 400) {
             // If validation failed, check that it wasn't due to length issues caused by spaces
-            expect(response.body.message.some(msg => 
-              msg.toLowerCase().includes('length') || msg.toLowerCase().includes('min')
-            )).toBe(false);
+            expect(
+              response.body.message.some(
+                (msg) =>
+                  msg.toLowerCase().includes('length') ||
+                  msg.toLowerCase().includes('min'),
+              ),
+            ).toBe(false);
           }
         });
     });

@@ -12,7 +12,7 @@ export class WebSocketRateLimitMiddleware implements NestMiddleware {
       max: 100, // Limit each IP to 100 requests per windowMs
       message: {
         error: 'Too many WebSocket connection attempts',
-        retryAfter: 60
+        retryAfter: 60,
       },
       standardHeaders: true,
       legacyHeaders: false,
@@ -21,7 +21,7 @@ export class WebSocketRateLimitMiddleware implements NestMiddleware {
       // Only count failed requests
       keyGenerator: (req: Request) => {
         return req.ip + ':' + req.path;
-      }
+      },
     });
   }
 

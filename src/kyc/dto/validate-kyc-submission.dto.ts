@@ -38,7 +38,8 @@ export class ValidateKycSubmissionDto {
   @IsNotEmpty()
   @Length(4, 30)
   @Matches(/^[A-Z0-9-]+$/i, {
-    message: 'documentNumber must contain only alphanumeric characters and hyphens',
+    message:
+      'documentNumber must contain only alphanumeric characters and hyphens',
   })
   documentNumber: string;
 }

@@ -12,22 +12,43 @@ export class ValidationException extends StructuredException {
     super(
       errorDef.code,
       errorDef.message,
-      errorDef.httpStatus as HttpStatus,
+      errorDef.httpStatus,
       details,
       requestId,
       errorDef.retryable,
     );
   }
 
-  static invalidInput(details?: Record<string, any>, requestId?: string): ValidationException {
-    return new ValidationException('VALIDATION_INVALID_INPUT_400', details, requestId);
+  static invalidInput(
+    details?: Record<string, any>,
+    requestId?: string,
+  ): ValidationException {
+    return new ValidationException(
+      'VALIDATION_INVALID_INPUT_400',
+      details,
+      requestId,
+    );
   }
 
-  static missingRequiredField(details?: Record<string, any>, requestId?: string): ValidationException {
-    return new ValidationException('VALIDATION_MISSING_REQUIRED_FIELD_400', details, requestId);
+  static missingRequiredField(
+    details?: Record<string, any>,
+    requestId?: string,
+  ): ValidationException {
+    return new ValidationException(
+      'VALIDATION_MISSING_REQUIRED_FIELD_400',
+      details,
+      requestId,
+    );
   }
 
-  static invalidFormat(details?: Record<string, any>, requestId?: string): ValidationException {
-    return new ValidationException('VALIDATION_INVALID_FORMAT_400', details, requestId);
+  static invalidFormat(
+    details?: Record<string, any>,
+    requestId?: string,
+  ): ValidationException {
+    return new ValidationException(
+      'VALIDATION_INVALID_FORMAT_400',
+      details,
+      requestId,
+    );
   }
 }

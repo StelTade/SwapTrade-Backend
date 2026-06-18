@@ -15,7 +15,11 @@ export function createRedisPooledStore(
   poolService: RedisPoolService,
   metricsService: RedisMetricsService,
   configService: ConfigService,
-): { get: (key: string) => Promise<unknown>; set: (key: string, value: unknown, ttl?: number) => Promise<void>; del: (key: string) => Promise<void> } {
+): {
+  get: (key: string) => Promise<unknown>;
+  set: (key: string, value: unknown, ttl?: number) => Promise<void>;
+  del: (key: string) => Promise<void>;
+} {
   const redis = configService.redis;
   const threshold = redis.circuitBreakerThreshold ?? 5;
   const resetTimeout = redis.circuitBreakerResetMs ?? 60000;
@@ -65,7 +69,8 @@ export function createRedisPooledStore(
     async set(key: string, value: unknown, ttl?: number): Promise<void> {
       return runWithBreaker(async () => {
         return poolService.withClient(async (client: Redis) => {
-          const serialized = typeof value === 'string' ? value : JSON.stringify(value);
+          const serialized =
+            typeof value === 'string' ? value : JSON.stringify(value);
           const ttlSec = ttl != null ? Math.ceil(ttl * TTL_MS_TO_SEC) : 0;
           if (ttlSec > 0) {
             await client.setex(key, ttlSec, serialized);

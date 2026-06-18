@@ -1,22 +1,27 @@
-import { WebSocketGateway, WebSocketServer, SubscribeMessage, MessageBody, ConnectedSocket, WsException } from '@nestjs/websockets';
+import {
+  WebSocketGateway,
+  WebSocketServer,
+  SubscribeMessage,
+  MessageBody,
+  ConnectedSocket,
+  WsException,
+} from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { UseGuards } from '@nestjs/common';
 import { WebSocketAuthGuard } from '../guards/websocket-auth.guard';
 import { WebSocketService } from '../services/websocket.service';
-import { 
-  WebSocketMessage, 
-  WebSocketMessageType
+import {
+  WebSocketMessage,
+  WebSocketMessageType,
 } from '../interfaces/websocket.interfaces';
-import type {
-  SubscriptionRequest
-} from '../interfaces/websocket.interfaces';
+import type { SubscriptionRequest } from '../interfaces/websocket.interfaces';
 
 @WebSocketGateway({
   namespace: '/trading',
   cors: {
     origin: process.env.WEBSOCKET_CORS_ORIGIN || '*',
-    credentials: true
-  }
+    credentials: true,
+  },
 })
 @UseGuards(WebSocketAuthGuard)
 export class TradingGateway {
@@ -27,24 +32,24 @@ export class TradingGateway {
   @SubscribeMessage('subscribe_trading')
   async handleTradingSubscribe(
     @MessageBody() data: SubscriptionRequest,
-    @ConnectedSocket() client: Socket & { clientId: string; userId: string }
+    @ConnectedSocket() client: Socket & { clientId: string; userId: string },
   ) {
     const clientId = client.clientId;
-    
+
     // Validate trading-specific channels
     const validChannels = [
       'orderbook:*',
       'trades',
       'orders:*',
       'market:*',
-      'user:*'
+      'user:*',
     ];
 
-    const filteredChannels = data.channels.filter(channel => {
-      return validChannels.some(pattern => 
-        pattern.endsWith('*') 
+    const filteredChannels = data.channels.filter((channel) => {
+      return validChannels.some((pattern) =>
+        pattern.endsWith('*')
           ? channel.startsWith(pattern.slice(0, -1))
-          : channel === pattern
+          : channel === pattern,
       );
     });
 
@@ -55,23 +60,23 @@ export class TradingGateway {
     // Subscribe to filtered channels
     await this.websocketService.handleSubscribe(client, {
       channels: filteredChannels,
-      filters: data.filters
+      filters: data.filters,
     });
 
     return {
       type: WebSocketMessageType.CONNECT,
-      data: { 
+      data: {
         message: 'Subscribed to trading channels',
-        channels: filteredChannels
+        channels: filteredChannels,
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
   @SubscribeMessage('get_orderbook')
   async handleGetOrderBook(
     @MessageBody() data: { asset: string },
-    @ConnectedSocket() client: Socket
+    @ConnectedSocket() client: Socket,
   ) {
     // This would fetch current order book from trading service
     // For now, return a mock response
@@ -81,23 +86,23 @@ export class TradingGateway {
         asset: data.asset,
         bids: [
           { price: 100.5, amount: 1000, count: 5 },
-          { price: 100.4, amount: 500, count: 3 }
+          { price: 100.4, amount: 500, count: 3 },
         ],
         asks: [
           { price: 100.6, amount: 800, count: 4 },
-          { price: 100.7, amount: 1200, count: 6 }
+          { price: 100.7, amount: 1200, count: 6 },
         ],
         timestamp: new Date().toISOString(),
-        sequence: 12345
+        sequence: 12345,
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
   @SubscribeMessage('get_market_data')
   async handleGetMarketData(
     @MessageBody() data: { asset: string },
-    @ConnectedSocket() client: Socket & { clientId: string; userId: string }
+    @ConnectedSocket() client: Socket & { clientId: string; userId: string },
   ) {
     // This would fetch market data from market service
     return {
@@ -109,19 +114,19 @@ export class TradingGateway {
         volume24h: 50000,
         high24h: 102.0,
         low24h: 99.0,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
   @SubscribeMessage('get_user_trades')
   async handleGetUserTrades(
     @MessageBody() data: { limit?: number },
-    @ConnectedSocket() client: Socket & { clientId: string; userId: string }
+    @ConnectedSocket() client: Socket & { clientId: string; userId: string },
   ) {
     const userId = client.userId;
-    
+
     // This would fetch user's recent trades from trading service
     return {
       type: WebSocketMessageType.USER_TRADE_EXECUTED,
@@ -134,21 +139,21 @@ export class TradingGateway {
             price: 100.5,
             type: 'buy',
             timestamp: new Date().toISOString(),
-            fee: 0.1
-          }
-        ]
+            fee: 0.1,
+          },
+        ],
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
   @SubscribeMessage('get_user_orders')
   async handleGetUserOrders(
     @MessageBody() data: { status?: string; limit?: number },
-    @ConnectedSocket() client: Socket & { clientId: string; userId: string }
+    @ConnectedSocket() client: Socket & { clientId: string; userId: string },
   ) {
     const userId = client.userId;
-    
+
     // This would fetch user's orders from trading service
     return {
       type: WebSocketMessageType.USER_ORDER_UPDATE,
@@ -163,11 +168,11 @@ export class TradingGateway {
             filled: 100,
             remaining: 100,
             status: 'partially_filled',
-            timestamp: new Date().toISOString()
-          }
-        ]
+            timestamp: new Date().toISOString(),
+          },
+        ],
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 }

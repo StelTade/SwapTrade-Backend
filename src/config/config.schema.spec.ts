@@ -54,7 +54,9 @@ describe('ConfigSchema', () => {
 
       const { error } = configSchema.validate(invalidConfig);
       expect(error).toBeDefined();
-      expect(error?.details.some(detail => detail.path.includes('JWT_SECRET'))).toBe(true);
+      expect(
+        error?.details.some((detail) => detail.path.includes('JWT_SECRET')),
+      ).toBe(true);
     });
 
     it('should validate feature flags', () => {
