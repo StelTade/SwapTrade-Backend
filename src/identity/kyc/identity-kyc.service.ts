@@ -50,7 +50,7 @@ export class IdentityKycService {
   ): Promise<void> {
     const record = await this.kycService.updateStatus(
       userId,
-      KycStatus.APPROVED,
+      KycStatus.VERIFIED,
       operator,
       notes,
     );
