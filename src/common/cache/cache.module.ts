@@ -20,12 +20,13 @@ import { RedisModule } from './redis.module';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (_configService: ConfigService) => {
-        const redisHost = _configService.get<string>('REDIS_HOST') || 'localhost';
+        const redisHost =
+          _configService.get<string>('REDIS_HOST') || 'localhost';
         const redisPort = _configService.get<number>('REDIS_PORT') || 6379;
         const redisPassword = _configService.get<string>('REDIS_PASSWORD');
         const redisDb = _configService.get<number>('REDIS_DB') || 0;
         const ttl = (_configService.get<number>('CACHE_TTL') || 300) * 1000;
-        
+
         return {
           store: redisStoreFactory,
           host: redisHost,

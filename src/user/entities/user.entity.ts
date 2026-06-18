@@ -14,29 +14,57 @@ import {
   assertNoGovernanceKycRoleConflict,
   normalizeRoleValues,
 } from '../../common/security/role-separation';
+import { AccountStatus } from '../../auth/entities/auth.entity';
 
-@Entity()
+@Entity('users')
 @Index(['id'])
+@Index(['email'], { unique: true })
 @Check(
   'CHK_user_governance_kyc_role_separation',
   `NOT ("roles" LIKE '%GOVERNANCE_OPERATOR%' AND ("roles" LIKE '%KYC_OPERATOR%' OR "roles" LIKE '%KYC_GOVERNANCE%'))`,
 )
 export class User {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  /** Reference to the Auth credential record (same email FK). */
+  @Column({ nullable: true })
+  @Index()
+  authId?: string;
 
   @Column()
   username: string;
 
-  @Column()
+  @Column({ unique: true })
   email: string;
 
-  @Column({ type: 'varchar', default: 'USER' })
+  @Column({ nullable: true })
+  firstName?: string;
+
+  @Column({ nullable: true })
+  lastName?: string;
+
+  @Column({ nullable: true })
+  phoneNumber?: string;
+
+  @Column({ nullable: true })
+  avatarUrl?: string;
+
+  // ─── Roles ─────────────────────────────────────────────────────────
+  @Column({ type: 'varchar', default: UserRole.USER })
   role: UserRole;
 
   @Column('simple-array', { default: UserRole.USER })
   roles: UserRole[];
 
+  // ─── Status ─────────────────────────────────────────────────────────
+  @Column({
+    type: 'varchar',
+    default: AccountStatus.INACTIVE,
+  })
+  status: AccountStatus;
+
+  // ─── Trading Stats ──────────────────────────────────────────────────
   @Column({ type: 'int', default: 0 })
   totalTrades: number;
 
@@ -49,6 +77,7 @@ export class User {
   @Column({ default: false })
   isPremium: boolean;
 
+  // ─── MFA (mirrored from Auth for quick reads, source of truth is Auth) ─
   @Column({ default: false })
   isSuspended: boolean;
 
@@ -65,11 +94,12 @@ export class User {
   mfaEnabled: boolean;
 
   @Column({ nullable: true, select: false })
-  mfaSecret: string;
+  mfaSecret?: string;
 
   @Column('simple-array', { nullable: true, select: false })
-  mfaRecoveryCodes: string[];
+  mfaRecoveryCodes?: string[];
 
+  // ─── Timestamps ─────────────────────────────────────────────────────
   @UpdateDateColumn()
   lastTradeDate: Date;
 
@@ -79,13 +109,16 @@ export class User {
   @UpdateDateColumn()
   updatedAt: Date;
 
+  // ─── Lifecycle Hooks ────────────────────────────────────────────────
   @BeforeInsert()
   @BeforeUpdate()
   validateRoleSeparation(): void {
-    const normalizedRoles = normalizeRoleValues(this.roles?.length ? this.roles : this.role);
+    const normalizedRoles = normalizeRoleValues(
+      this.roles?.length ? this.roles : this.role,
+    );
     assertNoGovernanceKycRoleConflict(normalizedRoles);
 
     this.roles = normalizedRoles as UserRole[];
-    this.role = (this.role ?? this.roles[0] ?? UserRole.USER) as UserRole;
+    this.role = this.role ?? this.roles[0] ?? UserRole.USER;
   }
 }

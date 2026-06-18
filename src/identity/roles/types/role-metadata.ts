@@ -6,7 +6,6 @@
  */
 
 import { UserRole } from '../enums/user-role.enum';
-import { getInheritedRoles } from '../constants/role-hierarchy';
 
 /**
  * Metadata for a specific role
@@ -76,8 +75,17 @@ export const ROLE_METADATA: Record<UserRole, RoleMetadata> = {
   [UserRole.ADMIN]: {
     name: UserRole.ADMIN,
     description: 'Administrator - Full system access',
-    priority: 100,
-    permissions: ['*'],
+    priority: 150,
+    permissions: [
+      'admin.access',
+      'users.read',
+      'users.write',
+      'accounts.read',
+      'accounts.write',
+      'trades.read',
+      'trades.write',
+      '*',
+    ],
     constraints: {
       maxUsers: 5,
       maxDailyActions: undefined,
@@ -292,7 +300,7 @@ export function roleHasPermission(role: UserRole, permission: string): boolean {
  */
 export function getAllRolePermissions(
   role: UserRole,
-  inheritedRoles: UserRole[]
+  inheritedRoles: UserRole[],
 ): Set<string> {
   const permissions = new Set<string>();
 

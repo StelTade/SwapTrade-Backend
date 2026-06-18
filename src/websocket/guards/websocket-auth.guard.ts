@@ -19,14 +19,14 @@ export class WebSocketAuthGuard implements CanActivate {
 
       // Extract token from auth data or headers
       const token = this.extractToken(client, data);
-      
+
       if (!token) {
         throw new WsException('Unauthorized: No token provided');
       }
 
       // Verify JWT token
       const payload = this.jwtService.verify(token);
-      
+
       // Attach user info to client
       client.userId = payload.sub;
       client.authenticated = true;
@@ -46,17 +46,29 @@ export class WebSocketAuthGuard implements CanActivate {
     }
 
     // Try to get token from handshake headers
-    if (client.handshake && client.handshake.auth && client.handshake.auth.token) {
+    if (
+      client.handshake &&
+      client.handshake.auth &&
+      client.handshake.auth.token
+    ) {
       return client.handshake.auth.token;
     }
 
     // Try to get token from query parameters
-    if (client.handshake && client.handshake.query && client.handshake.query.token) {
+    if (
+      client.handshake &&
+      client.handshake.query &&
+      client.handshake.query.token
+    ) {
       return client.handshake.query.token;
     }
 
     // Try to get token from authorization header
-    if (client.handshake && client.handshake.headers && client.handshake.headers.authorization) {
+    if (
+      client.handshake &&
+      client.handshake.headers &&
+      client.handshake.headers.authorization
+    ) {
       const authHeader = client.handshake.headers.authorization;
       if (authHeader.startsWith('Bearer ')) {
         return authHeader.substring(7);

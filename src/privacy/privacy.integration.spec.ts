@@ -2,9 +2,19 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PrivacyModule } from '../privacy.module';
-import { PrivacyProfile, AnonymityLevel } from '../entities/privacy-profile.entity';
-import { EncryptedOrder, EncryptedOrderStatus } from '../entities/encrypted-order.entity';
-import { PrivacyAuditLog, ComplianceFlag, AuditAction } from '../entities/privacy-audit-log.entity';
+import {
+  PrivacyProfile,
+  AnonymityLevel,
+} from '../entities/privacy-profile.entity';
+import {
+  EncryptedOrder,
+  EncryptedOrderStatus,
+} from '../entities/encrypted-order.entity';
+import {
+  PrivacyAuditLog,
+  ComplianceFlag,
+  AuditAction,
+} from '../entities/privacy-audit-log.entity';
 
 /**
  * Integration tests for Privacy-Preserving Trading

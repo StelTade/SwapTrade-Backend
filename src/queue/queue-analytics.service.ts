@@ -62,8 +62,12 @@ export class QueueAnalyticsService {
   private metricsHistory: Map<string, QueueMetricsSnapshot[]> = new Map();
   private healthThresholds: QueueHealthThresholds = DEFAULT_HEALTH_THRESHOLDS;
   private readonly MAX_HISTORY_SIZE = 1440; // 24 hours of minute-level metrics
-  private alerts: Array<{ queue: string; level: string; message: string; timestamp: Date }> =
-    [];
+  private alerts: Array<{
+    queue: string;
+    level: string;
+    message: string;
+    timestamp: Date;
+  }> = [];
 
   constructor() {
     this.initializeMetricsStorage();
@@ -134,19 +138,26 @@ export class QueueAnalyticsService {
         : 0;
 
     // Calculate rates
-    const total = (counts.waiting || 0) + (counts.active || 0) + (counts.completed || 0) + (counts.failed || 0);
+    const total =
+      (counts.waiting || 0) +
+      (counts.active || 0) +
+      (counts.completed || 0) +
+      (counts.failed || 0);
     const successRate =
       total > 0
-        ? ((counts.completed / ((counts.completed || 0) + (counts.failed || 0))) * 100).toFixed(
-            2,
-          )
+        ? (
+            (counts.completed /
+              ((counts.completed || 0) + (counts.failed || 0))) *
+            100
+          ).toFixed(2)
         : 0;
 
     const failureRate =
       total > 0
-        ? ((counts.failed / ((counts.completed || 0) + (counts.failed || 0))) * 100).toFixed(
-            2,
-          )
+        ? (
+            (counts.failed / ((counts.completed || 0) + (counts.failed || 0))) *
+            100
+          ).toFixed(2)
         : 0;
 
     return {
@@ -157,7 +168,7 @@ export class QueueAnalyticsService {
       completedJobs: counts.completed || 0,
       failedJobs: counts.failed || 0,
       delayedJobs: counts.delayed || 0,
-      stalledJobs: 0,  // Not available in current Bull API
+      stalledJobs: 0, // Not available in current Bull API
       isPaused: await queue.isPaused(),
       averageProcessingTime,
       averageWaitTime,
@@ -226,8 +237,7 @@ export class QueueAnalyticsService {
 
     // Check processing time
     if (
-      latest.averageProcessingTime >
-      this.healthThresholds.maxProcessingTimeMs
+      latest.averageProcessingTime > this.healthThresholds.maxProcessingTimeMs
     ) {
       issues.push(
         `Warning: Average processing time ${latest.averageProcessingTime}ms exceeds threshold of ${this.healthThresholds.maxProcessingTimeMs}ms`,
@@ -245,10 +255,7 @@ export class QueueAnalyticsService {
   /**
    * Generate analytics report
    */
-  generateAnalyticsReport(
-    startTime: Date,
-    endTime: Date,
-  ): AnalyticsReport {
+  generateAnalyticsReport(startTime: Date, endTime: Date): AnalyticsReport {
     const report: AnalyticsReport = {
       period: {
         startTime,
@@ -309,7 +316,7 @@ export class QueueAnalyticsService {
             level: a.level as 'warning' | 'critical',
             message: a.message,
             timestamp: a.timestamp,
-          } as const),
+          }) as const,
       );
 
     return report;
@@ -337,7 +344,7 @@ export class QueueAnalyticsService {
 
     if (health.status !== 'healthy') {
       for (const issue of health.issues) {
-        const level: 'warning' | 'critical' = health.status as 'warning' | 'critical';
+        const level: 'warning' | 'critical' = health.status;
         this.alerts.push({
           queue: metrics.queueName,
           level,

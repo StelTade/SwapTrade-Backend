@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { HealthCheckResult, HealthCheck, SLODefinition, LogLevel } from '../interfaces/monitoring.interfaces';
+import {
+  HealthCheckResult,
+  HealthCheck,
+  SLODefinition,
+  LogLevel,
+} from '../interfaces/monitoring.interfaces';
 import { PrometheusService } from './prometheus.service';
 import { StructuredLoggerService } from './structured-logger.service';
 
@@ -7,7 +12,7 @@ import { StructuredLoggerService } from './structured-logger.service';
 export class HealthService {
   constructor(
     private readonly prometheusService: PrometheusService,
-    private readonly logger: StructuredLoggerService
+    private readonly logger: StructuredLoggerService,
   ) {}
 
   async performHealthChecks(): Promise<HealthCheckResult> {
@@ -38,13 +43,17 @@ export class HealthService {
       const duration = Date.now() - startTime;
 
       // Record health check metrics
-      this.prometheusService.recordHealthCheck('overall', status === 'healthy' ? 'pass' : status === 'degraded' ? 'warn' : 'fail', duration);
+      this.prometheusService.recordHealthCheck(
+        'overall',
+        status === 'healthy' ? 'pass' : status === 'degraded' ? 'warn' : 'fail',
+        duration,
+      );
 
       const result: HealthCheckResult = {
         status,
         checks,
         timestamp: new Date().toISOString(),
-        duration
+        duration,
       };
 
       // Log health check result
@@ -52,27 +61,28 @@ export class HealthService {
         status === 'healthy' ? LogLevel.INFO : LogLevel.WARN,
         `Health check completed: ${status}`,
         result.timestamp,
-        { healthCheck: true, status, duration, checks }
+        { healthCheck: true, status, duration, checks },
       );
 
       return result;
-
     } catch (error) {
       const duration = Date.now() - startTime;
-      this.logger.error('Health check failed', error as Error, undefined, { healthCheck: true });
+      this.logger.error('Health check failed', error as Error, undefined, {
+        healthCheck: true,
+      });
 
       return {
         status: 'unhealthy',
         checks: { error: { status: 'fail', output: (error as Error).message } },
         timestamp: new Date().toISOString(),
-        duration
+        duration,
       };
     }
   }
 
   async checkDatabase(): Promise<HealthCheck> {
     const startTime = Date.now();
-    
+
     try {
       // This would check database connectivity
       // For now, we'll simulate a database check
@@ -86,7 +96,7 @@ export class HealthService {
           output: 'Database connection successful',
           observedValue: duration,
           observedUnit: 'ms',
-          duration
+          duration,
         };
       } else {
         this.prometheusService.recordHealthCheck('database', 'fail', duration);
@@ -95,7 +105,7 @@ export class HealthService {
           output: 'Database connection failed',
           observedValue: duration,
           observedUnit: 'ms',
-          duration
+          duration,
         };
       }
     } catch (error) {
@@ -106,14 +116,14 @@ export class HealthService {
         output: (error as Error).message,
         observedValue: duration,
         observedUnit: 'ms',
-        duration
+        duration,
       };
     }
   }
 
   async checkCache(): Promise<HealthCheck> {
     const startTime = Date.now();
-    
+
     try {
       // This would check Redis/cache connectivity
       const isHealthy = await this.simulateCacheCheck();
@@ -126,7 +136,7 @@ export class HealthService {
           output: 'Cache connection successful',
           observedValue: duration,
           observedUnit: 'ms',
-          duration
+          duration,
         };
       } else {
         this.prometheusService.recordHealthCheck('cache', 'warn', duration);
@@ -135,7 +145,7 @@ export class HealthService {
           output: 'Cache connection degraded',
           observedValue: duration,
           observedUnit: 'ms',
-          duration
+          duration,
         };
       }
     } catch (error) {
@@ -146,7 +156,7 @@ export class HealthService {
         output: (error as Error).message,
         observedValue: duration,
         observedUnit: 'ms',
-        duration
+        duration,
       };
     }
   }
@@ -167,45 +177,61 @@ export class HealthService {
       }
 
       const duration = Date.now() - startTime;
-      const failedServices = results.filter(r => r.includes('FAILED')).length;
+      const failedServices = results.filter((r) => r.includes('FAILED')).length;
 
       if (failedServices === 0) {
-        this.prometheusService.recordHealthCheck('external_services', 'pass', duration);
+        this.prometheusService.recordHealthCheck(
+          'external_services',
+          'pass',
+          duration,
+        );
         return {
           status: 'pass',
           output: 'All external services healthy',
           observedValue: results.length,
           observedUnit: 'services',
-          duration
+          duration,
         };
       } else if (failedServices < services.length) {
-        this.prometheusService.recordHealthCheck('external_services', 'warn', duration);
+        this.prometheusService.recordHealthCheck(
+          'external_services',
+          'warn',
+          duration,
+        );
         return {
           status: 'warn',
           output: `${failedServices} services degraded: ${results.join(', ')}`,
           observedValue: failedServices,
           observedUnit: 'services',
-          duration
+          duration,
         };
       } else {
-        this.prometheusService.recordHealthCheck('external_services', 'fail', duration);
+        this.prometheusService.recordHealthCheck(
+          'external_services',
+          'fail',
+          duration,
+        );
         return {
           status: 'fail',
           output: 'All external services failed',
           observedValue: failedServices,
           observedUnit: 'services',
-          duration
+          duration,
         };
       }
     } catch (error) {
       const duration = Date.now() - startTime;
-      this.prometheusService.recordHealthCheck('external_services', 'fail', duration);
+      this.prometheusService.recordHealthCheck(
+        'external_services',
+        'fail',
+        duration,
+      );
       return {
         status: 'fail',
         output: (error as Error).message,
         observedValue: 0,
         observedUnit: 'services',
-        duration
+        duration,
       };
     }
   }
@@ -219,7 +245,7 @@ export class HealthService {
       for (const queue of queues) {
         const size = await this.getQueueSize(queue);
         const maxSize = 1000; // Configurable threshold
-        
+
         if (size < maxSize * 0.8) {
           queueStatuses.push(`${queue}: OK (${size})`);
         } else if (size < maxSize) {
@@ -230,8 +256,12 @@ export class HealthService {
       }
 
       const duration = Date.now() - startTime;
-      const criticalQueues = queueStatuses.filter(s => s.includes('CRITICAL')).length;
-      const warningQueues = queueStatuses.filter(s => s.includes('WARNING')).length;
+      const criticalQueues = queueStatuses.filter((s) =>
+        s.includes('CRITICAL'),
+      ).length;
+      const warningQueues = queueStatuses.filter((s) =>
+        s.includes('WARNING'),
+      ).length;
 
       if (criticalQueues === 0 && warningQueues === 0) {
         this.prometheusService.recordHealthCheck('queues', 'pass', duration);
@@ -240,7 +270,7 @@ export class HealthService {
           output: 'All queues healthy',
           observedValue: queues.length,
           observedUnit: 'queues',
-          duration
+          duration,
         };
       } else if (criticalQueues === 0) {
         this.prometheusService.recordHealthCheck('queues', 'warn', duration);
@@ -249,7 +279,7 @@ export class HealthService {
           output: `${warningQueues} queues near capacity: ${queueStatuses.join(', ')}`,
           observedValue: warningQueues,
           observedUnit: 'queues',
-          duration
+          duration,
         };
       } else {
         this.prometheusService.recordHealthCheck('queues', 'fail', duration);
@@ -258,7 +288,7 @@ export class HealthService {
           output: `${criticalQueues} queues at capacity: ${queueStatuses.join(', ')}`,
           observedValue: criticalQueues,
           observedUnit: 'queues',
-          duration
+          duration,
         };
       }
     } catch (error) {
@@ -269,14 +299,14 @@ export class HealthService {
         output: (error as Error).message,
         observedValue: 0,
         observedUnit: 'queues',
-        duration
+        duration,
       };
     }
   }
 
   async checkSystemResources(): Promise<HealthCheck> {
     const startTime = Date.now();
-    
+
     try {
       const metrics = await this.getSystemMetrics();
       const duration = Date.now() - startTime;
@@ -299,49 +329,77 @@ export class HealthService {
       }
 
       if (issues.length === 0) {
-        this.prometheusService.recordHealthCheck('system_resources', 'pass', duration);
+        this.prometheusService.recordHealthCheck(
+          'system_resources',
+          'pass',
+          duration,
+        );
         return {
           status: 'pass',
           output: 'System resources healthy',
-          observedValue: Math.max(metrics.cpuUsage, metrics.memoryUsage, metrics.diskUsage),
+          observedValue: Math.max(
+            metrics.cpuUsage,
+            metrics.memoryUsage,
+            metrics.diskUsage,
+          ),
           observedUnit: 'percent',
-          duration
+          duration,
         };
       } else if (issues.length === 1) {
-        this.prometheusService.recordHealthCheck('system_resources', 'warn', duration);
+        this.prometheusService.recordHealthCheck(
+          'system_resources',
+          'warn',
+          duration,
+        );
         return {
           status: 'warn',
           output: issues.join(', '),
-          observedValue: Math.max(metrics.cpuUsage, metrics.memoryUsage, metrics.diskUsage),
+          observedValue: Math.max(
+            metrics.cpuUsage,
+            metrics.memoryUsage,
+            metrics.diskUsage,
+          ),
           observedUnit: 'percent',
-          duration
+          duration,
         };
       } else {
-        this.prometheusService.recordHealthCheck('system_resources', 'fail', duration);
+        this.prometheusService.recordHealthCheck(
+          'system_resources',
+          'fail',
+          duration,
+        );
         return {
           status: 'fail',
           output: issues.join(', '),
-          observedValue: Math.max(metrics.cpuUsage, metrics.memoryUsage, metrics.diskUsage),
+          observedValue: Math.max(
+            metrics.cpuUsage,
+            metrics.memoryUsage,
+            metrics.diskUsage,
+          ),
           observedUnit: 'percent',
-          duration
+          duration,
         };
       }
     } catch (error) {
       const duration = Date.now() - startTime;
-      this.prometheusService.recordHealthCheck('system_resources', 'fail', duration);
+      this.prometheusService.recordHealthCheck(
+        'system_resources',
+        'fail',
+        duration,
+      );
       return {
         status: 'fail',
         output: (error as Error).message,
         observedValue: 0,
         observedUnit: 'percent',
-        duration
+        duration,
       };
     }
   }
 
   async checkBusinessLogic(): Promise<HealthCheck> {
     const startTime = Date.now();
-    
+
     try {
       const metrics = await this.getBusinessMetrics();
       const duration = Date.now() - startTime;
@@ -364,50 +422,68 @@ export class HealthService {
       }
 
       if (issues.length === 0) {
-        this.prometheusService.recordHealthCheck('business_logic', 'pass', duration);
+        this.prometheusService.recordHealthCheck(
+          'business_logic',
+          'pass',
+          duration,
+        );
         return {
           status: 'pass',
           output: 'Business logic healthy',
           observedValue: metrics.tradesPerSecond,
           observedUnit: 'trades/sec',
-          duration
+          duration,
         };
       } else if (issues.length === 1) {
-        this.prometheusService.recordHealthCheck('business_logic', 'warn', duration);
+        this.prometheusService.recordHealthCheck(
+          'business_logic',
+          'warn',
+          duration,
+        );
         return {
           status: 'warn',
           output: issues.join(', '),
           observedValue: metrics.tradesPerSecond,
           observedUnit: 'trades/sec',
-          duration
+          duration,
         };
       } else {
-        this.prometheusService.recordHealthCheck('business_logic', 'fail', duration);
+        this.prometheusService.recordHealthCheck(
+          'business_logic',
+          'fail',
+          duration,
+        );
         return {
           status: 'fail',
           output: issues.join(', '),
           observedValue: metrics.tradesPerSecond,
           observedUnit: 'trades/sec',
-          duration
+          duration,
         };
       }
     } catch (error) {
       const duration = Date.now() - startTime;
-      this.prometheusService.recordHealthCheck('business_logic', 'fail', duration);
+      this.prometheusService.recordHealthCheck(
+        'business_logic',
+        'fail',
+        duration,
+      );
       return {
         status: 'fail',
         output: (error as Error).message,
         observedValue: 0,
         observedUnit: 'trades/sec',
-        duration
+        duration,
       };
     }
   }
 
-  private calculateOverallStatus(checks: Record<string, HealthCheck>): 'healthy' | 'degraded' | 'unhealthy' {
-    const statuses = Object.values(checks).map(check => check.status);
-    const failCount = statuses.filter(status => status === 'fail').length;
-    const warnCount = statuses.filter(status => status === 'warn').length;
+  private calculateOverallStatus(
+    checks: Record<string, HealthCheck>,
+  ): 'healthy' | 'degraded' | 'unhealthy' {
+    const statuses = Object.values(checks).map((check) => check.status);
+    const failCount = statuses.filter((status) => status === 'fail').length;
+    const warnCount = statuses.filter((status) => status === 'warn').length;
 
     if (failCount > 0) {
       return 'unhealthy';
@@ -429,7 +505,9 @@ export class HealthService {
     return Math.random() > 0.15; // 85% success rate
   }
 
-  private async simulateExternalServiceCheck(service: string): Promise<boolean> {
+  private async simulateExternalServiceCheck(
+    service: string,
+  ): Promise<boolean> {
     // Simulate external service check
     return Math.random() > 0.2; // 80% success rate
   }
@@ -448,7 +526,7 @@ export class HealthService {
     return {
       cpuUsage: Math.random() * 100,
       memoryUsage: Math.random() * 100,
-      diskUsage: Math.random() * 100
+      diskUsage: Math.random() * 100,
     };
   }
 
@@ -459,20 +537,25 @@ export class HealthService {
   }> {
     // Get business metrics from Prometheus service
     const metrics = this.prometheusService.getBusinessMetrics();
-    
+
     return {
       tradesPerSecond: metrics.tradesPerSecond,
       errorRate: metrics.errorRate,
       latency: {
         p95: metrics.latency.p95,
-        p99: metrics.latency.p99
-      }
+        p99: metrics.latency.p99,
+      },
     };
   }
 
   // SLO monitoring
-  async checkSLOs(): Promise<Record<string, { passed: boolean; value: number; target: number }>> {
-    const sloResults: Record<string, { passed: boolean; value: number; target: number }> = {};
+  async checkSLOs(): Promise<
+    Record<string, { passed: boolean; value: number; target: number }>
+  > {
+    const sloResults: Record<
+      string,
+      { passed: boolean; value: number; target: number }
+    > = {};
 
     // Define SLOs
     const slos: SLODefinition[] = [
@@ -486,8 +569,8 @@ export class HealthService {
           burnRateThresholds: [1, 2, 5],
           alertOnBurnRate: true,
           alertOnErrorBudget: true,
-          errorBudgetThreshold: 0.1
-        }
+          errorBudgetThreshold: 0.1,
+        },
       },
       {
         name: 'error_rate',
@@ -499,8 +582,8 @@ export class HealthService {
           burnRateThresholds: [1, 2, 5],
           alertOnBurnRate: true,
           alertOnErrorBudget: true,
-          errorBudgetThreshold: 0.05
-        }
+          errorBudgetThreshold: 0.05,
+        },
       },
       {
         name: 'availability',
@@ -512,20 +595,20 @@ export class HealthService {
           burnRateThresholds: [1, 2, 5],
           alertOnBurnRate: true,
           alertOnErrorBudget: true,
-          errorBudgetThreshold: 0.01
-        }
-      }
+          errorBudgetThreshold: 0.01,
+        },
+      },
     ];
 
     // Check each SLO
     for (const slo of slos) {
       const currentValue = await this.getSLOValue(slo.name);
       const passed = this.evaluateSLO(slo, currentValue);
-      
+
       sloResults[slo.name] = {
         passed,
         value: currentValue,
-        target: slo.target
+        target: slo.target,
       };
     }
 

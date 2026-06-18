@@ -7,13 +7,13 @@ import { OpenTelemetryService } from '../services/opentelemetry.service';
 export class MetricsController {
   constructor(
     private readonly prometheusService: PrometheusService,
-    private readonly telemetryService: OpenTelemetryService
+    private readonly telemetryService: OpenTelemetryService,
   ) {}
 
   @Get()
   async getMetrics(@Res() res: Response) {
     const metrics = this.prometheusService.getMetrics();
-    
+
     res.set('Content-Type', 'text/plain');
     res.send(metrics);
   }
@@ -22,7 +22,7 @@ export class MetricsController {
   async getBusinessMetrics() {
     return {
       timestamp: new Date().toISOString(),
-      metrics: this.prometheusService.getBusinessMetrics()
+      metrics: this.prometheusService.getBusinessMetrics(),
     };
   }
 
@@ -30,7 +30,7 @@ export class MetricsController {
   async getCustomMetrics() {
     // Return custom application metrics in JSON format
     const businessMetrics = this.prometheusService.getBusinessMetrics();
-    
+
     return {
       timestamp: new Date().toISOString(),
       application: {
@@ -41,14 +41,14 @@ export class MetricsController {
         order_book_depth: businessMetrics.orderBookDepth,
         latency: businessMetrics.latency,
         error_rate: businessMetrics.errorRate,
-        throughput: businessMetrics.throughput
+        throughput: businessMetrics.throughput,
       },
       system: {
         uptime: process.uptime(),
         memory_usage: process.memoryUsage(),
-        cpu_usage: process.cpuUsage()
+        cpu_usage: process.cpuUsage(),
       },
-      trace_context: this.telemetryService.getCurrentContext()
+      trace_context: this.telemetryService.getCurrentContext(),
     };
   }
 }

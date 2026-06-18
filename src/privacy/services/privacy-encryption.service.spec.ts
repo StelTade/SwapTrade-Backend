@@ -57,9 +57,12 @@ describe('PrivacyEncryptionService', () => {
       const key = service.generateRandomBytes(32);
 
       const { ciphertext, nonce, tag } = service.encrypt(plaintext, key);
-      const tamperedCiphertext = ciphertext.substring(0, ciphertext.length - 2) + 'FF';
+      const tamperedCiphertext =
+        ciphertext.substring(0, ciphertext.length - 2) + 'FF';
 
-      expect(() => service.decrypt(tamperedCiphertext, key, nonce, tag)).toThrow();
+      expect(() =>
+        service.decrypt(tamperedCiphertext, key, nonce, tag),
+      ).toThrow();
     });
   });
 

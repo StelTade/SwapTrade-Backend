@@ -60,13 +60,8 @@ export class CacheInvalidationService {
   /**
    * Batch invalidate multiple keys (used by transaction hooks)
    */
-  async invalidateBatch(
-    keys: string[],
-    entityType = 'unknown',
-  ): Promise<void> {
-    await Promise.allSettled(
-      keys.map((k) => this.invalidate(k, entityType)),
-    );
+  async invalidateBatch(keys: string[], entityType = 'unknown'): Promise<void> {
+    await Promise.allSettled(keys.map((k) => this.invalidate(k, entityType)));
   }
 
   /**

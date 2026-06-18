@@ -116,7 +116,8 @@ export class RetryService {
         lastError = error instanceof Error ? error : new Error(String(error));
         errors.push(lastError);
 
-        const shouldRetry = attempts <= policy.maxRetries && this.shouldRetry(error);
+        const shouldRetry =
+          attempts <= policy.maxRetries && this.shouldRetry(error);
 
         this.logger.warn(
           `[${correlationId}] ${functionName} failed on attempt ${attempts}: ${lastError.message} (retryable: ${shouldRetry})`,
@@ -169,7 +170,8 @@ export class RetryService {
     let delay: number;
 
     if (policy.backoffType === 'exponential') {
-      delay = policy.initialDelayMs * Math.pow(policy.multiplier, attemptNumber - 1);
+      delay =
+        policy.initialDelayMs * Math.pow(policy.multiplier, attemptNumber - 1);
     } else {
       delay = policy.initialDelayMs * attemptNumber;
     }
@@ -187,7 +189,10 @@ export class RetryService {
   /**
    * Execute function with timeout
    */
-  private executeWithTimeout<T>(fn: () => Promise<T>, timeoutMs?: number): Promise<T> {
+  private executeWithTimeout<T>(
+    fn: () => Promise<T>,
+    timeoutMs?: number,
+  ): Promise<T> {
     if (!timeoutMs) {
       return fn();
     }
@@ -213,9 +218,7 @@ export class RetryService {
   /**
    * Get retry policy by name
    */
-  getPolicy(
-    policyName: keyof typeof this.defaultPolicies,
-  ): RetryPolicy {
+  getPolicy(policyName: keyof typeof this.defaultPolicies): RetryPolicy {
     return this.defaultPolicies[policyName];
   }
 

@@ -39,7 +39,10 @@ export class DeterministicRateLimitService {
 
     // Deterministic refill based on elapsed time
     const elapsed = now - bucket.lastRefillMs;
-    bucket.tokens = Math.min(capacity, bucket.tokens + elapsed * refillRatePerMs);
+    bucket.tokens = Math.min(
+      capacity,
+      bucket.tokens + elapsed * refillRatePerMs,
+    );
     bucket.lastRefillMs = now;
 
     if (bucket.tokens < 1) {

@@ -105,25 +105,59 @@ export class PerformanceOptimizationIndexes1234567890 implements MigrationInterf
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Drop all created indexes
-    await queryRunner.query(`DROP INDEX CONCURRENTLY IF EXISTS "IDX_TRADES_USER_ID_ASSET_TIMESTAMP"`);
-    await queryRunner.query(`DROP INDEX CONCURRENTLY IF EXISTS "IDX_TRADES_ASSET_STATUS_TIMESTAMP"`);
-    await queryRunner.query(`DROP INDEX CONCURRENTLY IF EXISTS "IDX_TRADES_BUYER_ID_TIMESTAMP"`);
-    await queryRunner.query(`DROP INDEX CONCURRENTLY IF EXISTS "IDX_TRADES_SELLER_ID_TIMESTAMP"`);
-    await queryRunner.query(`DROP INDEX CONCURRENTLY IF EXISTS "IDX_TRADES_TYPE_TIMESTAMP"`);
-    await queryRunner.query(`DROP INDEX CONCURRENTLY IF EXISTS "IDX_ORDER_BOOK_ASSET_STATUS_PRICE"`);
-    await queryRunner.query(`DROP INDEX CONCURRENTLY IF EXISTS "IDX_ORDER_BOOK_USER_ID_STATUS"`);
-    await queryRunner.query(`DROP INDEX CONCURRENTLY IF EXISTS "IDX_PORTFOLIO_USER_ID_ASSET"`);
-    await queryRunner.query(`DROP INDEX CONCURRENTLY IF EXISTS "IDX_USER_BALANCE_USER_ID_ASSET"`);
-    await queryRunner.query(`DROP INDEX CONCURRENTLY IF EXISTS "IDX_VIRTUAL_ASSET_SYMBOL"`);
-    await queryRunner.query(`DROP INDEX CONCURRENTLY IF EXISTS "IDX_NOTIFICATION_USER_ID_CREATED_AT"`);
-    await queryRunner.query(`DROP INDEX CONCURRENTLY IF EXISTS "IDX_NOTIFICATION_TYPE_STATUS"`);
-    await queryRunner.query(`DROP INDEX CONCURRENTLY IF EXISTS "IDX_AUDIT_LOG_USER_ID_TIMESTAMP"`);
-    await queryRunner.query(`DROP INDEX CONCURRENTLY IF EXISTS "IDX_AUDIT_LOG_ACTION_TIMESTAMP"`);
-    await queryRunner.query(`DROP INDEX CONCURRENTLY IF EXISTS "IDX_TRADES_ACTIVE"`);
-    await queryRunner.query(`DROP INDEX CONCURRENTLY IF EXISTS "IDX_ORDER_BOOK_PENDING"`);
-    
+    await queryRunner.query(
+      `DROP INDEX CONCURRENTLY IF EXISTS "IDX_TRADES_USER_ID_ASSET_TIMESTAMP"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX CONCURRENTLY IF EXISTS "IDX_TRADES_ASSET_STATUS_TIMESTAMP"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX CONCURRENTLY IF EXISTS "IDX_TRADES_BUYER_ID_TIMESTAMP"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX CONCURRENTLY IF EXISTS "IDX_TRADES_SELLER_ID_TIMESTAMP"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX CONCURRENTLY IF EXISTS "IDX_TRADES_TYPE_TIMESTAMP"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX CONCURRENTLY IF EXISTS "IDX_ORDER_BOOK_ASSET_STATUS_PRICE"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX CONCURRENTLY IF EXISTS "IDX_ORDER_BOOK_USER_ID_STATUS"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX CONCURRENTLY IF EXISTS "IDX_PORTFOLIO_USER_ID_ASSET"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX CONCURRENTLY IF EXISTS "IDX_USER_BALANCE_USER_ID_ASSET"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX CONCURRENTLY IF EXISTS "IDX_VIRTUAL_ASSET_SYMBOL"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX CONCURRENTLY IF EXISTS "IDX_NOTIFICATION_USER_ID_CREATED_AT"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX CONCURRENTLY IF EXISTS "IDX_NOTIFICATION_TYPE_STATUS"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX CONCURRENTLY IF EXISTS "IDX_AUDIT_LOG_USER_ID_TIMESTAMP"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX CONCURRENTLY IF EXISTS "IDX_AUDIT_LOG_ACTION_TIMESTAMP"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX CONCURRENTLY IF EXISTS "IDX_TRADES_ACTIVE"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX CONCURRENTLY IF EXISTS "IDX_ORDER_BOOK_PENDING"`,
+    );
+
     if (queryRunner.connection.options.type === 'postgres') {
-      await queryRunner.query(`DROP INDEX CONCURRENTLY IF EXISTS "IDX_TRADES_METADATA_GIN"`);
+      await queryRunner.query(
+        `DROP INDEX CONCURRENTLY IF EXISTS "IDX_TRADES_METADATA_GIN"`,
+      );
     }
   }
 }

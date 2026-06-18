@@ -1,9 +1,9 @@
-import { 
-  Controller, 
-  Get, 
-  Post, 
-  Query, 
-  Body, 
+import {
+  Controller,
+  Get,
+  Post,
+  Query,
+  Body,
   Param,
   HttpCode,
   HttpStatus,
@@ -83,16 +83,23 @@ export class DatabaseController {
     @Query('timeWindow') timeWindow: '1h' | '24h' | '7d' = '24h',
   ) {
     const assetList = assets ? assets.split(',') : ['BTC', 'ETH', 'USDT'];
-    return await this.optimizedQueryService.getMarketDataAggregation(assetList, timeWindow);
+    return await this.optimizedQueryService.getMarketDataAggregation(
+      assetList,
+      timeWindow,
+    );
   }
 
   @Get('queries/portfolio/:userId')
   async getUserPortfolio(@Param('userId') userId: string) {
-    return await this.optimizedQueryService.getUserPortfolioSnapshot(parseInt(userId));
+    return await this.optimizedQueryService.getUserPortfolioSnapshot(
+      parseInt(userId),
+    );
   }
 
   @Get('queries/statistics')
-  async getTradingStatistics(@Query('timeWindow') timeWindow: '1m' | '5m' | '15m' | '1h' = '5m') {
+  async getTradingStatistics(
+    @Query('timeWindow') timeWindow: '1m' | '5m' | '15m' | '1h' = '5m',
+  ) {
     return await this.optimizedQueryService.getTradingStatistics(timeWindow);
   }
 
@@ -185,9 +192,12 @@ export class DatabaseController {
   async getHealthCheck() {
     const health = await this.optimizedQueryService.getQueryPerformanceHealth();
     const cacheHealth = await this.cacheService.healthCheck();
-    
+
     return {
-      status: health.status === 'healthy' && cacheHealth.status === 'healthy' ? 'healthy' : 'degraded',
+      status:
+        health.status === 'healthy' && cacheHealth.status === 'healthy'
+          ? 'healthy'
+          : 'degraded',
       database: health,
       cache: cacheHealth,
       timestamp: new Date(),

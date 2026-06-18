@@ -24,10 +24,7 @@ export {
   roleHasPermission,
   getAllRolePermissions,
 } from './types/role-metadata';
-export type {
-  RoleMetadata,
-  RoleContext,
-} from './types/role-metadata';
+export type { RoleMetadata, RoleContext } from './types/role-metadata';
 
 // Service
 export { RoleService } from './services/role.service';

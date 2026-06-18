@@ -1,11 +1,18 @@
-import { IsOptional, IsEnum, IsBoolean, IsInt, Min, Max } from 'class-validator';
+import {
+  IsOptional,
+  IsEnum,
+  IsBoolean,
+  IsInt,
+  Min,
+  Max,
+} from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 
 export enum ReferralStatus {
-  PENDING   = 'pending',
+  PENDING = 'pending',
   CONFIRMED = 'confirmed',
-  FLAGGED   = 'flagged',
-  REJECTED  = 'rejected',
+  FLAGGED = 'flagged',
+  REJECTED = 'rejected',
 }
 
 export class ReferralQueryDto {

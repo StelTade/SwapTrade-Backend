@@ -11,7 +11,9 @@ import { EncryptedOrderService } from './services/encrypted-order.service';
 import { PrivacyComplianceService } from './services/privacy-compliance.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([PrivacyProfile, EncryptedOrder, PrivacyAuditLog])],
+  imports: [
+    TypeOrmModule.forFeature([PrivacyProfile, EncryptedOrder, PrivacyAuditLog]),
+  ],
   controllers: [PrivacyController],
   providers: [
     PrivacyEncryptionService,

@@ -1,9 +1,21 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { PrivacyProfile, AnonymityLevel } from '../entities/privacy-profile.entity';
-import { CreatePrivacyProfileDto, UpdatePrivacyProfileDto, PrivacyProfileResponseDto } from '../dto/privacy-profile.dto';
+import {
+  PrivacyProfile,
+  AnonymityLevel,
+} from '../entities/privacy-profile.entity';
+import {
+  CreatePrivacyProfileDto,
+  UpdatePrivacyProfileDto,
+  PrivacyProfileResponseDto,
+} from '../dto/privacy-profile.dto';
 import { PrivacyEncryptionService } from './privacy-encryption.service';
 
 @Injectable()
@@ -93,13 +105,17 @@ export class PrivacyProfileService {
    * @param pseudonymousId Pseudonymous ID
    * @returns Privacy profile
    */
-  async getProfileByPseudonymousId(pseudonymousId: string): Promise<PrivacyProfile> {
+  async getProfileByPseudonymousId(
+    pseudonymousId: string,
+  ): Promise<PrivacyProfile> {
     const profile = await this.privacyProfileRepository.findOne({
       where: { pseudonymousId },
     });
 
     if (!profile) {
-      throw new NotFoundException(`Profile not found for pseudonymous ID: ${pseudonymousId}`);
+      throw new NotFoundException(
+        `Profile not found for pseudonymous ID: ${pseudonymousId}`,
+      );
     }
 
     return profile;
@@ -168,7 +184,10 @@ export class PrivacyProfileService {
    * @param pseudonymousId Pseudonymous ID
    * @param amount Order quantity
    */
-  async incrementOrderCount(pseudonymousId: string, amount: number = 1): Promise<void> {
+  async incrementOrderCount(
+    pseudonymousId: string,
+    amount: number = 1,
+  ): Promise<void> {
     const profile = await this.getProfileByPseudonymousId(pseudonymousId);
     profile.anonymousOrderCount++;
     profile.anonymousTradeVolume += amount;
@@ -181,9 +200,7 @@ export class PrivacyProfileService {
    * @param pseudonymousId Pseudonymous ID
    * @returns Aggregated stats
    */
-  async getAggregatedStats(
-    pseudonymousId: string,
-  ): Promise<{
+  async getAggregatedStats(pseudonymousId: string): Promise<{
     totalOrders: number;
     totalVolume: number;
     profileAge: number; // in days
@@ -238,7 +255,9 @@ export class PrivacyProfileService {
   async getProfilesByIds(pseudonymousIds: string[]): Promise<PrivacyProfile[]> {
     return await this.privacyProfileRepository
       .createQueryBuilder('profile')
-      .where('profile.pseudonymousId IN (:...pseudonymousIds)', { pseudonymousIds })
+      .where('profile.pseudonymousId IN (:...pseudonymousIds)', {
+        pseudonymousIds,
+      })
       .getMany();
   }
 
@@ -257,7 +276,9 @@ export class PrivacyProfileService {
    * @param level Anonymity level
    * @returns Array of profiles
    */
-  async getProfilesByAnonymityLevel(level: AnonymityLevel): Promise<PrivacyProfile[]> {
+  async getProfilesByAnonymityLevel(
+    level: AnonymityLevel,
+  ): Promise<PrivacyProfile[]> {
     return await this.privacyProfileRepository.find({
       where: { anonymityLevel: level },
     });
@@ -269,9 +290,12 @@ export class PrivacyProfileService {
    * @param newPublicKey New public key
    * @returns Updated profile
    */
-  async rotatePublicKey(pseudonymousId: string, newPublicKey: string): Promise<PrivacyProfile> {
+  async rotatePublicKey(
+    pseudonymousId: string,
+    newPublicKey: string,
+  ): Promise<PrivacyProfile> {
     const profile = await this.getProfileByPseudonymousId(pseudonymousId);
-    
+
     if (!newPublicKey || newPublicKey.length < 10) {
       throw new BadRequestException('Invalid public key format');
     }

@@ -13,31 +13,30 @@ import { UserRole } from '../enums/user-role.enum';
  * SUPER_ADMIN is at the top with no parents
  *
  * Hierarchy:
- * SUPER_ADMIN (highest — unrestricted)
+ * SUPER_ADMIN (highest)
  *   └─ ADMIN
  *       ├─ COMPLIANCE_OFFICER
  *       ├─ SUPPORT_AGENT
- *       │   └─ STAFF
- *       │       └─ USER (base)
  *       ├─ GOVERNANCE_OPERATOR
  *       │   └─ STAFF
- *       │       └─ USER
+ *       │       └─ TRADER
+ *       │           └─ USER (base)
  *       └─ KYC_GOVERNANCE
  *           ├─ KYC_OPERATOR
  *           └─ STAFF
- *               └─ USER
- * TRADER inherits USER
+ *               └─ TRADER
+ *                   └─ USER
  *
  * USER is the base role from which others inherit
  */
 export const ROLE_HIERARCHY: Record<UserRole, UserRole[]> = {
   [UserRole.SUPER_ADMIN]: [],
-  [UserRole.ADMIN]: [],
-  [UserRole.COMPLIANCE_OFFICER]: [UserRole.STAFF],
-  [UserRole.SUPPORT_AGENT]: [UserRole.STAFF],
-  [UserRole.GOVERNANCE_OPERATOR]: [UserRole.STAFF],
-  [UserRole.STAFF]: [UserRole.USER],
+  [UserRole.ADMIN]: [UserRole.SUPER_ADMIN],
+  [UserRole.COMPLIANCE_OFFICER]: [UserRole.ADMIN],
+  [UserRole.SUPPORT_AGENT]: [UserRole.ADMIN],
   [UserRole.TRADER]: [UserRole.USER],
+  [UserRole.GOVERNANCE_OPERATOR]: [UserRole.STAFF],
+  [UserRole.STAFF]: [UserRole.TRADER],
   [UserRole.USER]: [],
   [UserRole.KYC_OPERATOR]: [UserRole.USER],
   [UserRole.KYC_GOVERNANCE]: [UserRole.STAFF, UserRole.KYC_OPERATOR],

@@ -28,12 +28,10 @@ export class EnhancedCacheService {
     deletes: 0,
     hitRate: 0,
     totalMemoryUsage: 0,
-    keyCount: 0
+    keyCount: 0,
   };
 
-  constructor(
-    private readonly cache: Cache
-  ) {}
+  constructor(private readonly cache: Cache) {}
 
   /**
    * Get market price with intelligent caching
@@ -42,7 +40,7 @@ export class EnhancedCacheService {
   async getMarketPrice(symbol: string): Promise<number | null> {
     const cacheKey = `market:price:${symbol}`;
     const result = await this.get<number>(cacheKey, 30); // 30 seconds
-    
+
     if (result !== null) {
       this.logger.debug(`Market price cache hit: ${symbol} = ${result}`);
       return result;
@@ -68,7 +66,7 @@ export class EnhancedCacheService {
   async getUserPortfolio(userId: string): Promise<any | null> {
     const cacheKey = `portfolio:user:${userId}`;
     const result = await this.get<any>(cacheKey, 120); // 2 minutes
-    
+
     if (result !== null) {
       this.logger.debug(`Portfolio cache hit: user ${userId}`);
       return result;
@@ -94,7 +92,7 @@ export class EnhancedCacheService {
   async getPortfolioAnalytics(userId: string): Promise<any | null> {
     const cacheKey = `analytics:portfolio:${userId}`;
     const result = await this.get<any>(cacheKey, 120); // 2 minutes
-    
+
     if (result !== null) {
       this.logger.debug(`Portfolio analytics cache hit: user ${userId}`);
       return result;
@@ -120,7 +118,7 @@ export class EnhancedCacheService {
   async getOrderBook(asset: string): Promise<any | null> {
     const cacheKey = `orderbook:${asset}`;
     const result = await this.get<any>(cacheKey, 5); // 5 seconds
-    
+
     if (result !== null) {
       this.logger.debug(`Order book cache hit: ${asset}`);
       return result;
@@ -147,7 +145,7 @@ export class EnhancedCacheService {
       `portfolio:user:${userId}`,
       `analytics:portfolio:${userId}`,
       `trades:user:${userId}`,
-      `balance:user:${userId}`
+      `balance:user:${userId}`,
     ];
 
     for (const pattern of patterns) {
@@ -166,7 +164,17 @@ export class EnhancedCacheService {
       this.logger.log(`Invalidated market cache for ${symbol}`);
     } else {
       // Invalidate all market prices (pattern matching would be ideal here)
-      const commonSymbols = ['BTC', 'ETH', 'XLM', 'USDT', 'USDC', 'BNB', 'SOL', 'XRP', 'ADA'];
+      const commonSymbols = [
+        'BTC',
+        'ETH',
+        'XLM',
+        'USDT',
+        'USDC',
+        'BNB',
+        'SOL',
+        'XRP',
+        'ADA',
+      ];
       for (const sym of commonSymbols) {
         await this.delete(`market:price:${sym}`);
       }
@@ -193,7 +201,7 @@ export class EnhancedCacheService {
   getCacheStats(): CacheStats {
     const total = this.stats.hits + this.stats.misses;
     this.stats.hitRate = total > 0 ? (this.stats.hits / total) * 100 : 0;
-    
+
     return { ...this.stats };
   }
 
@@ -214,7 +222,7 @@ export class EnhancedCacheService {
    */
   async warmupCache(): Promise<void> {
     this.logger.log('Starting cache warmup...');
-    
+
     try {
       // Warm up common market prices
       const commonSymbols = ['BTC', 'ETH', 'XLM', 'USDT', 'USDC'];
@@ -233,7 +241,7 @@ export class EnhancedCacheService {
   private async get<T>(key: string, defaultTtl: number): Promise<T | null> {
     try {
       const cached = await this.cache.get<CacheEntry<T>>(key);
-      
+
       if (cached) {
         // Check if expired
         if (Date.now() - cached.timestamp > cached.ttl * 1000) {
@@ -241,12 +249,12 @@ export class EnhancedCacheService {
           this.stats.misses++;
           return null;
         }
-        
+
         cached.hitCount++;
         this.stats.hits++;
         return cached.data;
       }
-      
+
       this.stats.misses++;
       return null;
     } catch (error) {
@@ -262,7 +270,7 @@ export class EnhancedCacheService {
         data,
         timestamp: Date.now(),
         ttl,
-        hitCount: 0
+        hitCount: 0,
       };
 
       await this.cache.set(key, entry, ttl * 1000); // Convert to milliseconds
@@ -287,7 +295,7 @@ export class EnhancedCacheService {
       ETH: 3000,
       XLM: 0.25,
       USDT: 1,
-      USDC: 1
+      USDC: 1,
     };
     return prices[symbol] || 100;
   }

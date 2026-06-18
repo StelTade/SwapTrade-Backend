@@ -42,11 +42,11 @@ export class MemoryProfilingService {
     resolverName: string,
     operationType: string,
     userId?: string,
-    parameters?: any
+    parameters?: any,
   ): () => MemoryProfile {
     const startTime = new Date();
     const startMemory = this.getMemorySnapshot();
-    
+
     // Track peak memory during operation
     let currentPeak = startMemory;
     const peakCheckInterval = setInterval(() => {
@@ -58,10 +58,10 @@ export class MemoryProfilingService {
 
     return (): MemoryProfile => {
       clearInterval(peakCheckInterval);
-      
+
       const endTime = new Date();
       const endMemory = this.getMemorySnapshot();
-      
+
       const profile: MemoryProfile = {
         resolverName,
         operationType,
@@ -74,12 +74,12 @@ export class MemoryProfilingService {
           heapUsed: endMemory.heapUsed - startMemory.heapUsed,
           heapTotal: endMemory.heapTotal - startMemory.heapTotal,
           external: endMemory.external - startMemory.external,
-          arrayBuffers: endMemory.arrayBuffers - startMemory.arrayBuffers
+          arrayBuffers: endMemory.arrayBuffers - startMemory.arrayBuffers,
         },
         peakMemory: currentPeak,
         duration: endTime.getTime() - startTime.getTime(),
         userId,
-        parameters
+        parameters,
       };
 
       this.addProfile(profile);
@@ -103,24 +103,24 @@ export class MemoryProfilingService {
         averageMemoryDelta: 0,
         peakMemoryUsage: 0,
         memoryIntensiveOperations: [],
-        recommendations: []
+        recommendations: [],
       };
     }
 
     const totalMemoryDelta = this.profiles.reduce(
       (sum, profile) => sum + profile.memoryDelta.heapUsed,
-      0
+      0,
     );
-    
+
     const averageMemoryDelta = totalMemoryDelta / this.profiles.length;
-    
+
     const peakMemoryUsage = Math.max(
-      ...this.profiles.map(profile => profile.peakMemory.heapUsed)
+      ...this.profiles.map((profile) => profile.peakMemory.heapUsed),
     );
 
     // Find memory intensive operations (>10MB delta)
     const memoryIntensiveOperations = this.profiles
-      .filter(profile => profile.memoryDelta.heapUsed > 10 * 1024 * 1024)
+      .filter((profile) => profile.memoryDelta.heapUsed > 10 * 1024 * 1024)
       .sort((a, b) => b.memoryDelta.heapUsed - a.memoryDelta.heapUsed)
       .slice(0, 10);
 
@@ -131,7 +131,7 @@ export class MemoryProfilingService {
       averageMemoryDelta,
       peakMemoryUsage,
       memoryIntensiveOperations,
-      recommendations
+      recommendations,
     };
   }
 
@@ -148,19 +148,21 @@ export class MemoryProfilingService {
    * Get profiles by resolver
    */
   getProfilesByResolver(resolverName: string): MemoryProfile[] {
-    return this.profiles.filter(profile => profile.resolverName === resolverName);
+    return this.profiles.filter(
+      (profile) => profile.resolverName === resolverName,
+    );
   }
 
   /**
    * Get profiles by user
    */
   getProfilesByUser(userId: string): MemoryProfile[] {
-    return this.profiles.filter(profile => profile.userId === userId);
+    return this.profiles.filter((profile) => profile.userId === userId);
   }
 
   private addProfile(profile: MemoryProfile): void {
     this.profiles.push(profile);
-    
+
     // Keep only last 1000 profiles to prevent memory leaks
     if (this.profiles.length > 1000) {
       this.profiles = this.profiles.slice(-1000);
@@ -176,8 +178,8 @@ export class MemoryProfilingService {
           operationType: profile.operationType,
           memoryDeltaMB,
           duration: profile.duration,
-          userId: profile.userId
-        }
+          userId: profile.userId,
+        },
       );
     } else if (memoryDeltaMB > 10) {
       this.logger.log(
@@ -186,8 +188,8 @@ export class MemoryProfilingService {
           resolverName: profile.resolverName,
           operationType: profile.operationType,
           memoryDeltaMB,
-          duration: profile.duration
-        }
+          duration: profile.duration,
+        },
       );
     }
   }
@@ -200,28 +202,35 @@ export class MemoryProfilingService {
       heapUsed: usage.heapUsed,
       heapTotal: usage.heapTotal,
       external: usage.external,
-      arrayBuffers: usage.arrayBuffers || 0
+      arrayBuffers: usage.arrayBuffers || 0,
     };
   }
 
   private generateRecommendations(): string[] {
     const recommendations: string[] = [];
-    
-    // Analyze patterns in memory usage
-    const resolverStats = new Map<string, {
-      count: number;
-      totalDelta: number;
-      maxDelta: number;
-    }>();
 
-    this.profiles.forEach(profile => {
+    // Analyze patterns in memory usage
+    const resolverStats = new Map<
+      string,
+      {
+        count: number;
+        totalDelta: number;
+        maxDelta: number;
+      }
+    >();
+
+    this.profiles.forEach((profile) => {
       const key = profile.resolverName;
-      const existing = resolverStats.get(key) || { count: 0, totalDelta: 0, maxDelta: 0 };
-      
+      const existing = resolverStats.get(key) || {
+        count: 0,
+        totalDelta: 0,
+        maxDelta: 0,
+      };
+
       resolverStats.set(key, {
         count: existing.count + 1,
         totalDelta: existing.totalDelta + profile.memoryDelta.heapUsed,
-        maxDelta: Math.max(existing.maxDelta, profile.memoryDelta.heapUsed)
+        maxDelta: Math.max(existing.maxDelta, profile.memoryDelta.heapUsed),
       });
     });
 
@@ -232,31 +241,35 @@ export class MemoryProfilingService {
 
       if (avgDeltaMB > 20) {
         recommendations.push(
-          `${resolver}: Consider implementing pagination or result streaming (avg: ${avgDeltaMB.toFixed(1)}MB)`
+          `${resolver}: Consider implementing pagination or result streaming (avg: ${avgDeltaMB.toFixed(1)}MB)`,
         );
       }
 
       if (maxDeltaMB > 100) {
         recommendations.push(
-          `${resolver}: Implement memory optimization for large datasets (peak: ${maxDeltaMB.toFixed(1)}MB)`
+          `${resolver}: Implement memory optimization for large datasets (peak: ${maxDeltaMB.toFixed(1)}MB)`,
         );
       }
     }
 
     // Check for memory leaks
     const recentProfiles = this.profiles.slice(-50);
-    const recentAvgDelta = recentProfiles.reduce(
-      (sum, profile) => sum + profile.memoryDelta.heapUsed,
-      0
-    ) / recentProfiles.length;
+    const recentAvgDelta =
+      recentProfiles.reduce(
+        (sum, profile) => sum + profile.memoryDelta.heapUsed,
+        0,
+      ) / recentProfiles.length;
 
-    const overallAvgDelta = this.profiles.reduce(
-      (sum, profile) => sum + profile.memoryDelta.heapUsed,
-      0
-    ) / this.profiles.length;
+    const overallAvgDelta =
+      this.profiles.reduce(
+        (sum, profile) => sum + profile.memoryDelta.heapUsed,
+        0,
+      ) / this.profiles.length;
 
     if (recentAvgDelta > overallAvgDelta * 1.5) {
-      recommendations.push('Possible memory leak detected - recent operations using more memory than average');
+      recommendations.push(
+        'Possible memory leak detected - recent operations using more memory than average',
+      );
     }
 
     return recommendations;

@@ -20,12 +20,16 @@ export interface CorrelationContext {
  */
 @Injectable()
 export class CorrelationIdService {
-  private readonly asyncLocalStorage = new AsyncLocalStorage<CorrelationContext>();
+  private readonly asyncLocalStorage =
+    new AsyncLocalStorage<CorrelationContext>();
 
   /**
    * Create a new correlation context
    */
-  createContext(userId?: string, metadata?: Record<string, any>): CorrelationContext {
+  createContext(
+    userId?: string,
+    metadata?: Record<string, any>,
+  ): CorrelationContext {
     const context: CorrelationContext = {
       correlationId: uuidv4(),
       traceId: uuidv4(),
@@ -127,7 +131,8 @@ export class CorrelationIdService {
     headers: Record<string, string | string[]>,
     userId?: string,
   ): CorrelationContext {
-    const correlationId = this.extractHeader(headers, 'x-correlation-id') || uuidv4();
+    const correlationId =
+      this.extractHeader(headers, 'x-correlation-id') || uuidv4();
     const traceId = this.extractHeader(headers, 'x-trace-id') || uuidv4();
     const requestId = this.extractHeader(headers, 'x-request-id') || uuidv4();
 

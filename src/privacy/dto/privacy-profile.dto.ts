@@ -1,4 +1,10 @@
-import { IsString, IsOptional, IsEnum, IsBoolean, IsObject } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsBoolean,
+  IsObject,
+} from 'class-validator';
 import { AnonymityLevel } from '../entities/privacy-profile.entity';
 
 export class CreatePrivacyProfileDto {

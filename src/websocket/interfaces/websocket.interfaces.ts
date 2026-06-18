@@ -14,12 +14,12 @@ export enum WebSocketMessageType {
   ERROR = 'error',
   PING = 'ping',
   PONG = 'pong',
-  
+
   // Authentication
   AUTH_REQUEST = 'auth_request',
   AUTH_SUCCESS = 'auth_success',
   AUTH_FAILED = 'auth_failed',
-  
+
   // Trading events
   ORDER_BOOK_UPDATE = 'order_book_update',
   TRADE_EXECUTED = 'trade_executed',
@@ -27,25 +27,25 @@ export enum WebSocketMessageType {
   ORDER_CANCELLED = 'order_cancelled',
   ORDER_FILLED = 'order_filled',
   ORDER_PARTIALLY_FILLED = 'order_partially_filled',
-  
+
   // Balance updates
   BALANCE_UPDATE = 'balance_update',
   PORTFOLIO_UPDATE = 'portfolio_update',
-  
+
   // Market data
   MARKET_DATA_UPDATE = 'market_data_update',
   PRICE_TICK = 'price_tick',
   VOLUME_UPDATE = 'volume_update',
-  
+
   // User-specific events
   USER_TRADE_EXECUTED = 'user_trade_executed',
   USER_ORDER_UPDATE = 'user_order_update',
   USER_ACHIEVEMENT_UNLOCKED = 'user_achievement_unlocked',
   USER_TIER_PROGRESS = 'user_tier_progress',
-  
+
   // System events
   SYSTEM_STATUS = 'system_status',
-  MAINTENANCE_NOTICE = 'maintenance_notice'
+  MAINTENANCE_NOTICE = 'maintenance_notice',
 }
 
 export interface WebSocketClient {

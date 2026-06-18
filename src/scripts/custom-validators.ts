@@ -1,7 +1,11 @@
-import { registerDecorator, ValidationOptions, ValidationArguments } from 'class-validator';
+import {
+  registerDecorator,
+  ValidationOptions,
+  ValidationArguments,
+} from 'class-validator';
 
 export function IsAssetSymbol(validationOptions?: ValidationOptions) {
-  return function (object: Object, propertyName: string) {
+  return function (object: object, propertyName: string) {
     registerDecorator({
       name: 'isAssetSymbol',
       target: object.constructor,
@@ -12,15 +16,15 @@ export function IsAssetSymbol(validationOptions?: ValidationOptions) {
           return typeof value === 'string' && /^[A-Z0-9]{2,10}$/.test(value);
         },
         defaultMessage(args: ValidationArguments) {
-            return `${args.property} must be a valid asset symbol (uppercase alphanumeric, 2-10 chars)`;
-        }
+          return `${args.property} must be a valid asset symbol (uppercase alphanumeric, 2-10 chars)`;
+        },
       },
     });
   };
 }
 
 export function IsSafeText(validationOptions?: ValidationOptions) {
-  return function (object: Object, propertyName: string) {
+  return function (object: object, propertyName: string) {
     registerDecorator({
       name: 'isSafeText',
       target: object.constructor,
@@ -37,11 +41,11 @@ export function IsSafeText(validationOptions?: ValidationOptions) {
             /onerror=/i,
             /onclick=/i,
           ];
-          return !dangerousPatterns.some(pattern => pattern.test(value));
+          return !dangerousPatterns.some((pattern) => pattern.test(value));
         },
         defaultMessage(args: ValidationArguments) {
-            return `${args.property} contains potentially unsafe characters or patterns`;
-        }
+          return `${args.property} contains potentially unsafe characters or patterns`;
+        },
       },
     });
   };

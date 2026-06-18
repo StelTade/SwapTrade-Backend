@@ -1,5 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { AuditLogService, CreateAuditLogDto } from '../../audit-log/audit-log.service';
+import {
+  AuditLogService,
+  CreateAuditLogDto,
+} from '../../audit-log/audit-log.service';
 import { AuditEventType, AuditSeverity } from './audit-log.entity';
 
 /**
@@ -45,7 +48,9 @@ export class SecurityEventLoggerService {
       metadata: { action: 'KYC_UPDATE', targetUserId },
       ipAddress,
     });
-    this.logger.log(`[Security] KYC updated: actor=${actorId} target=${targetUserId}`);
+    this.logger.log(
+      `[Security] KYC updated: actor=${actorId} target=${targetUserId}`,
+    );
   }
 
   // ─── Role changes ──────────────────────────────────────────────────────────
@@ -68,7 +73,13 @@ export class SecurityEventLoggerService {
       entityId: targetUserId,
       beforeState: { role: oldRole },
       afterState: { role: newRole },
-      metadata: { action: 'ROLE_CHANGE', actorId, targetUserId, oldRole, newRole },
+      metadata: {
+        action: 'ROLE_CHANGE',
+        actorId,
+        targetUserId,
+        oldRole,
+        newRole,
+      },
       ipAddress,
     });
     this.logger.warn(
@@ -95,7 +106,9 @@ export class SecurityEventLoggerService {
       metadata: { action: actionType, ...details },
       ipAddress,
     });
-    this.logger.log(`[Security] Governance action: actor=${actorId} action=${actionType}`);
+    this.logger.log(
+      `[Security] Governance action: actor=${actorId} action=${actionType}`,
+    );
   }
 
   // ─── Auth events ──────────────────────────────────────────────────────────

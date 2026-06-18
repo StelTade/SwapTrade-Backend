@@ -37,7 +37,7 @@ export class MessageOrderingService {
     }
 
     const partitionId = this.getPartitionId(queueName, partitionKey);
-    
+
     // Get or create partition
     if (!this.partitions.has(partitionId)) {
       this.partitions.set(partitionId, {
@@ -137,14 +137,18 @@ export class MessageOrderingService {
       return false;
     }
 
-    const index = partition.messages.findIndex((m) => m.messageId === messageId);
+    const index = partition.messages.findIndex(
+      (m) => m.messageId === messageId,
+    );
     if (index === -1) {
       return false;
     }
 
     partition.messages.splice(index, 1);
-    this.logger.debug(`Message removed from partition ${partitionId}: ${messageId}`);
-    
+    this.logger.debug(
+      `Message removed from partition ${partitionId}: ${messageId}`,
+    );
+
     return true;
   }
 
@@ -168,7 +172,10 @@ export class MessageOrderingService {
   /**
    * Get partition by ID
    */
-  getPartition(queueName: string, partitionKey: string): MessageOrderingPartition | undefined {
+  getPartition(
+    queueName: string,
+    partitionKey: string,
+  ): MessageOrderingPartition | undefined {
     const partitionId = this.getPartitionId(queueName, partitionKey);
     return this.partitions.get(partitionId);
   }
@@ -178,7 +185,7 @@ export class MessageOrderingService {
    */
   getQueuePartitions(queueName: string): MessageOrderingPartition[] {
     const partitions: MessageOrderingPartition[] = [];
-    
+
     for (const [partitionId, partition] of this.partitions.entries()) {
       if (partition.queueName === queueName) {
         partitions.push(partition);
@@ -242,8 +249,10 @@ export class MessageOrderingService {
     const messageCount = partition.messages.length;
     partition.messages = [];
     this.sequenceNumbers.set(partitionId, 0);
-    
-    this.logger.log(`Cleared ${messageCount} messages from partition ${partitionId}`);
+
+    this.logger.log(
+      `Cleared ${messageCount} messages from partition ${partitionId}`,
+    );
     return true;
   }
 
@@ -289,16 +298,18 @@ export class MessageOrderingService {
   } {
     const partitions = Array.from(this.partitions.values());
     const processingCount = partitions.filter((p) => p.isProcessing).length;
-    const totalMessages = partitions.reduce((sum, p) => sum + p.messages.length, 0);
+    const totalMessages = partitions.reduce(
+      (sum, p) => sum + p.messages.length,
+      0,
+    );
 
     return {
       enabled: this.config.ordering.enabled,
       totalPartitions: partitions.length,
       totalMessages,
       processingPartitions: processingCount,
-      averageMessagesPerPartition: partitions.length > 0 
-        ? totalMessages / partitions.length 
-        : 0,
+      averageMessagesPerPartition:
+        partitions.length > 0 ? totalMessages / partitions.length : 0,
     };
   }
 

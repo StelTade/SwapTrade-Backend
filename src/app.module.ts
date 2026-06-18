@@ -1,7 +1,12 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { I18nModule, AcceptLanguageResolver, HeaderResolver, QueryResolver } from 'nestjs-i18n';
+import {
+  I18nModule,
+  AcceptLanguageResolver,
+  HeaderResolver,
+  QueryResolver,
+} from 'nestjs-i18n';
 import * as path from 'path';
 
 // Root
@@ -20,8 +25,7 @@ import { ErrorModule } from './error/error.module';
 // ── Identity Domain Entities (Phase 2) ──
 import { User } from './user/entities/user.entity';
 import { Auth } from './auth/entities/auth.entity';
-import { Session } from './auth/entities/session.entity';
-import { KycRecord } from './kyc/entities/kyc-records.entity';
+import { Session } from './auth/entities/session.entity';import { KycRecord } from './kyc/entities/kyc-records.entity';
 import { DidDocument } from './did/entities/did-document.entity';
 import { VerifiableCredential } from './did/entities/verifiable-credential.entity';
 import { PrivacyProfile } from './privacy/entities/privacy-profile.entity';
@@ -66,7 +70,9 @@ import { Trade } from './database/entities/trade.entity';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        type: configService.get<string>('DB_TYPE', 'postgres') as 'postgres' | 'sqlite',
+        type: configService.get<string>('DB_TYPE', 'postgres') as
+          | 'postgres'
+          | 'sqlite',
         host: configService.get<string>('DB_HOST', 'localhost'),
         port: configService.get<number>('DB_PORT', 5432),
         username: configService.get<string>('DB_USERNAME', 'postgres'),
@@ -74,23 +80,35 @@ import { Trade } from './database/entities/trade.entity';
         database: configService.get<string>('DB_NAME', 'swaptrade'),
         entities: [
           // Identity — Auth
-          Auth, Session,
+          Auth,
+          Session,
           // Identity — User
           User,
           // Identity — KYC
           KycRecord,
           // Identity — DID
-          DidDocument, VerifiableCredential,
+          DidDocument,
+          VerifiableCredential,
           // Identity — Privacy
-          PrivacyProfile, EncryptedOrder, PrivacyAuditLog,
+          PrivacyProfile,
+          EncryptedOrder,
+          PrivacyAuditLog,
           // Identity — Compliance
-          ComplianceRuleEntity, ComplianceAlertEntity, AuditTrailEntity, RegulatoryReportEntity,
+          ComplianceRuleEntity,
+          ComplianceAlertEntity,
+          AuditTrailEntity,
+          RegulatoryReportEntity,
           // Supporting (required by UserModule & DatabaseModule)
-          UserBalance, VirtualAsset, Trade,
+          UserBalance,
+          VirtualAsset,
+          Trade,
         ],
         synchronize: configService.get<boolean>('DB_SYNCHRONIZE', true),
         logging: configService.get<boolean>('DB_LOGGING', false),
-        autoLoadEntities: configService.get<boolean>('DB_AUTO_LOAD_ENTITIES', true),
+        autoLoadEntities: configService.get<boolean>(
+          'DB_AUTO_LOAD_ENTITIES',
+          true,
+        ),
       }),
     }),
 
@@ -102,8 +120,6 @@ import { Trade } from './database/entities/trade.entity';
 
     // ── Error Handling ──
     ErrorModule,
-
-    
   ],
   controllers: [AppController],
   providers: [AppService],

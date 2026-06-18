@@ -14,11 +14,16 @@ export class TradeResolver {
     @Args('price') price: number,
     @Args('type') type: string,
   ) {
-    const result = await this.tradingService.swap(userId, asset, amount, price, type);
+    const result = await this.tradingService.swap(
+      userId,
+      asset,
+      amount,
+      price,
+      type,
+    );
     if (!result.success || !result.trade) {
       throw new Error(result.error ?? 'Trade execution failed');
     }
     return result.trade;
   }
 }
-

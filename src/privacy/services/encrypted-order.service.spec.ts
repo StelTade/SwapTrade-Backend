@@ -3,7 +3,10 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EncryptedOrderService } from '../services/encrypted-order.service';
 import { PrivacyEncryptionService } from '../services/privacy-encryption.service';
-import { EncryptedOrder, EncryptedOrderStatus } from '../entities/encrypted-order.entity';
+import {
+  EncryptedOrder,
+  EncryptedOrderStatus,
+} from '../entities/encrypted-order.entity';
 
 describe('EncryptedOrderService', () => {
   let service: EncryptedOrderService;
@@ -30,8 +33,12 @@ describe('EncryptedOrderService', () => {
     }).compile();
 
     service = module.get<EncryptedOrderService>(EncryptedOrderService);
-    repository = module.get<Repository<EncryptedOrder>>(getRepositoryToken(EncryptedOrder));
-    encryptionService = module.get<PrivacyEncryptionService>(PrivacyEncryptionService);
+    repository = module.get<Repository<EncryptedOrder>>(
+      getRepositoryToken(EncryptedOrder),
+    );
+    encryptionService = module.get<PrivacyEncryptionService>(
+      PrivacyEncryptionService,
+    );
   });
 
   it('should be defined', () => {
@@ -55,7 +62,7 @@ describe('EncryptedOrderService', () => {
         status: EncryptedOrderStatus.PENDING,
         createdAt: new Date(),
         updatedAt: new Date(),
-      } as any);
+      });
 
       const result = await service.createOrder('pseudo-id', createDto);
 
@@ -139,7 +146,10 @@ describe('EncryptedOrderService', () => {
         matchedAt: new Date(),
       });
 
-      const result = await service.updateOrderStatus('order-id', EncryptedOrderStatus.MATCHED);
+      const result = await service.updateOrderStatus(
+        'order-id',
+        EncryptedOrderStatus.MATCHED,
+      );
 
       expect(result.status).toBe(EncryptedOrderStatus.MATCHED);
       expect(result.matchedAt).toBeDefined();
@@ -155,7 +165,9 @@ describe('EncryptedOrderService', () => {
 
       jest.spyOn(repository, 'find').mockResolvedValue(orders as any);
 
-      const result = await service.getOrdersByStatus(EncryptedOrderStatus.PENDING);
+      const result = await service.getOrdersByStatus(
+        EncryptedOrderStatus.PENDING,
+      );
 
       expect(result).toHaveLength(2);
       expect(result[0].status).toBe(EncryptedOrderStatus.PENDING);
@@ -167,7 +179,10 @@ describe('EncryptedOrderService', () => {
       const encryptionKey = encryptionService.generateRandomBytes(32);
       const orderData = 'BTC/USD:LIMIT:1.5:50000';
 
-      const expectedHash = encryptionService.generateHMAC(orderData, encryptionKey);
+      const expectedHash = encryptionService.generateHMAC(
+        orderData,
+        encryptionKey,
+      );
 
       const order = {
         id: 'order-id',
@@ -176,7 +191,10 @@ describe('EncryptedOrderService', () => {
 
       jest.spyOn(repository, 'findOne').mockResolvedValue(order);
 
-      const isValid = await service.verifyOrderIntegrity('order-id', expectedHash);
+      const isValid = await service.verifyOrderIntegrity(
+        'order-id',
+        expectedHash,
+      );
 
       expect(isValid).toBe(true);
     });

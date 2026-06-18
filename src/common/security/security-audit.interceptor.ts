@@ -54,12 +54,19 @@ export class SecurityAuditInterceptor implements NestInterceptor {
             userId,
             eventType,
             severity: AuditSeverity.INFO,
-            metadata: { success: true, method: request.method, path: request.path },
+            metadata: {
+              success: true,
+              method: request.method,
+              path: request.path,
+            },
             ipAddress,
             userAgent,
           });
         } catch (err) {
-          this.logger.error('Failed to write security audit log (success)', err);
+          this.logger.error(
+            'Failed to write security audit log (success)',
+            err,
+          );
         }
       }),
       catchError((err) => {
@@ -68,11 +75,21 @@ export class SecurityAuditInterceptor implements NestInterceptor {
             userId,
             eventType,
             severity: AuditSeverity.WARNING,
-            metadata: { success: false, error: err?.message, method: request.method, path: request.path },
+            metadata: {
+              success: false,
+              error: err?.message,
+              method: request.method,
+              path: request.path,
+            },
             ipAddress,
             userAgent,
           })
-          .catch((logErr) => this.logger.error('Failed to write security audit log (failure)', logErr));
+          .catch((logErr) =>
+            this.logger.error(
+              'Failed to write security audit log (failure)',
+              logErr,
+            ),
+          );
 
         return throwError(() => err);
       }),

@@ -181,7 +181,9 @@ export class ConfigDocumentationGenerator {
           variables: [
             {
               name: 'FEATURE_ADVANCED_CACHING',
-              value: this.configService.isFeatureEnabled('enableAdvancedCaching'),
+              value: this.configService.isFeatureEnabled(
+                'enableAdvancedCaching',
+              ),
               default: true,
               description: 'Enable advanced caching features',
               required: false,
@@ -189,7 +191,9 @@ export class ConfigDocumentationGenerator {
             },
             {
               name: 'FEATURE_QUEUE_MONITORING',
-              value: this.configService.isFeatureEnabled('enableQueueMonitoring'),
+              value: this.configService.isFeatureEnabled(
+                'enableQueueMonitoring',
+              ),
               default: true,
               description: 'Enable queue monitoring',
               required: false,
@@ -216,7 +220,8 @@ export class ConfigDocumentationGenerator {
    */
   saveDocumentation(filePath?: string): void {
     const doc = this.generateDocumentation();
-    const outputPath = filePath || path.join(process.cwd(), 'config-documentation.json');
+    const outputPath =
+      filePath || path.join(process.cwd(), 'config-documentation.json');
 
     try {
       fs.writeFileSync(outputPath, JSON.stringify(doc, null, 2));
@@ -242,7 +247,9 @@ export class ConfigDocumentationGenerator {
       markdown += `|----------|-------|---------|----------|-----------|-------------|\n`;
 
       for (const variable of section.variables) {
-        const value = variable.sensitive ? '[REDACTED]' : (variable.value || 'null');
+        const value = variable.sensitive
+          ? '[REDACTED]'
+          : variable.value || 'null';
         const required = variable.required ? 'Yes' : 'No';
         const sensitive = variable.sensitive ? 'Yes' : 'No';
         markdown += `| ${variable.name} | ${value} | ${variable.default} | ${required} | ${sensitive} | ${variable.description} |\n`;
@@ -259,7 +266,8 @@ export class ConfigDocumentationGenerator {
    */
   saveMarkdown(filePath?: string): void {
     const markdown = this.generateMarkdown();
-    const outputPath = filePath || path.join(process.cwd(), 'CONFIG_DOCUMENTATION.md');
+    const outputPath =
+      filePath || path.join(process.cwd(), 'CONFIG_DOCUMENTATION.md');
 
     try {
       fs.writeFileSync(outputPath, markdown);

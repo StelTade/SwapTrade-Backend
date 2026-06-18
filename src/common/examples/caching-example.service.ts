@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CacheKey, InvalidateCacheKeys } from '../decorators/cache-key.decorator';
+import {
+  CacheKey,
+  InvalidateCacheKeys,
+} from '../decorators/cache-key.decorator';
 import { CacheTTL } from '../decorators/cache.decorators';
 import { Balance } from '../../balance/balance.entity';
 
@@ -41,10 +44,7 @@ export class CachingExampleService {
    * - portfolio:123 (user's portfolio)
    * - user:balance:123 (user's balance)
    */
-  @InvalidateCacheKeys([
-    'portfolio:{{userId}}',
-    'user:balance:{{userId}}',
-  ])
+  @InvalidateCacheKeys(['portfolio:{{userId}}', 'user:balance:{{userId}}'])
   @CacheTTL(30)
   async updateBalance(
     userId: string,

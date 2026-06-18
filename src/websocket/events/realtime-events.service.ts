@@ -66,18 +66,22 @@ export class RealtimeEventsService {
       data,
       timestamp: new Date().toISOString(),
     });
-    
+
     this.logger.debug(`Emitted event: ${eventType}`);
   }
 
-  private emitToUser(userId: string, eventType: RealtimeEventType, data: any): void {
+  private emitToUser(
+    userId: string,
+    eventType: RealtimeEventType,
+    data: any,
+  ): void {
     this.eventEmitter.emit(`websocket.user.${userId}.${eventType}`, {
       type: eventType,
       userId,
       data,
       timestamp: new Date().toISOString(),
     });
-    
+
     this.logger.debug(`Emitted event to user ${userId}: ${eventType}`);
   }
 }

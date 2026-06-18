@@ -1,7 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, LessThanOrEqual } from 'typeorm';
-import { RegulatoryReportEntity, ReportType, ReportStatus, RegulatoryFramework, SubmissionMethod } from '../entities/regulatory-report.entity';
+import {
+  RegulatoryReportEntity,
+  ReportType,
+  ReportStatus,
+  RegulatoryFramework,
+  SubmissionMethod,
+} from '../entities/regulatory-report.entity';
 import { ComplianceAlertEntity } from '../entities/compliance-alert.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { AuditLogService } from '../../audit-log/audit-log.service';
@@ -42,38 +48,56 @@ export class RegulatoryReportingService {
 
   private initializeReportTemplates(): void {
     // SAR Template
-    this.reportTemplates.set(`${ReportType.SAR}_${RegulatoryFramework.FINCEN}`, {
-      type: ReportType.SAR,
-      framework: RegulatoryFramework.FINCEN,
-      requiredFields: [
-        'reportingEntity',
-        'subjectUser',
-        'suspiciousActivities',
-        'transactionDetails',
-        'timeframe',
-      ],
-      validationRules: [
-        { field: 'suspiciousActivities', rule: 'required', message: 'Suspicious activities are required' },
-        { field: 'transactionDetails', rule: 'minLength:1', message: 'At least one transaction is required' },
-      ],
-      submissionFormat: 'json',
-    });
+    this.reportTemplates.set(
+      `${ReportType.SAR}_${RegulatoryFramework.FINCEN}`,
+      {
+        type: ReportType.SAR,
+        framework: RegulatoryFramework.FINCEN,
+        requiredFields: [
+          'reportingEntity',
+          'subjectUser',
+          'suspiciousActivities',
+          'transactionDetails',
+          'timeframe',
+        ],
+        validationRules: [
+          {
+            field: 'suspiciousActivities',
+            rule: 'required',
+            message: 'Suspicious activities are required',
+          },
+          {
+            field: 'transactionDetails',
+            rule: 'minLength:1',
+            message: 'At least one transaction is required',
+          },
+        ],
+        submissionFormat: 'json',
+      },
+    );
 
     // CTR Template
-    this.reportTemplates.set(`${ReportType.CTR}_${RegulatoryFramework.FINCEN}`, {
-      type: ReportType.CTR,
-      framework: RegulatoryFramework.FINCEN,
-      requiredFields: [
-        'reportingEntity',
-        'transactionDetails',
-        'totalAmount',
-        'currency',
-      ],
-      validationRules: [
-        { field: 'totalAmount', rule: 'min:10000', message: 'Total amount must be $10,000 or more' },
-      ],
-      submissionFormat: 'json',
-    });
+    this.reportTemplates.set(
+      `${ReportType.CTR}_${RegulatoryFramework.FINCEN}`,
+      {
+        type: ReportType.CTR,
+        framework: RegulatoryFramework.FINCEN,
+        requiredFields: [
+          'reportingEntity',
+          'transactionDetails',
+          'totalAmount',
+          'currency',
+        ],
+        validationRules: [
+          {
+            field: 'totalAmount',
+            rule: 'min:10000',
+            message: 'Total amount must be $10,000 or more',
+          },
+        ],
+        submissionFormat: 'json',
+      },
+    );
 
     // AML Report Template
     this.reportTemplates.set(`${ReportType.AML}_${RegulatoryFramework.FATF}`, {
@@ -89,44 +113,62 @@ export class RegulatoryReportingService {
     });
 
     // SEC Form 4 Template
-    this.reportTemplates.set(`${ReportType.SEC_FORM_4}_${RegulatoryFramework.SEC}`, {
-      type: ReportType.SEC_FORM_4,
-      framework: RegulatoryFramework.SEC,
-      requiredFields: [
-        'reportingPerson',
-        'issuer',
-        'transactionDate',
-        'derivativeSecurities',
-        'nonDerivativeSecurities',
-      ],
-      validationRules: [
-        { field: 'transactionDate', rule: 'required', message: 'Transaction date is required' },
-      ],
-      submissionFormat: 'xml',
-    });
+    this.reportTemplates.set(
+      `${ReportType.SEC_FORM_4}_${RegulatoryFramework.SEC}`,
+      {
+        type: ReportType.SEC_FORM_4,
+        framework: RegulatoryFramework.SEC,
+        requiredFields: [
+          'reportingPerson',
+          'issuer',
+          'transactionDate',
+          'derivativeSecurities',
+          'nonDerivativeSecurities',
+        ],
+        validationRules: [
+          {
+            field: 'transactionDate',
+            rule: 'required',
+            message: 'Transaction date is required',
+          },
+        ],
+        submissionFormat: 'xml',
+      },
+    );
 
     // FINRA CAT Template
-    this.reportTemplates.set(`${ReportType.FINRA_CAT}_${RegulatoryFramework.FINRA}`, {
-      type: ReportType.FINRA_CAT,
-      framework: RegulatoryFramework.FINRA,
-      requiredFields: [
-        'eventTimestamp',
-        'orderID',
-        'symbol',
-        'quantity',
-        'price',
-        'side',
-      ],
-      validationRules: [
-        { field: 'orderID', rule: 'required', message: 'Order ID is required' },
-        { field: 'symbol', rule: 'required', message: 'Symbol is required' },
-      ],
-      submissionFormat: 'json',
-    });
+    this.reportTemplates.set(
+      `${ReportType.FINRA_CAT}_${RegulatoryFramework.FINRA}`,
+      {
+        type: ReportType.FINRA_CAT,
+        framework: RegulatoryFramework.FINRA,
+        requiredFields: [
+          'eventTimestamp',
+          'orderID',
+          'symbol',
+          'quantity',
+          'price',
+          'side',
+        ],
+        validationRules: [
+          {
+            field: 'orderID',
+            rule: 'required',
+            message: 'Order ID is required',
+          },
+          { field: 'symbol', rule: 'required', message: 'Symbol is required' },
+        ],
+        submissionFormat: 'json',
+      },
+    );
   }
 
-  async generateReport(reportData: ReportData): Promise<RegulatoryReportEntity> {
-    this.logger.log(`Generating ${reportData.reportType} report for ${reportData.framework}`);
+  async generateReport(
+    reportData: ReportData,
+  ): Promise<RegulatoryReportEntity> {
+    this.logger.log(
+      `Generating ${reportData.reportType} report for ${reportData.framework}`,
+    );
 
     try {
       // Validate report data
@@ -158,7 +200,9 @@ export class RegulatoryReportingService {
   async submitReport(reportId: string): Promise<RegulatoryReportEntity> {
     this.logger.log(`Submitting report ${reportId}`);
 
-    const report = await this.reportRepository.findOne({ where: { id: reportId } });
+    const report = await this.reportRepository.findOne({
+      where: { id: reportId },
+    });
     if (!report) {
       throw new Error(`Report ${reportId} not found`);
     }
@@ -171,7 +215,10 @@ export class RegulatoryReportingService {
       const formattedReport = await this.formatReportForSubmission(report);
 
       // Submit to regulatory authority
-      const submissionResult = await this.submitToAuthority(report, formattedReport);
+      const submissionResult = await this.submitToAuthority(
+        report,
+        formattedReport,
+      );
 
       // Update report status
       report.status = ReportStatus.SUBMITTED;
@@ -183,12 +230,12 @@ export class RegulatoryReportingService {
       return this.reportRepository.save(report);
     } catch (error) {
       this.logger.error(`Report submission failed for ${reportId}:`, error);
-      
+
       // Update submission attempts
       report.submissionAttempts += 1;
       report.lastSubmissionAttempt = new Date();
       await this.reportRepository.save(report);
-      
+
       throw error;
     }
   }
@@ -207,13 +254,16 @@ export class RegulatoryReportingService {
     }
 
     // Group alerts by user if multiple users involved
-    const alertsByUser = alerts.reduce((groups, alert) => {
-      if (!groups[alert.userId]) {
-        groups[alert.userId] = [];
-      }
-      groups[alert.userId].push(alert);
-      return groups;
-    }, {} as Record<string, ComplianceAlertEntity[]>);
+    const alertsByUser = alerts.reduce(
+      (groups, alert) => {
+        if (!groups[alert.userId]) {
+          groups[alert.userId] = [];
+        }
+        groups[alert.userId].push(alert);
+        return groups;
+      },
+      {} as Record<string, ComplianceAlertEntity[]>,
+    );
 
     // Generate SAR data
     const sarData = this.generateSARData(alertsByUser);
@@ -222,26 +272,32 @@ export class RegulatoryReportingService {
       reportType: ReportType.SAR,
       framework: RegulatoryFramework.FINCEN,
       reportingPeriod: {
-        start: new Date(Math.min(...alerts.map(a => a.createdAt.getTime()))),
-        end: new Date(Math.max(...alerts.map(a => a.createdAt.getTime()))),
+        start: new Date(Math.min(...alerts.map((a) => a.createdAt.getTime()))),
+        end: new Date(Math.max(...alerts.map((a) => a.createdAt.getTime()))),
       },
       data: sarData,
     };
 
     const report = await this.generateReport(reportData);
-    
+
     // Link alerts to report
     await this.linkAlertsToReport(alertIds, report.id);
 
     return report;
   }
 
-  async generateCTRReport(transactionData: any[]): Promise<RegulatoryReportEntity> {
-    this.logger.log(`Generating CTR report for ${transactionData.length} transactions`);
+  async generateCTRReport(
+    transactionData: any[],
+  ): Promise<RegulatoryReportEntity> {
+    this.logger.log(
+      `Generating CTR report for ${transactionData.length} transactions`,
+    );
 
     // Filter transactions over $10,000
-    const reportableTransactions = transactionData.filter(tx => tx.amount >= 10000);
-    
+    const reportableTransactions = transactionData.filter(
+      (tx) => tx.amount >= 10000,
+    );
+
     if (reportableTransactions.length === 0) {
       throw new Error('No transactions meet CTR reporting threshold');
     }
@@ -249,11 +305,26 @@ export class RegulatoryReportingService {
     const ctrData = {
       reportingEntity: 'SwapTrade',
       transactionDetails: reportableTransactions,
-      totalAmount: reportableTransactions.reduce((sum, tx) => sum + tx.amount, 0),
+      totalAmount: reportableTransactions.reduce(
+        (sum, tx) => sum + tx.amount,
+        0,
+      ),
       currency: 'USD',
       timeframe: {
-        start: new Date(Math.min(...reportableTransactions.map(tx => new Date(tx.timestamp).getTime()))),
-        end: new Date(Math.max(...reportableTransactions.map(tx => new Date(tx.timestamp).getTime()))),
+        start: new Date(
+          Math.min(
+            ...reportableTransactions.map((tx) =>
+              new Date(tx.timestamp).getTime(),
+            ),
+          ),
+        ),
+        end: new Date(
+          Math.max(
+            ...reportableTransactions.map((tx) =>
+              new Date(tx.timestamp).getTime(),
+            ),
+          ),
+        ),
       },
     };
 
@@ -267,11 +338,19 @@ export class RegulatoryReportingService {
     return this.generateReport(reportData);
   }
 
-  async generateAMLReport(periodStart: Date, periodEnd: Date): Promise<RegulatoryReportEntity> {
-    this.logger.log(`Generating AML report for period ${periodStart.toISOString()} to ${periodEnd.toISOString()}`);
+  async generateAMLReport(
+    periodStart: Date,
+    periodEnd: Date,
+  ): Promise<RegulatoryReportEntity> {
+    this.logger.log(
+      `Generating AML report for period ${periodStart.toISOString()} to ${periodEnd.toISOString()}`,
+    );
 
     // Get compliance data for the period
-    const complianceData = await this.getComplianceDataForPeriod(periodStart, periodEnd);
+    const complianceData = await this.getComplianceDataForPeriod(
+      periodStart,
+      periodEnd,
+    );
 
     const amlData = {
       riskAssessment: this.performRiskAssessment(complianceData),
@@ -290,14 +369,19 @@ export class RegulatoryReportingService {
     return this.generateReport(reportData);
   }
 
-  async generateSECForm4(userId: string, transactionIds: string[]): Promise<RegulatoryReportEntity> {
+  async generateSECForm4(
+    userId: string,
+    transactionIds: string[],
+  ): Promise<RegulatoryReportEntity> {
     this.logger.log(`Generating SEC Form 4 for user ${userId}`);
 
     const secData = {
       reportingPerson: { userId },
       issuer: 'SwapTrade Platform',
       transactionDate: new Date(),
-      nonDerivativeSecurities: transactionIds.map(id => ({ transactionId: id })),
+      nonDerivativeSecurities: transactionIds.map((id) => ({
+        transactionId: id,
+      })),
       derivativeSecurities: [],
       reportingEntity: 'SwapTrade',
     };
@@ -313,11 +397,13 @@ export class RegulatoryReportingService {
   }
 
   async generateFINRACAT(orderIds: string[]): Promise<RegulatoryReportEntity> {
-    this.logger.log(`Generating FINRA CAT report for orders: ${orderIds.join(', ')}`);
+    this.logger.log(
+      `Generating FINRA CAT report for orders: ${orderIds.join(', ')}`,
+    );
 
     const catData = {
       reportingEntity: 'SwapTrade',
-      events: orderIds.map(id => ({
+      events: orderIds.map((id) => ({
         eventTimestamp: new Date(),
         orderID: id,
         symbol: 'UNKNOWN', // In real app, fetch from order data
@@ -344,8 +430,14 @@ export class RegulatoryReportingService {
     return this.generateReport(reportData);
   }
 
-  async exportAuditTrail(userId: string, from: Date, to: Date): Promise<string> {
-    this.logger.log(`Exporting audit trail for user ${userId} from ${from} to ${to}`);
+  async exportAuditTrail(
+    userId: string,
+    from: Date,
+    to: Date,
+  ): Promise<string> {
+    this.logger.log(
+      `Exporting audit trail for user ${userId} from ${from} to ${to}`,
+    );
 
     const logs = await this.auditLogService.getByUser(userId, from, to);
     const integrity = await this.auditLogService.verifyChainIntegrity();
@@ -354,7 +446,7 @@ export class RegulatoryReportingService {
       userId,
       exportDate: new Date(),
       integrityStatus: integrity.valid ? 'VERIFIED' : 'FAILED',
-      logs: logs.map(log => ({
+      logs: logs.map((log) => ({
         timestamp: log.createdAt,
         event: log.eventType,
         severity: log.severity,
@@ -366,10 +458,13 @@ export class RegulatoryReportingService {
     return JSON.stringify(exportData, null, 2);
   }
 
-  async validateTransactionHistory(userId: string, transactions: any[]): Promise<any> {
+  async validateTransactionHistory(
+    userId: string,
+    transactions: any[],
+  ): Promise<any> {
     this.logger.log(`Validating transaction history for user ${userId}`);
 
-    const validations = transactions.map(tx => {
+    const validations = transactions.map((tx) => {
       const issues: string[] = [];
       if (!tx.timestamp) issues.push('Missing timestamp');
       if (!tx.amount || tx.amount <= 0) issues.push('Invalid amount');
@@ -387,8 +482,8 @@ export class RegulatoryReportingService {
       validatedAt: new Date(),
       summary: {
         total: transactions.length,
-        valid: validations.filter(v => v.isValid).length,
-        invalid: validations.filter(v => !v.isValid).length,
+        valid: validations.filter((v) => v.isValid).length,
+        invalid: validations.filter((v) => !v.isValid).length,
       },
       results: validations,
     };
@@ -399,7 +494,9 @@ export class RegulatoryReportingService {
     const template = this.reportTemplates.get(templateKey);
 
     if (!template) {
-      throw new Error(`No template found for ${reportData.reportType} under ${reportData.framework}`);
+      throw new Error(
+        `No template found for ${reportData.reportType} under ${reportData.framework}`,
+      );
     }
 
     // Check required fields
@@ -412,35 +509,46 @@ export class RegulatoryReportingService {
     // Apply validation rules
     for (const rule of template.validationRules) {
       if (!this.validateField(reportData.data[rule.field], rule.rule)) {
-        throw new Error(`Validation failed for field '${rule.field}': ${rule.message}`);
+        throw new Error(
+          `Validation failed for field '${rule.field}': ${rule.message}`,
+        );
       }
     }
   }
 
   private validateField(value: any, rule: string): boolean {
     const [ruleName, ruleParam] = rule.split(':');
-    
+
     switch (ruleName) {
       case 'required':
         return value !== null && value !== undefined && value !== '';
       case 'min':
         return Number(value) >= Number(ruleParam);
       case 'minLength':
-        return Array.isArray(value) ? value.length >= Number(ruleParam) : String(value).length >= Number(ruleParam);
+        return Array.isArray(value)
+          ? value.length >= Number(ruleParam)
+          : String(value).length >= Number(ruleParam);
       default:
         return true;
     }
   }
 
-  private async validateReportForSubmission(report: RegulatoryReportEntity): Promise<void> {
-    if (report.status !== ReportStatus.DRAFT && report.status !== ReportStatus.REJECTED) {
+  private async validateReportForSubmission(
+    report: RegulatoryReportEntity,
+  ): Promise<void> {
+    if (
+      report.status !== ReportStatus.DRAFT &&
+      report.status !== ReportStatus.REJECTED
+    ) {
       throw new Error(`Report ${report.id} is not in a submittable state`);
     }
 
     // Additional validation logic here
   }
 
-  private async formatReportForSubmission(report: RegulatoryReportEntity): Promise<any> {
+  private async formatReportForSubmission(
+    report: RegulatoryReportEntity,
+  ): Promise<any> {
     const templateKey = `${report.reportType}_${report.regulatoryFramework}`;
     const template = this.reportTemplates.get(templateKey);
 
@@ -488,18 +596,28 @@ export class RegulatoryReportingService {
   private formatAsCSV(report: RegulatoryReportEntity): string {
     // Simplified CSV formatting
     const headers = ['Report ID', 'Type', 'Framework', 'Created Date'];
-    const row = [report.reportId, report.reportType, report.regulatoryFramework, report.createdAt.toISOString()];
-    
+    const row = [
+      report.reportId,
+      report.reportType,
+      report.regulatoryFramework,
+      report.createdAt.toISOString(),
+    ];
+
     return [headers.join(','), row.join(',')].join('\n');
   }
 
-  private async submitToAuthority(report: RegulatoryReportEntity, formattedReport: any): Promise<{ reference: string }> {
+  private async submitToAuthority(
+    report: RegulatoryReportEntity,
+    formattedReport: any,
+  ): Promise<{ reference: string }> {
     // Mock submission - in production, this would make actual API calls to regulatory authorities
-    this.logger.log(`Submitting ${report.reportType} report to ${report.regulatoryFramework}`);
-    
+    this.logger.log(
+      `Submitting ${report.reportType} report to ${report.regulatoryFramework}`,
+    );
+
     // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
     return {
       reference: `REF_${Date.now()}_${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
     };
@@ -520,24 +638,29 @@ export class RegulatoryReportingService {
     }
   }
 
-  private generateSARData(alertsByUser: Record<string, ComplianceAlertEntity[]>): any {
+  private generateSARData(
+    alertsByUser: Record<string, ComplianceAlertEntity[]>,
+  ): any {
     return {
       reportingEntity: 'SwapTrade',
       subjects: Object.entries(alertsByUser).map(([userId, alerts]) => ({
         userId,
-        suspiciousActivities: alerts.map(alert => ({
+        suspiciousActivities: alerts.map((alert) => ({
           type: alert.alertType,
           description: alert.description,
           riskScore: alert.riskScore,
           timestamp: alert.createdAt,
         })),
-        totalRiskScore: Math.max(...alerts.map(a => a.riskScore)),
+        totalRiskScore: Math.max(...alerts.map((a) => a.riskScore)),
       })),
       totalAlerts: Object.values(alertsByUser).flat().length,
     };
   }
 
-  private async getComplianceDataForPeriod(start: Date, end: Date): Promise<any> {
+  private async getComplianceDataForPeriod(
+    start: Date,
+    end: Date,
+  ): Promise<any> {
     // Mock data - in production, this would query actual compliance databases
     return {
       totalAlerts: 150,
@@ -588,11 +711,14 @@ export class RegulatoryReportingService {
     ];
   }
 
-  private async linkAlertsToReport(alertIds: string[], reportId: string): Promise<void> {
+  private async linkAlertsToReport(
+    alertIds: string[],
+    reportId: string,
+  ): Promise<void> {
     // Update alerts to link them to the report
     await this.alertRepository.update(
       { id: In(alertIds) },
-      { regulatoryReportRequired: true, regulatoryReportStatus: 'submitted' }
+      { regulatoryReportRequired: true, regulatoryReportStatus: 'submitted' },
     );
   }
 
@@ -603,7 +729,7 @@ export class RegulatoryReportingService {
   @Cron(CronExpression.EVERY_DAY_AT_2AM)
   async checkDueReports(): Promise<void> {
     this.logger.log('Checking for due regulatory reports...');
-    
+
     const today = new Date();
     const dueReports = await this.reportRepository.find({
       where: {
@@ -618,14 +744,18 @@ export class RegulatoryReportingService {
     }
   }
 
-  async getReportsByStatus(status: ReportStatus): Promise<RegulatoryReportEntity[]> {
+  async getReportsByStatus(
+    status: ReportStatus,
+  ): Promise<RegulatoryReportEntity[]> {
     return this.reportRepository.find({
       where: { status },
       order: { createdAt: 'DESC' },
     });
   }
 
-  async getReportsByType(reportType: ReportType): Promise<RegulatoryReportEntity[]> {
+  async getReportsByType(
+    reportType: ReportType,
+  ): Promise<RegulatoryReportEntity[]> {
     return this.reportRepository.find({
       where: { reportType },
       order: { createdAt: 'DESC' },

@@ -122,7 +122,8 @@ export class BulkheadService {
           return result;
         } catch (error) {
           metrics.totalFailed++;
-          const errorMsg = error instanceof Error ? error.message : String(error);
+          const errorMsg =
+            error instanceof Error ? error.message : String(error);
           this.logger.error(
             `[${correlationId}] ${functionName || 'Task'} failed in bulkhead "${bulkheadName}": ${errorMsg}`,
           );
@@ -195,7 +196,10 @@ export class BulkheadService {
 
     return new Promise((_, reject) =>
       setTimeout(
-        () => reject(new Error(`Bulkhead operation timed out after ${timeoutMs}ms`)),
+        () =>
+          reject(
+            new Error(`Bulkhead operation timed out after ${timeoutMs}ms`),
+          ),
         timeoutMs,
       ),
     );

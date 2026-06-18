@@ -88,7 +88,7 @@ export class DynamicScalingService {
     try {
       const counts = await queue.getJobCounts();
       const completedJobs = await queue.getCompleted(0, 100);
-      
+
       // Calculate average processing time
       const processingTimes: number[] = [];
       for (const job of completedJobs.slice(0, 50)) {
@@ -104,19 +104,19 @@ export class DynamicScalingService {
 
       // Calculate failure rate
       const totalProcessed = (counts.completed || 0) + (counts.failed || 0);
-      const failureRate = totalProcessed > 0 
-        ? ((counts.failed || 0) / totalProcessed) * 100 
-        : 0;
+      const failureRate =
+        totalProcessed > 0 ? ((counts.failed || 0) / totalProcessed) * 100 : 0;
 
       // Calculate throughput (jobs per minute)
       const history = this.metricsHistory.get(queueName) || [];
       let throughputPerMinute = 0;
-      
+
       if (history.length >= 2) {
         const oldest = history[0];
         const newest = history[history.length - 1];
-        const timeDiffMinutes = (newest.timestamp.getTime() - oldest.timestamp.getTime()) / 60000;
-        
+        const timeDiffMinutes =
+          (newest.timestamp.getTime() - oldest.timestamp.getTime()) / 60000;
+
         if (timeDiffMinutes > 0) {
           const completedDiff = newest.completedJobs - oldest.completedJobs;
           throughputPerMinute = completedDiff / timeDiffMinutes;
@@ -140,7 +140,8 @@ export class DynamicScalingService {
       historyArray.push(metrics);
 
       // Keep only recent history (based on config window)
-      const cutoffTime = Date.now() - this.config.dynamicScaling.metricsWindowMs;
+      const cutoffTime =
+        Date.now() - this.config.dynamicScaling.metricsWindowMs;
       const filteredHistory = historyArray.filter(
         (m) => m.timestamp.getTime() > cutoffTime,
       );
@@ -167,21 +168,33 @@ export class DynamicScalingService {
     if (metrics.waitingJobs > this.config.dynamicScaling.queueDepthThreshold) {
       shouldScale = true;
       direction = 'up';
-      reasons.push(`Queue depth ${metrics.waitingJobs} exceeds threshold ${this.config.dynamicScaling.queueDepthThreshold}`);
+      reasons.push(
+        `Queue depth ${metrics.waitingJobs} exceeds threshold ${this.config.dynamicScaling.queueDepthThreshold}`,
+      );
       confidence += 30;
     }
 
-    if (metrics.averageProcessingTimeMs > this.config.dynamicScaling.processingTimeThresholdMs) {
+    if (
+      metrics.averageProcessingTimeMs >
+      this.config.dynamicScaling.processingTimeThresholdMs
+    ) {
       shouldScale = true;
       direction = 'up';
-      reasons.push(`Processing time ${metrics.averageProcessingTimeMs}ms exceeds threshold ${this.config.dynamicScaling.processingTimeThresholdMs}ms`);
+      reasons.push(
+        `Processing time ${metrics.averageProcessingTimeMs}ms exceeds threshold ${this.config.dynamicScaling.processingTimeThresholdMs}ms`,
+      );
       confidence += 25;
     }
 
-    if (metrics.failureRate > this.config.monitoring.alertThresholds.failureRateWarning) {
+    if (
+      metrics.failureRate >
+      this.config.monitoring.alertThresholds.failureRateWarning
+    ) {
       shouldScale = true;
       direction = 'up';
-      reasons.push(`Failure rate ${metrics.failureRate}% exceeds warning threshold`);
+      reasons.push(
+        `Failure rate ${metrics.failureRate}% exceeds warning threshold`,
+      );
       confidence += 20;
     }
 
@@ -193,7 +206,9 @@ export class DynamicScalingService {
     ) {
       shouldScale = true;
       direction = 'down';
-      reasons.push(`Queue depth ${metrics.waitingJobs} below scale-down threshold`);
+      reasons.push(
+        `Queue depth ${metrics.waitingJobs} below scale-down threshold`,
+      );
       confidence += 40;
     }
 
@@ -240,10 +255,12 @@ export class DynamicScalingService {
     // Check cooldown
     const lastDecision = this.lastScalingDecision.get(queueName);
     if (lastDecision && lastDecision.shouldScale) {
-      const timeSinceLastDecision = Date.now() - lastDecision.currentMetrics.timestamp.getTime();
-      const cooldownMs = decision.direction === 'up'
-        ? this.config.dynamicScaling.scaleUpCooldownMs
-        : this.config.dynamicScaling.scaleDownCooldownMs;
+      const timeSinceLastDecision =
+        Date.now() - lastDecision.currentMetrics.timestamp.getTime();
+      const cooldownMs =
+        decision.direction === 'up'
+          ? this.config.dynamicScaling.scaleUpCooldownMs
+          : this.config.dynamicScaling.scaleDownCooldownMs;
 
       if (timeSinceLastDecision < cooldownMs) {
         this.logger.debug(
@@ -256,10 +273,12 @@ export class DynamicScalingService {
     // Execute scaling
     let event: ScalingEvent;
     if (decision.direction === 'up') {
-      const count = decision.targetWorkers - this.workerManager.getActiveWorkersCount();
+      const count =
+        decision.targetWorkers - this.workerManager.getActiveWorkersCount();
       event = await this.workerManager.scaleUp(queueName, count);
     } else {
-      const count = this.workerManager.getActiveWorkersCount() - decision.targetWorkers;
+      const count =
+        this.workerManager.getActiveWorkersCount() - decision.targetWorkers;
       event = await this.workerManager.scaleDown(queueName, count);
     }
 
@@ -295,12 +314,12 @@ export class DynamicScalingService {
         }
 
         const decision = this.makeScalingDecision(metrics);
-        
+
         if (decision.shouldScale) {
           this.logger.log(
             `Scaling decision for ${queueName}: ${decision.direction} (confidence: ${decision.confidence}%)`,
           );
-          
+
           await this.executeScalingDecision(queueName, decision);
         }
       } catch (error) {
@@ -346,10 +365,13 @@ export class DynamicScalingService {
   } {
     const decisions = Array.from(this.lastScalingDecision.values());
     const scaleUpEvents = decisions.filter((d) => d.direction === 'up').length;
-    const scaleDownEvents = decisions.filter((d) => d.direction === 'down').length;
-    const avgConfidence = decisions.length > 0
-      ? decisions.reduce((sum, d) => sum + d.confidence, 0) / decisions.length
-      : 0;
+    const scaleDownEvents = decisions.filter(
+      (d) => d.direction === 'down',
+    ).length;
+    const avgConfidence =
+      decisions.length > 0
+        ? decisions.reduce((sum, d) => sum + d.confidence, 0) / decisions.length
+        : 0;
 
     return {
       totalQueues: this.queues.size,

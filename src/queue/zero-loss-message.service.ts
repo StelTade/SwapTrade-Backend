@@ -68,7 +68,7 @@ export class ZeroLossMessageService {
     maxAttempts: number = this.config.zeroLoss.maxRetryAttempts,
   ): PersistedMessage {
     const now = new Date();
-    
+
     const message: PersistedMessage = {
       messageId,
       queueName,
@@ -100,7 +100,7 @@ export class ZeroLossMessageService {
   private getReplicationTargets(): string[] {
     const targets: string[] = [];
     const nodes = Array.from(this.replicationNodes);
-    
+
     // Select nodes based on replication factor
     const count = Math.min(
       this.config.zeroLoss.replicationFactor,
@@ -130,23 +130,29 @@ export class ZeroLossMessageService {
    */
   private handleAcknowledgmentTimeout(messageId: string): void {
     const message = this.persistedMessages.get(messageId);
-    
+
     if (message && message.status === 'processing' && !message.acknowledgedAt) {
       this.logger.warn(`Acknowledgment timeout for message: ${messageId}`);
-      
+
       // Retry if attempts remaining
       if (message.attempts < message.maxAttempts) {
         message.status = 'pending';
         message.updatedAt = new Date();
         this.logger.log(`Message re-queued after timeout: ${messageId}`);
-        this.eventEmitter.emit('message.requeued', { messageId, reason: 'acknowledgment-timeout' });
+        this.eventEmitter.emit('message.requeued', {
+          messageId,
+          reason: 'acknowledgment-timeout',
+        });
       } else {
         message.status = 'failed';
         message.error = 'Acknowledgment timeout';
         message.failedAt = new Date();
         message.updatedAt = new Date();
         this.logger.error(`Message failed after max attempts: ${messageId}`);
-        this.eventEmitter.emit('message.failed', { messageId, reason: 'max-attempts-exceeded' });
+        this.eventEmitter.emit('message.failed', {
+          messageId,
+          reason: 'max-attempts-exceeded',
+        });
       }
     }
 
@@ -158,7 +164,7 @@ export class ZeroLossMessageService {
    */
   markProcessing(messageId: string): boolean {
     const message = this.persistedMessages.get(messageId);
-    
+
     if (!message) {
       this.logger.warn(`Message not found: ${messageId}`);
       return false;
@@ -168,7 +174,9 @@ export class ZeroLossMessageService {
     message.attempts++;
     message.updatedAt = new Date();
 
-    this.logger.debug(`Message marked as processing: ${messageId} (attempt ${message.attempts}/${message.maxAttempts})`);
+    this.logger.debug(
+      `Message marked as processing: ${messageId} (attempt ${message.attempts}/${message.maxAttempts})`,
+    );
     return true;
   }
 
@@ -177,7 +185,7 @@ export class ZeroLossMessageService {
    */
   acknowledgeMessage(messageId: string): boolean {
     const message = this.persistedMessages.get(messageId);
-    
+
     if (!message) {
       this.logger.warn(`Message not found for acknowledgment: ${messageId}`);
       return false;
@@ -204,7 +212,7 @@ export class ZeroLossMessageService {
    */
   markCompleted(messageId: string): boolean {
     const message = this.persistedMessages.get(messageId);
-    
+
     if (!message) {
       return false;
     }
@@ -224,7 +232,7 @@ export class ZeroLossMessageService {
    */
   markFailed(messageId: string, error: string): boolean {
     const message = this.persistedMessages.get(messageId);
-    
+
     if (!message) {
       return false;
     }
@@ -245,7 +253,7 @@ export class ZeroLossMessageService {
    */
   retryMessage(messageId: string): boolean {
     const message = this.persistedMessages.get(messageId);
-    
+
     if (!message) {
       return false;
     }
@@ -277,7 +285,7 @@ export class ZeroLossMessageService {
    */
   getQueueMessages(queueName: string): PersistedMessage[] {
     const messages: PersistedMessage[] = [];
-    
+
     for (const message of this.persistedMessages.values()) {
       if (message.queueName === queueName) {
         messages.push(message);
@@ -292,7 +300,7 @@ export class ZeroLossMessageService {
    */
   getMessagesByStatus(status: PersistedMessage['status']): PersistedMessage[] {
     const messages: PersistedMessage[] = [];
-    
+
     for (const message of this.persistedMessages.values()) {
       if (message.status === status) {
         messages.push(message);
@@ -389,8 +397,12 @@ export class ZeroLossMessageService {
     }
 
     // Check for missing replication
-    if (message.replicationNodes.length < this.config.zeroLoss.replicationFactor) {
-      issues.push(`Insufficient replication: ${message.replicationNodes.length}/${this.config.zeroLoss.replicationFactor}`);
+    if (
+      message.replicationNodes.length < this.config.zeroLoss.replicationFactor
+    ) {
+      issues.push(
+        `Insufficient replication: ${message.replicationNodes.length}/${this.config.zeroLoss.replicationFactor}`,
+      );
     }
 
     // Check for excessive retries

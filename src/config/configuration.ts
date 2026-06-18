@@ -1,5 +1,15 @@
 // src/config/configuration.ts
-import { IsString, IsNumber, IsBoolean, IsOptional, IsEnum, Min, Max, IsArray, ValidateNested } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsBoolean,
+  IsOptional,
+  IsEnum,
+  Min,
+  Max,
+  IsArray,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export enum Environment {

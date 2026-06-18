@@ -4,14 +4,12 @@ import { MultiLevelCacheService } from './multi-level-cache.service';
 @Injectable()
 export class IntelligentCacheService implements OnModuleInit {
   private readonly logger = new Logger(IntelligentCacheService.name);
-  
+
   // Access frequency tracking for ML prediction
   private accessHistory: Map<string, number[]> = new Map();
   private readonly HISTORY_WINDOW = 100;
 
-  constructor(
-    private readonly multiLevelCache: MultiLevelCacheService,
-  ) {}
+  constructor(private readonly multiLevelCache: MultiLevelCacheService) {}
 
   async onModuleInit() {
     this.logger.log('Intelligent Cache Service initialized');
@@ -22,10 +20,10 @@ export class IntelligentCacheService implements OnModuleInit {
    */
   async get<T>(key: string): Promise<T | undefined> {
     this.recordAccess(key);
-    
+
     // 1. Predict next likely keys to be accessed
     const predictions = this.predictNextKeys(key);
-    
+
     // 2. Proactively pre-fetch predicted keys into L1/L2
     this.prefetchKeys(predictions);
 
@@ -38,10 +36,10 @@ export class IntelligentCacheService implements OnModuleInit {
    */
   async set<T>(key: string, value: T): Promise<void> {
     const volatility = this.calculateVolatility(key);
-    
+
     // High volatility = shorter TTL
-    const ttl = volatility > 0.8 ? 30 : 300; 
-    
+    const ttl = volatility > 0.8 ? 30 : 300;
+
     await this.multiLevelCache.set(key, value, ttl);
   }
 
@@ -52,10 +50,10 @@ export class IntelligentCacheService implements OnModuleInit {
     if (!this.accessHistory.has(key)) {
       this.accessHistory.set(key, []);
     }
-    
+
     const history = this.accessHistory.get(key)!;
     history.push(Date.now());
-    
+
     if (history.length > this.HISTORY_WINDOW) {
       history.shift();
     }
@@ -68,7 +66,7 @@ export class IntelligentCacheService implements OnModuleInit {
     // In a real implementation, this would use a Markov Chain or LSTM model
     // For now, we'll use a simple sequential pattern recognizer
     const predictions: string[] = [];
-    
+
     if (currentKey.startsWith('trade:')) {
       const tradeId = parseInt(currentKey.split(':')[1]);
       predictions.push(`trade:${tradeId + 1}`);
@@ -105,11 +103,11 @@ export class IntelligentCacheService implements OnModuleInit {
     // Calculate average time between accesses
     let totalGap = 0;
     for (let i = 1; i < history.length; i++) {
-      totalGap += (history[i] - history[i-1]);
+      totalGap += history[i] - history[i - 1];
     }
-    
+
     const avgGap = totalGap / (history.length - 1);
-    
+
     // Higher frequency (lower gap) = higher volatility
     return Math.min(1.0, 1000 / avgGap);
   }
@@ -118,8 +116,10 @@ export class IntelligentCacheService implements OnModuleInit {
    * Intelligent invalidation based on usage patterns
    */
   async intelligentInvalidate(pattern: string): Promise<void> {
-    this.logger.log(`Executing intelligent invalidation for pattern: ${pattern}`);
-    
+    this.logger.log(
+      `Executing intelligent invalidation for pattern: ${pattern}`,
+    );
+
     // Find all keys matching pattern and analyze their utility
     // In production, this would query Redis for keys and check hit rates
     await this.multiLevelCache.invalidatePattern(pattern);

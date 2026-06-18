@@ -1,10 +1,19 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NestInterceptor,
+  ExecutionContext,
+  CallHandler,
+  Logger,
+} from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
 import { PrometheusService } from '../services/prometheus.service';
 import { OpenTelemetryService } from '../services/opentelemetry.service';
 import { StructuredLoggerService } from '../services/structured-logger.service';
-import { CorrelationContext, LogLevel } from '../interfaces/monitoring.interfaces';
+import {
+  CorrelationContext,
+  LogLevel,
+} from '../interfaces/monitoring.interfaces';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
@@ -12,7 +21,7 @@ export class MonitoringInterceptor implements NestInterceptor {
   constructor(
     private readonly prometheusService: PrometheusService,
     private readonly telemetryService: OpenTelemetryService,
-    private readonly logger: StructuredLoggerService
+    private readonly logger: StructuredLoggerService,
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
@@ -25,8 +34,10 @@ export class MonitoringInterceptor implements NestInterceptor {
     request.correlationId = correlationId;
 
     // Extract trace context from headers
-    const traceContext = this.telemetryService.extractTraceContext(request.headers);
-    
+    const traceContext = this.telemetryService.extractTraceContext(
+      request.headers,
+    );
+
     // Create correlation context
     const correlationContext: CorrelationContext = {
       correlationId,
@@ -34,7 +45,7 @@ export class MonitoringInterceptor implements NestInterceptor {
       spanId: traceContext.spanId,
       userId: request.user?.id,
       requestId: request.id,
-      sessionId: request.session?.id
+      sessionId: request.session?.id,
     };
 
     // Start tracing span
@@ -45,8 +56,8 @@ export class MonitoringInterceptor implements NestInterceptor {
         'http.method': request.method,
         'http.url': request.url,
         'user.id': request.user?.id || 'anonymous',
-        'correlation.id': correlationId
-      }
+        'correlation.id': correlationId,
+      },
     );
 
     // Log request start
@@ -59,8 +70,8 @@ export class MonitoringInterceptor implements NestInterceptor {
         url: request.url,
         userAgent: request.headers['user-agent'],
         ip: request.ip,
-        userId: request.user?.id
-      }
+        userId: request.user?.id,
+      },
     );
 
     return next.handle().pipe(
@@ -73,7 +84,7 @@ export class MonitoringInterceptor implements NestInterceptor {
           request.method,
           request.route?.path || request.url,
           statusCode,
-          duration
+          duration,
         );
 
         // Record trace
@@ -82,7 +93,7 @@ export class MonitoringInterceptor implements NestInterceptor {
           request.route?.path || request.url,
           statusCode,
           duration,
-          request.user?.id
+          request.user?.id,
         );
 
         // Log request completion
@@ -94,10 +105,10 @@ export class MonitoringInterceptor implements NestInterceptor {
             method: request.method,
             url: request.url,
             statusCode,
-            duration
+            duration,
           },
           undefined,
-          duration
+          duration,
         );
 
         // End span
@@ -112,13 +123,13 @@ export class MonitoringInterceptor implements NestInterceptor {
           request.method,
           request.route?.path || request.url,
           statusCode,
-          duration
+          duration,
         );
 
         // Record error trace
         span.setStatus({
           code: 2, // ERROR
-          message: error.message
+          message: error.message,
         });
         span.recordException(error);
         span.end();
@@ -133,15 +144,15 @@ export class MonitoringInterceptor implements NestInterceptor {
             url: request.url,
             statusCode,
             duration,
-            error: error.message
+            error: error.message,
           },
           error,
-          duration
+          duration,
         );
 
         // Re-throw the error
         throw error;
-      })
+      }),
     );
   }
 }

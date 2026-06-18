@@ -35,23 +35,28 @@ export class MessageDeduplicationService {
 
     // Generate fingerprint from message data
     const fingerprint = this.generateFingerprint(messageData);
-    
+
     // Check if we've seen this fingerprint before
     const existingFingerprint = this.messageFingerprints.get(messageId);
     if (existingFingerprint && existingFingerprint === fingerprint) {
       this.logger.debug(`Duplicate message detected: ${messageId}`);
-      this.eventEmitter.emit('message.duplicate-detected', { messageId, fingerprint });
+      this.eventEmitter.emit('message.duplicate-detected', {
+        messageId,
+        fingerprint,
+      });
       return true;
     }
 
     // Check if fingerprint exists for a different message ID
     for (const [existingId, existingFp] of this.messageFingerprints.entries()) {
       if (existingFp === fingerprint && existingId !== messageId) {
-        this.logger.debug(`Duplicate fingerprint detected: ${messageId} matches ${existingId}`);
-        this.eventEmitter.emit('message.duplicate-detected', { 
-          messageId, 
+        this.logger.debug(
+          `Duplicate fingerprint detected: ${messageId} matches ${existingId}`,
+        );
+        this.eventEmitter.emit('message.duplicate-detected', {
+          messageId,
           duplicateOf: existingId,
-          fingerprint 
+          fingerprint,
         });
         return true;
       }
@@ -70,7 +75,9 @@ export class MessageDeduplicationService {
 
     const fingerprint = this.generateFingerprint(messageData);
     const now = new Date();
-    const expiresAt = new Date(now.getTime() + this.config.deduplication.windowMs);
+    const expiresAt = new Date(
+      now.getTime() + this.config.deduplication.windowMs,
+    );
 
     const entry: DeduplicationEntry = {
       messageId,
@@ -83,7 +90,10 @@ export class MessageDeduplicationService {
     this.messageFingerprints.set(messageId, fingerprint);
 
     // Check if we've exceeded max entries
-    if (this.deduplicationCache.size > this.config.deduplication.maxDeduplicationEntries) {
+    if (
+      this.deduplicationCache.size >
+      this.config.deduplication.maxDeduplicationEntries
+    ) {
       this.cleanupOldestEntries();
     }
 
@@ -106,12 +116,9 @@ export class MessageDeduplicationService {
     // Normalize data to ensure consistent hashing
     const normalizedData = this.normalizeData(data);
     const dataString = JSON.stringify(normalizedData);
-    
+
     // Create SHA-256 hash
-    return crypto
-      .createHash('sha256')
-      .update(dataString)
-      .digest('hex');
+    return crypto.createHash('sha256').update(dataString).digest('hex');
   }
 
   /**
@@ -190,7 +197,9 @@ export class MessageDeduplicationService {
     }
 
     if (cleanedCount > 0) {
-      this.logger.debug(`Cleaned up ${cleanedCount} expired deduplication entries`);
+      this.logger.debug(
+        `Cleaned up ${cleanedCount} expired deduplication entries`,
+      );
     }
   }
 
@@ -199,20 +208,22 @@ export class MessageDeduplicationService {
    */
   private cleanupOldestEntries(): void {
     const entries = Array.from(this.deduplicationCache.entries());
-    
+
     // Sort by timestamp (oldest first)
     entries.sort((a, b) => a[1].timestamp.getTime() - b[1].timestamp.getTime());
 
     // Remove oldest 10% of entries
     const removeCount = Math.ceil(entries.length * 0.1);
-    
+
     for (let i = 0; i < removeCount; i++) {
       const [messageId] = entries[i];
       this.deduplicationCache.delete(messageId);
       this.messageFingerprints.delete(messageId);
     }
 
-    this.logger.debug(`Cleaned up ${removeCount} oldest deduplication entries (cache full)`);
+    this.logger.debug(
+      `Cleaned up ${removeCount} oldest deduplication entries (cache full)`,
+    );
   }
 
   /**
@@ -239,7 +250,10 @@ export class MessageDeduplicationService {
       trackedMessages: this.deduplicationCache.size,
       maxEntries: this.config.deduplication.maxDeduplicationEntries,
       windowMs: this.config.deduplication.windowMs,
-      cacheUtilizationPercent: (this.deduplicationCache.size / this.config.deduplication.maxDeduplicationEntries) * 100,
+      cacheUtilizationPercent:
+        (this.deduplicationCache.size /
+          this.config.deduplication.maxDeduplicationEntries) *
+        100,
     };
   }
 

@@ -14,12 +14,12 @@ export class DidAuthService {
 
   async generateChallenge(did: string): Promise<string> {
     let doc = await this.didDocRepo.findOne({ where: { did } });
-    
+
     // Auto-onboard for demonstration if no doc exists (in reality, requires registration step)
     if (!doc) {
       doc = this.didDocRepo.create({
         did,
-        userId: crypto.randomUUID() // Mock linking to a real backend user
+        userId: crypto.randomUUID(), // Mock linking to a real backend user
       });
     }
 
@@ -27,7 +27,7 @@ export class DidAuthService {
     doc.nonce = nonce;
     // Set expiry 5 mins from now
     doc.nonceExpiry = new Date(Date.now() + 5 * 60 * 1000);
-    
+
     await this.didDocRepo.save(doc);
     return nonce;
   }
@@ -51,7 +51,7 @@ export class DidAuthService {
 
       // We expect the user signed the raw nonce string
       const recoveredAddress = verifyMessage(doc.nonce, signature);
-      
+
       if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
         throw new UnauthorizedException('Signature recovery mismatch');
       }
@@ -63,10 +63,10 @@ export class DidAuthService {
 
       // Return a pseudo session token for the standard auth system to consume
       const sessionToken = crypto.randomBytes(32).toString('hex');
-      return { 
+      return {
         message: 'DID Authentication successful',
         userId: doc.userId,
-        sessionToken
+        sessionToken,
       };
     } catch (err) {
       throw new UnauthorizedException('Signature verification failed');

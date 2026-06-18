@@ -162,7 +162,10 @@ export class AdvancedCacheInterceptor implements NestInterceptor {
           this.cacheStats?.recordInvalidation(key);
         }
       } catch (error) {
-        this.logger.warn(`Cache invalidation error for pattern ${keyPattern}:`, error);
+        this.logger.warn(
+          `Cache invalidation error for pattern ${keyPattern}:`,
+          error,
+        );
       }
     }
   }

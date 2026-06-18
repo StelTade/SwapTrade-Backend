@@ -21,7 +21,7 @@ describe('Logging Integration Tests', () => {
     app = moduleFixture.createNestApplication();
     loggerService = app.get<LoggerService>(LoggerService);
     metricsService = app.get<MetricsService>(MetricsService);
-    
+
     await app.init();
   });
 
@@ -77,9 +77,7 @@ describe('Logging Integration Tests', () => {
     it('should log successful requests', async () => {
       const logSpy = jest.spyOn(loggerService, 'log');
 
-      await request(app.getHttpServer())
-        .get('/health')
-        .expect(200);
+      await request(app.getHttpServer()).get('/health').expect(200);
 
       expect(logSpy).toHaveBeenCalledWith(
         'Request completed',
@@ -94,9 +92,7 @@ describe('Logging Integration Tests', () => {
     it('should log failed requests with error level', async () => {
       const errorSpy = jest.spyOn(loggerService, 'error');
 
-      await request(app.getHttpServer())
-        .get('/nonexistent')
-        .expect(404);
+      await request(app.getHttpServer()).get('/nonexistent').expect(404);
 
       // Should log with appropriate level based on status code
     });
@@ -109,7 +105,7 @@ describe('Logging Integration Tests', () => {
       const endTime = Date.now();
 
       const logCall = logSpy.mock.calls.find(
-        call => call[0] === 'Request completed',
+        (call) => call[0] === 'Request completed',
       );
 
       expect(logCall).toBeDefined();
@@ -121,9 +117,7 @@ describe('Logging Integration Tests', () => {
 
   describe('Performance Metrics', () => {
     it('should record request duration metrics', async () => {
-      await request(app.getHttpServer())
-        .get('/health')
-        .expect(200);
+      await request(app.getHttpServer()).get('/health').expect(200);
 
       const metrics = metricsService.getRequestMetrics('/health');
       expect(metrics).toBeDefined();
@@ -162,9 +156,7 @@ describe('Logging Integration Tests', () => {
     it('should log errors with stack traces', async () => {
       const errorSpy = jest.spyOn(loggerService, 'error');
 
-      await request(app.getHttpServer())
-        .post('/test-error')
-        .expect(500);
+      await request(app.getHttpServer()).post('/test-error').expect(500);
 
       expect(errorSpy).toHaveBeenCalledWith(
         expect.any(String),
@@ -195,12 +187,10 @@ describe('Logging Integration Tests', () => {
     it('should mask passwords in request logs', async () => {
       const logSpy = jest.spyOn(loggerService as any, 'maskSensitiveData');
 
-      await request(app.getHttpServer())
-        .post('/auth/login')
-        .send({
-          username: 'testuser',
-          password: 'secret123',
-        });
+      await request(app.getHttpServer()).post('/auth/login').send({
+        username: 'testuser',
+        password: 'secret123',
+      });
 
       const maskedData = (loggerService as any).maskSensitiveData({
         username: 'testuser',
@@ -276,7 +266,7 @@ describe('Logging Integration Tests', () => {
       await Promise.all(requests);
 
       const totalTime = Date.now() - startTime;
-      
+
       // All concurrent requests should complete in reasonable time
       expect(totalTime).toBeLessThan(1000);
     });
@@ -286,9 +276,7 @@ describe('Logging Integration Tests', () => {
     it('should alert on slow requests', async () => {
       const warnSpy = jest.spyOn(loggerService, 'warn');
 
-      await request(app.getHttpServer())
-        .get('/slow-endpoint')
-        .expect(200);
+      await request(app.getHttpServer()).get('/slow-endpoint').expect(200);
 
       expect(warnSpy).toHaveBeenCalledWith(
         'Slow request detected',
@@ -307,11 +295,11 @@ describe('Logging Integration Tests', () => {
       }
 
       // Wait for error rate check interval
-      await new Promise(resolve => setTimeout(resolve, 11000));
+      await new Promise((resolve) => setTimeout(resolve, 11000));
 
       // Should have logged high error rate alert
       const alertCall = errorSpy.mock.calls.find(
-        call => call[0] === 'High error rate detected',
+        (call) => call[0] === 'High error rate detected',
       );
 
       expect(alertCall).toBeDefined();

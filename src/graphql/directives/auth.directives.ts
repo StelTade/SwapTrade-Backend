@@ -8,6 +8,8 @@ export function AuthDirective() {
 }
 
 export function HasRoleDirective(role: string) {
-  return applyDecorators(SetMetadata(AUTH_DIRECTIVE_KEY, true), SetMetadata(AUTH_ROLE_KEY, role));
+  return applyDecorators(
+    SetMetadata(AUTH_DIRECTIVE_KEY, true),
+    SetMetadata(AUTH_ROLE_KEY, role),
+  );
 }
-

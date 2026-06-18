@@ -1,4 +1,9 @@
-import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 
 @Injectable()
 export class IpWhitelistGuard implements CanActivate {
@@ -9,7 +14,10 @@ export class IpWhitelistGuard implements CanActivate {
     if (!whitelistEnv) {
       return true;
     }
-    const whitelist = whitelistEnv.split(',').map((x) => x.trim()).filter(Boolean);
+    const whitelist = whitelistEnv
+      .split(',')
+      .map((x) => x.trim())
+      .filter(Boolean);
     if (whitelist.length === 0) {
       return true;
     }
@@ -19,4 +27,3 @@ export class IpWhitelistGuard implements CanActivate {
     return true;
   }
 }
-

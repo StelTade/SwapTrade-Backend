@@ -12,8 +12,8 @@ export interface CacheMetricSnapshot {
 export class CacheMetricsService {
   private readonly logger = new Logger(CacheMetricsService.name);
 
-  private metrics = new Map<string,
-
+  private metrics = new Map<
+    string,
     { hits: number; misses: number; invalidations: number }
   >();
 

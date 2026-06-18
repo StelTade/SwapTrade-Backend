@@ -65,7 +65,10 @@ export class PrivacyController {
     @Body() createDto: CreatePrivacyProfileDto,
   ): Promise<PrivacyProfileResponseDto> {
     const userId = req.user?.id; // Assuming auth middleware sets this
-    const profile = await this.privacyProfileService.createProfile(userId, createDto);
+    const profile = await this.privacyProfileService.createProfile(
+      userId,
+      createDto,
+    );
     return this.privacyProfileService.toResponseDto(profile);
   }
 
@@ -92,8 +95,13 @@ export class PrivacyController {
     description: 'Privacy profile retrieved',
     type: PrivacyProfileResponseDto,
   })
-  async getProfile(@Param('pseudonymousId') pseudonymousId: string): Promise<PrivacyProfileResponseDto> {
-    const profile = await this.privacyProfileService.getProfileByPseudonymousId(pseudonymousId);
+  async getProfile(
+    @Param('pseudonymousId') pseudonymousId: string,
+  ): Promise<PrivacyProfileResponseDto> {
+    const profile =
+      await this.privacyProfileService.getProfileByPseudonymousId(
+        pseudonymousId,
+      );
     return this.privacyProfileService.toResponseDto(profile);
   }
 
@@ -108,7 +116,10 @@ export class PrivacyController {
     @Param('pseudonymousId') pseudonymousId: string,
     @Body() updateDto: UpdatePrivacyProfileDto,
   ): Promise<PrivacyProfileResponseDto> {
-    const profile = await this.privacyProfileService.updateProfile(pseudonymousId, updateDto);
+    const profile = await this.privacyProfileService.updateProfile(
+      pseudonymousId,
+      updateDto,
+    );
     return this.privacyProfileService.toResponseDto(profile);
   }
 
@@ -122,7 +133,8 @@ export class PrivacyController {
   async enableAnonymousMode(
     @Param('pseudonymousId') pseudonymousId: string,
   ): Promise<PrivacyProfileResponseDto> {
-    const profile = await this.privacyProfileService.enableAnonymousMode(pseudonymousId);
+    const profile =
+      await this.privacyProfileService.enableAnonymousMode(pseudonymousId);
     return this.privacyProfileService.toResponseDto(profile);
   }
 
@@ -136,7 +148,8 @@ export class PrivacyController {
   async disableAnonymousMode(
     @Param('pseudonymousId') pseudonymousId: string,
   ): Promise<PrivacyProfileResponseDto> {
-    const profile = await this.privacyProfileService.disableAnonymousMode(pseudonymousId);
+    const profile =
+      await this.privacyProfileService.disableAnonymousMode(pseudonymousId);
     return this.privacyProfileService.toResponseDto(profile);
   }
 
@@ -149,7 +162,9 @@ export class PrivacyController {
   @Delete('profiles/:pseudonymousId')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete privacy profile' })
-  async deleteProfile(@Param('pseudonymousId') pseudonymousId: string): Promise<void> {
+  async deleteProfile(
+    @Param('pseudonymousId') pseudonymousId: string,
+  ): Promise<void> {
     await this.privacyProfileService.deleteProfile(pseudonymousId);
   }
 
@@ -169,18 +184,25 @@ export class PrivacyController {
     @Query('pseudonymousId') pseudonymousId: string,
     @Body() createDto: CreateEncryptedOrderDto,
   ): Promise<EncryptedOrderResponseDto> {
-    const order = await this.encryptedOrderService.createOrder(pseudonymousId, createDto);
+    const order = await this.encryptedOrderService.createOrder(
+      pseudonymousId,
+      createDto,
+    );
     return this.encryptedOrderService.toResponseDto(order);
   }
 
   @Get('orders/:orderId')
-  @ApiOperation({ summary: 'Get encrypted order (metadata only, details encrypted)' })
+  @ApiOperation({
+    summary: 'Get encrypted order (metadata only, details encrypted)',
+  })
   @ApiResponse({
     status: 200,
     description: 'Encrypted order retrieved',
     type: EncryptedOrderResponseDto,
   })
-  async getOrder(@Param('orderId') orderId: string): Promise<EncryptedOrderResponseDto> {
+  async getOrder(
+    @Param('orderId') orderId: string,
+  ): Promise<EncryptedOrderResponseDto> {
     const order = await this.encryptedOrderService.getOrderById(orderId);
     if (!order) {
       throw new NotFoundException('Encrypted order not found');
@@ -209,7 +231,10 @@ export class PrivacyController {
   @Put('orders/:orderId')
   @ApiOperation({ summary: 'Update encrypted order' })
   async updateOrder(@Param('orderId') orderId: string, @Body() updateDto: any) {
-    const order = await this.encryptedOrderService.updateOrder(orderId, updateDto);
+    const order = await this.encryptedOrderService.updateOrder(
+      orderId,
+      updateDto,
+    );
     return this.encryptedOrderService.toResponseDto(order);
   }
 
@@ -243,7 +268,9 @@ export class PrivacyController {
     status: 201,
     description: 'Balance commitment created',
   })
-  async createBalanceCommitment(@Body() body: { balance: string; nonce?: string }) {
+  async createBalanceCommitment(
+    @Body() body: { balance: string; nonce?: string },
+  ) {
     return this.zkpService.createBalanceCommitment(body.balance, body.nonce);
   }
 
@@ -298,7 +325,11 @@ export class PrivacyController {
   async createRangeProof(
     @Body() body: { balance: string; minRange: string; maxRange: string },
   ) {
-    return this.zkpService.createRangeProof(body.balance, body.minRange, body.maxRange);
+    return this.zkpService.createRangeProof(
+      body.balance,
+      body.minRange,
+      body.maxRange,
+    );
   }
 
   @Get('proofs/challenge')
@@ -317,9 +348,15 @@ export class PrivacyController {
     @Body() body: { plaintext: string; key: string; nonce?: string },
   ) {
     const keyBuffer = Buffer.from(body.key, 'hex');
-    const nonceBuffer = body.nonce ? Buffer.from(body.nonce, 'base64') : undefined;
+    const nonceBuffer = body.nonce
+      ? Buffer.from(body.nonce, 'base64')
+      : undefined;
 
-    return this.encryptionService.encrypt(body.plaintext, keyBuffer, nonceBuffer);
+    return this.encryptionService.encrypt(
+      body.plaintext,
+      keyBuffer,
+      nonceBuffer,
+    );
   }
 
   @Post('decrypt')
@@ -356,7 +393,9 @@ export class PrivacyController {
     description: 'Audit log created',
     type: PrivacyAuditLogResponseDto,
   })
-  async createAuditLog(@Body() createDto: CreatePrivacyAuditLogDto): Promise<PrivacyAuditLogResponseDto> {
+  async createAuditLog(
+    @Body() createDto: CreatePrivacyAuditLogDto,
+  ): Promise<PrivacyAuditLogResponseDto> {
     const auditLog = await this.complianceService.createAuditLog(createDto);
     return this.complianceService.toResponseDto(auditLog);
   }
@@ -368,7 +407,9 @@ export class PrivacyController {
     description: 'Audit log retrieved',
     type: PrivacyAuditLogResponseDto,
   })
-  async getAuditLog(@Param('auditId') auditId: string): Promise<PrivacyAuditLogResponseDto> {
+  async getAuditLog(
+    @Param('auditId') auditId: string,
+  ): Promise<PrivacyAuditLogResponseDto> {
     const auditLog = await this.complianceService.getAuditLogById(auditId);
     if (!auditLog) {
       throw new NotFoundException('Privacy audit log not found');
@@ -382,7 +423,10 @@ export class PrivacyController {
     @Query('pseudonymousIdHash') pseudonymousIdHash: string,
     @Query('action') action?: string,
   ) {
-    const logs = await this.complianceService.getAuditLogsByUser(pseudonymousIdHash, action as any);
+    const logs = await this.complianceService.getAuditLogsByUser(
+      pseudonymousIdHash,
+      action as any,
+    );
     return logs.map((l) => this.complianceService.toResponseDto(l));
   }
 
@@ -426,7 +470,9 @@ export class PrivacyController {
 
   @Post('compliance-report/export')
   @ApiOperation({ summary: 'Export audit logs for compliance' })
-  async exportAuditLogs(@Query('pseudonymousIdHash') pseudonymousIdHash?: string) {
+  async exportAuditLogs(
+    @Query('pseudonymousIdHash') pseudonymousIdHash?: string,
+  ) {
     return await this.complianceService.exportAuditLogs(pseudonymousIdHash);
   }
 

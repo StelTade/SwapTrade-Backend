@@ -1,4 +1,9 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import { ConfigService } from '../../config/config.service';
 import Redis from 'ioredis';
 import { adaptiveBackoffWithJitter } from './redis-backoff.util';
@@ -42,18 +47,23 @@ export class RedisPoolService implements OnModuleInit, OnModuleDestroy {
         const client = await this.createClientWithBackoff();
         this.pool.push(client);
       } catch (err) {
-        this.logger.warn(`Pool prefill: failed to create connection ${i + 1}/${min}`, (err as Error).message);
+        this.logger.warn(
+          `Pool prefill: failed to create connection ${i + 1}/${min}`,
+          (err as Error).message,
+        );
         this.totalConnectionErrors++;
         this.metricsService.recordConnectionError();
       }
     }
-    this.logger.log(`Redis pool initialized with ${this.pool.length} connection(s), max ${redis.poolMax ?? 10}`);
+    this.logger.log(
+      `Redis pool initialized with ${this.pool.length} connection(s), max ${redis.poolMax ?? 10}`,
+    );
   }
 
   async onModuleDestroy(): Promise<void> {
     this.closed = true;
     const all = [...this.pool, ...this.inUse];
-    await Promise.all(all.map(c => c.quit().catch(() => {})));
+    await Promise.all(all.map((c) => c.quit().catch(() => {})));
     this.pool.length = 0;
     this.inUse.clear();
   }
@@ -151,7 +161,7 @@ export class RedisPoolService implements OnModuleInit, OnModuleDestroy {
         if (attempt < maxAttempts - 1) {
           const delay = adaptiveBackoffWithJitter(attempt, baseMs, maxMs);
           this.logger.warn(
-            `Redis connect attempt ${attempt + 1}/${maxAttempts} failed, retrying in ${delay}ms: ${(lastError as Error).message}`,
+            `Redis connect attempt ${attempt + 1}/${maxAttempts} failed, retrying in ${delay}ms: ${lastError.message}`,
           );
           await this.sleep(delay);
         }
@@ -177,6 +187,6 @@ export class RedisPoolService implements OnModuleInit, OnModuleDestroy {
   }
 
   private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }

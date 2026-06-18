@@ -57,135 +57,172 @@ export interface ErrorInfo {
  * Determines retry strategies and circuit breaker behavior
  */
 export class ErrorCategorizer {
-  private static readonly ERROR_CLASSIFICATION: Map<string, ErrorInfo> = new Map([
-    // Transient Errors (retryable)
-    ['ECONNREFUSED', {
-      category: ErrorCategory.TRANSIENT,
-      severity: ErrorSeverity.MEDIUM,
-      errorType: ErrorType.NETWORK,
-      code: 'ECONNREFUSED',
-      message: 'Connection refused',
-      retryable: true,
-      maxRetries: 5,
-      backoffMultiplier: 2,
-      circuitBreakerCompatible: true,
-    }],
-    ['ECONNRESET', {
-      category: ErrorCategory.TRANSIENT,
-      severity: ErrorSeverity.MEDIUM,
-      errorType: ErrorType.NETWORK,
-      code: 'ECONNRESET',
-      message: 'Connection reset',
-      retryable: true,
-      maxRetries: 5,
-      backoffMultiplier: 2,
-      circuitBreakerCompatible: true,
-    }],
-    ['ETIMEDOUT', {
-      category: ErrorCategory.TRANSIENT,
-      severity: ErrorSeverity.MEDIUM,
-      errorType: ErrorType.TIMEOUT,
-      code: 'ETIMEDOUT',
-      message: 'Connection timed out',
-      retryable: true,
-      maxRetries: 3,
-      backoffMultiplier: 2,
-      circuitBreakerCompatible: true,
-    }],
-    ['EHOSTUNREACH', {
-      category: ErrorCategory.TRANSIENT,
-      severity: ErrorSeverity.MEDIUM,
-      errorType: ErrorType.NETWORK,
-      code: 'EHOSTUNREACH',
-      message: 'Host unreachable',
-      retryable: true,
-      maxRetries: 3,
-      backoffMultiplier: 2,
-      circuitBreakerCompatible: true,
-    }],
-    // HTTP Status Codes
-    ['429', {
-      category: ErrorCategory.TRANSIENT,
-      severity: ErrorSeverity.LOW,
-      errorType: ErrorType.RATE_LIMIT,
-      code: '429',
-      message: 'Too many requests',
-      retryable: true,
-      maxRetries: 3,
-      backoffMultiplier: 3,
-      circuitBreakerCompatible: false,
-    }],
-    ['503', {
-      category: ErrorCategory.TRANSIENT,
-      severity: ErrorSeverity.MEDIUM,
-      errorType: ErrorType.SERVICE_UNAVAILABLE,
-      code: '503',
-      message: 'Service unavailable',
-      retryable: true,
-      maxRetries: 5,
-      backoffMultiplier: 2,
-      circuitBreakerCompatible: true,
-    }],
-    ['502', {
-      category: ErrorCategory.TRANSIENT,
-      severity: ErrorSeverity.MEDIUM,
-      errorType: ErrorType.SERVICE_UNAVAILABLE,
-      code: '502',
-      message: 'Bad gateway',
-      retryable: true,
-      maxRetries: 3,
-      backoffMultiplier: 2,
-      circuitBreakerCompatible: true,
-    }],
-    ['504', {
-      category: ErrorCategory.TRANSIENT,
-      severity: ErrorSeverity.MEDIUM,
-      errorType: ErrorType.TIMEOUT,
-      code: '504',
-      message: 'Gateway timeout',
-      retryable: true,
-      maxRetries: 3,
-      backoffMultiplier: 2,
-      circuitBreakerCompatible: true,
-    }],
-    // Permanent Errors (not retryable)
-    ['400', {
-      category: ErrorCategory.PERMANENT,
-      severity: ErrorSeverity.MEDIUM,
-      errorType: ErrorType.INVALID_INPUT,
-      code: '400',
-      message: 'Bad request',
-      retryable: false,
-      circuitBreakerCompatible: false,
-    }],
-    ['401', {
-      category: ErrorCategory.PERMANENT,
-      severity: ErrorSeverity.MEDIUM,
-      errorType: ErrorType.AUTHENTICATION,
-      code: '401',
-      message: 'Unauthorized',
-      retryable: false,
-      circuitBreakerCompatible: false,
-    }],
-    ['403', {
-      category: ErrorCategory.PERMANENT,
-      severity: ErrorSeverity.MEDIUM,
-      errorType: ErrorType.AUTHORIZATION,
-      code: '403',
-      message: 'Forbidden',
-      retryable: false,
-      circuitBreakerCompatible: false,
-    }],
-    ['404', {
-      category: ErrorCategory.PERMANENT,
-      severity: ErrorSeverity.LOW,
-      errorType: ErrorType.NOT_FOUND,
-      code: '404',
-      message: 'Not found',
-      retryable: false,
-      circuitBreakerCompatible: false,
-    }],
-  ]);
+  private static readonly ERROR_CLASSIFICATION: Map<string, ErrorInfo> =
+    new Map([
+      // Transient Errors (retryable)
+      [
+        'ECONNREFUSED',
+        {
+          category: ErrorCategory.TRANSIENT,
+          severity: ErrorSeverity.MEDIUM,
+          errorType: ErrorType.NETWORK,
+          code: 'ECONNREFUSED',
+          message: 'Connection refused',
+          retryable: true,
+          maxRetries: 5,
+          backoffMultiplier: 2,
+          circuitBreakerCompatible: true,
+        },
+      ],
+      [
+        'ECONNRESET',
+        {
+          category: ErrorCategory.TRANSIENT,
+          severity: ErrorSeverity.MEDIUM,
+          errorType: ErrorType.NETWORK,
+          code: 'ECONNRESET',
+          message: 'Connection reset',
+          retryable: true,
+          maxRetries: 5,
+          backoffMultiplier: 2,
+          circuitBreakerCompatible: true,
+        },
+      ],
+      [
+        'ETIMEDOUT',
+        {
+          category: ErrorCategory.TRANSIENT,
+          severity: ErrorSeverity.MEDIUM,
+          errorType: ErrorType.TIMEOUT,
+          code: 'ETIMEDOUT',
+          message: 'Connection timed out',
+          retryable: true,
+          maxRetries: 3,
+          backoffMultiplier: 2,
+          circuitBreakerCompatible: true,
+        },
+      ],
+      [
+        'EHOSTUNREACH',
+        {
+          category: ErrorCategory.TRANSIENT,
+          severity: ErrorSeverity.MEDIUM,
+          errorType: ErrorType.NETWORK,
+          code: 'EHOSTUNREACH',
+          message: 'Host unreachable',
+          retryable: true,
+          maxRetries: 3,
+          backoffMultiplier: 2,
+          circuitBreakerCompatible: true,
+        },
+      ],
+      // HTTP Status Codes
+      [
+        '429',
+        {
+          category: ErrorCategory.TRANSIENT,
+          severity: ErrorSeverity.LOW,
+          errorType: ErrorType.RATE_LIMIT,
+          code: '429',
+          message: 'Too many requests',
+          retryable: true,
+          maxRetries: 3,
+          backoffMultiplier: 3,
+          circuitBreakerCompatible: false,
+        },
+      ],
+      [
+        '503',
+        {
+          category: ErrorCategory.TRANSIENT,
+          severity: ErrorSeverity.MEDIUM,
+          errorType: ErrorType.SERVICE_UNAVAILABLE,
+          code: '503',
+          message: 'Service unavailable',
+          retryable: true,
+          maxRetries: 5,
+          backoffMultiplier: 2,
+          circuitBreakerCompatible: true,
+        },
+      ],
+      [
+        '502',
+        {
+          category: ErrorCategory.TRANSIENT,
+          severity: ErrorSeverity.MEDIUM,
+          errorType: ErrorType.SERVICE_UNAVAILABLE,
+          code: '502',
+          message: 'Bad gateway',
+          retryable: true,
+          maxRetries: 3,
+          backoffMultiplier: 2,
+          circuitBreakerCompatible: true,
+        },
+      ],
+      [
+        '504',
+        {
+          category: ErrorCategory.TRANSIENT,
+          severity: ErrorSeverity.MEDIUM,
+          errorType: ErrorType.TIMEOUT,
+          code: '504',
+          message: 'Gateway timeout',
+          retryable: true,
+          maxRetries: 3,
+          backoffMultiplier: 2,
+          circuitBreakerCompatible: true,
+        },
+      ],
+      // Permanent Errors (not retryable)
+      [
+        '400',
+        {
+          category: ErrorCategory.PERMANENT,
+          severity: ErrorSeverity.MEDIUM,
+          errorType: ErrorType.INVALID_INPUT,
+          code: '400',
+          message: 'Bad request',
+          retryable: false,
+          circuitBreakerCompatible: false,
+        },
+      ],
+      [
+        '401',
+        {
+          category: ErrorCategory.PERMANENT,
+          severity: ErrorSeverity.MEDIUM,
+          errorType: ErrorType.AUTHENTICATION,
+          code: '401',
+          message: 'Unauthorized',
+          retryable: false,
+          circuitBreakerCompatible: false,
+        },
+      ],
+      [
+        '403',
+        {
+          category: ErrorCategory.PERMANENT,
+          severity: ErrorSeverity.MEDIUM,
+          errorType: ErrorType.AUTHORIZATION,
+          code: '403',
+          message: 'Forbidden',
+          retryable: false,
+          circuitBreakerCompatible: false,
+        },
+      ],
+      [
+        '404',
+        {
+          category: ErrorCategory.PERMANENT,
+          severity: ErrorSeverity.LOW,
+          errorType: ErrorType.NOT_FOUND,
+          code: '404',
+          message: 'Not found',
+          retryable: false,
+          circuitBreakerCompatible: false,
+        },
+      ],
+    ]);
 
   /**
    * Categorize an error
@@ -205,7 +242,9 @@ export class ErrorCategorizer {
 
     // Check for HTTP status codes
     if (error.status) {
-      const statusClassified = this.ERROR_CLASSIFICATION.get(String(error.status));
+      const statusClassified = this.ERROR_CLASSIFICATION.get(
+        String(error.status),
+      );
       if (statusClassified) {
         return statusClassified;
       }

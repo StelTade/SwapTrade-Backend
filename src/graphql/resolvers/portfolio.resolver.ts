@@ -7,8 +7,9 @@ export class PortfolioResolver {
   constructor(private readonly portfolioService: PortfolioService) {}
 
   @Query(() => Object)
-  portfolioAnalytics(@Args('userId') userId: string): Promise<PortfolioAnalytics> {
+  portfolioAnalytics(
+    @Args('userId') userId: string,
+  ): Promise<PortfolioAnalytics> {
     return this.portfolioService.getAnalytics(userId);
   }
 }
-

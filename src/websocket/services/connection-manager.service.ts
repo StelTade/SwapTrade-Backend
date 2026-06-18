@@ -27,7 +27,11 @@ export class ConnectionManagerService {
     maxBackoffMs: 30000,
   };
 
-  registerConnection(clientId: string, userId?: string, metadata: Record<string, any> = {}): ConnectionState {
+  registerConnection(
+    clientId: string,
+    userId?: string,
+    metadata: Record<string, any> = {},
+  ): ConnectionState {
     const state: ConnectionState = {
       clientId,
       userId,
@@ -66,7 +70,9 @@ export class ConnectionManagerService {
   removeSubscription(clientId: string, channel: string): void {
     const state = this.connections.get(clientId);
     if (state) {
-      state.subscriptions = state.subscriptions.filter(sub => sub !== channel);
+      state.subscriptions = state.subscriptions.filter(
+        (sub) => sub !== channel,
+      );
     }
   }
 
@@ -97,7 +103,9 @@ export class ConnectionManagerService {
       this.reconnectionConfig.maxBackoffMs,
     );
 
-    this.logger.log(`Reconnection attempt ${attempts} for ${clientId}, backoff: ${backoff}ms`);
+    this.logger.log(
+      `Reconnection attempt ${attempts} for ${clientId}, backoff: ${backoff}ms`,
+    );
     return backoff;
   }
 
@@ -138,13 +146,13 @@ export class ConnectionManagerService {
 
   getUserConnections(userId: string): ConnectionState[] {
     return Array.from(this.connections.values()).filter(
-      state => state.userId === userId,
+      (state) => state.userId === userId,
     );
   }
 
   getConnectionsByChannel(channel: string): ConnectionState[] {
-    return Array.from(this.connections.values()).filter(
-      state => state.subscriptions.includes(channel),
+    return Array.from(this.connections.values()).filter((state) =>
+      state.subscriptions.includes(channel),
     );
   }
 
@@ -154,13 +162,17 @@ export class ConnectionManagerService {
 
     return {
       totalConnections: connections.length,
-      authenticatedConnections: connections.filter(c => c.isAuthenticated).length,
+      authenticatedConnections: connections.filter((c) => c.isAuthenticated)
+        .length,
       averageSessionDuration: this.calculateAverageDuration(connections, now),
       connectionsByChannel: this.countConnectionsByChannel(connections),
     };
   }
 
-  private calculateAverageDuration(connections: ConnectionState[], now: number): number {
+  private calculateAverageDuration(
+    connections: ConnectionState[],
+    now: number,
+  ): number {
     if (connections.length === 0) return 0;
     const totalDuration = connections.reduce((sum, conn) => {
       return sum + (now - conn.connectedAt.getTime());
@@ -168,7 +180,9 @@ export class ConnectionManagerService {
     return totalDuration / connections.length;
   }
 
-  private countConnectionsByChannel(connections: ConnectionState[]): Record<string, number> {
+  private countConnectionsByChannel(
+    connections: ConnectionState[],
+  ): Record<string, number> {
     const channelCounts: Record<string, number> = {};
 
     for (const conn of connections) {

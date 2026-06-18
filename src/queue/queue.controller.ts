@@ -40,15 +40,31 @@ export class QueueController {
   // ==================== Queue Metrics ====================
 
   @Get('metrics')
-  @ApiOperation({ summary: 'Get metrics for all queues', description: 'Returns metrics for all background job queues. Requires authentication.' })
-  @ApiResponse({ status: 200, description: 'Queue metrics retrieved', schema: { example: [{ queue: 'default', jobs: 10 }] } })
+  @ApiOperation({
+    summary: 'Get metrics for all queues',
+    description:
+      'Returns metrics for all background job queues. Requires authentication.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Queue metrics retrieved',
+    schema: { example: [{ queue: 'default', jobs: 10 }] },
+  })
   async getAllMetrics() {
     return await this.monitoringService.getAllQueueMetrics();
   }
 
   @Get('metrics/:queueName')
-  @ApiOperation({ summary: 'Get metrics for specific queue', description: 'Returns metrics for a specific queue. Requires authentication.' })
-  @ApiResponse({ status: 200, description: 'Queue metrics retrieved', schema: { example: { queue: 'default', jobs: 10 } } })
+  @ApiOperation({
+    summary: 'Get metrics for specific queue',
+    description:
+      'Returns metrics for a specific queue. Requires authentication.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Queue metrics retrieved',
+    schema: { example: { queue: 'default', jobs: 10 } },
+  })
   async getQueueMetrics(@Param('queueName') queueName: QueueName) {
     return await this.monitoringService.getQueueMetrics(queueName);
   }
@@ -56,8 +72,16 @@ export class QueueController {
   // ==================== Health Check ====================
 
   @Get('health')
-  @ApiOperation({ summary: 'Check queue system health', description: 'Returns health status of the queue system. Requires authentication.' })
-  @ApiResponse({ status: 200, description: 'Health status retrieved', schema: { example: { status: 'ok' } } })
+  @ApiOperation({
+    summary: 'Check queue system health',
+    description:
+      'Returns health status of the queue system. Requires authentication.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Health status retrieved',
+    schema: { example: { status: 'ok' } },
+  })
   async getHealth() {
     return await this.monitoringService.getHealthStatus();
   }
@@ -65,8 +89,15 @@ export class QueueController {
   // ==================== Job Management ====================
 
   @Get('jobs/:queueName/:jobId')
-  @ApiOperation({ summary: 'Get job status', description: 'Returns status of a specific job. Requires authentication.' })
-  @ApiResponse({ status: 200, description: 'Job status retrieved', schema: { example: { jobId: '123', status: 'completed' } } })
+  @ApiOperation({
+    summary: 'Get job status',
+    description: 'Returns status of a specific job. Requires authentication.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Job status retrieved',
+    schema: { example: { jobId: '123', status: 'completed' } },
+  })
   async getJobStatus(
     @Param('queueName') queueName: QueueName,
     @Param('jobId') jobId: string,
@@ -75,8 +106,15 @@ export class QueueController {
   }
 
   @Post('jobs/:queueName/:jobId/retry')
-  @ApiOperation({ summary: 'Retry a failed job', description: 'Retries a failed job in the queue. Requires authentication.' })
-  @ApiResponse({ status: 200, description: 'Job retry initiated', schema: { example: { jobId: '123', retried: true } } })
+  @ApiOperation({
+    summary: 'Retry a failed job',
+    description: 'Retries a failed job in the queue. Requires authentication.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Job retry initiated',
+    schema: { example: { jobId: '123', retried: true } },
+  })
   async retryJob(
     @Param('queueName') queueName: QueueName,
     @Param('jobId') jobId: string,

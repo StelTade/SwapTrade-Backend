@@ -13,7 +13,6 @@ export class ApiKey {
   @Index()
   ownerId: number;
 
-
   @Column({ default: true })
   active: boolean;
 
@@ -29,4 +28,3 @@ export class ApiKey {
   @Column({ type: 'timestamp', nullable: true })
   lastUsedAt: Date | null;
 }
-

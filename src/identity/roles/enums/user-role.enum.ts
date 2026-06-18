@@ -11,15 +11,13 @@
  * Roles form a hierarchy for permission inheritance
  */
 export enum UserRole {
-  // Platform-wide administrative roles
+  // Platform-wide roles
   SUPER_ADMIN = 'SUPER_ADMIN',
   ADMIN = 'ADMIN',
-
-  // Compliance & oversight roles
   COMPLIANCE_OFFICER = 'COMPLIANCE_OFFICER',
-
-  // Support roles
   SUPPORT_AGENT = 'SUPPORT_AGENT',
+  TRADER = 'TRADER',
+  USER = 'USER',
   STAFF = 'STAFF',
 
   // Trading roles
@@ -39,13 +37,16 @@ export enum UserRole {
  * Used for UI display and documentation
  */
 export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
-  [UserRole.SUPER_ADMIN]: 'Super Administrator - Unrestricted platform access',
+  [UserRole.SUPER_ADMIN]: 'Super Administrator - Complete system root access',
   [UserRole.ADMIN]: 'Administrator - Full system access',
-  [UserRole.COMPLIANCE_OFFICER]: 'Compliance Officer - Regulatory and compliance oversight',
-  [UserRole.SUPPORT_AGENT]: 'Support Agent - Customer support operations',
+  [UserRole.COMPLIANCE_OFFICER]:
+    'Compliance Officer - Regulatory monitoring and enforcement',
+  [UserRole.SUPPORT_AGENT]:
+    'Support Agent - User assistance and account troubleshooting',
+  [UserRole.TRADER]:
+    'Trader - Advanced trading capabilities and portfolio management',
+  [UserRole.USER]: 'Standard user - Trading and account access',
   [UserRole.STAFF]: 'Staff member - Support and monitoring',
-  [UserRole.TRADER]: 'Trader - Trading and account operations',
-  [UserRole.USER]: 'Standard user - Basic trading and account access',
   [UserRole.GOVERNANCE_OPERATOR]: 'Governance operator - Policy enforcement',
   [UserRole.KYC_OPERATOR]: 'KYC operator - Document review',
   [UserRole.KYC_GOVERNANCE]: 'KYC governance - Process oversight',

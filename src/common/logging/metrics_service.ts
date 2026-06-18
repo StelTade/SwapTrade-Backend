@@ -30,18 +30,18 @@ export class MetricsService {
   constructor(private readonly logger: LoggerService) {
     // Clean up old metrics every minute
     setInterval(() => this.cleanupMetrics(), this.windowSize);
-    
+
     // Check error rates every 10 seconds
     setInterval(() => this.checkErrorRates(), 10000);
   }
 
   recordRequestDuration(route: string, duration: number): void {
     const key = `request:${route}`;
-    
+
     if (!this.requestDurations.has(key)) {
       this.requestDurations.set(key, []);
     }
-    
+
     this.requestDurations.get(key)!.push(duration);
     this.requestCounts.set(key, (this.requestCounts.get(key) || 0) + 1);
 
@@ -62,11 +62,11 @@ export class MetricsService {
 
   recordQueryDuration(query: string, duration: number): void {
     const key = `query:${query}`;
-    
+
     if (!this.queryDurations.has(key)) {
       this.queryDurations.set(key, []);
     }
-    
+
     this.queryDurations.get(key)!.push(duration);
 
     this.logger.metric('db.query.duration', duration, {
@@ -151,7 +151,7 @@ export class MetricsService {
 
   private cleanupMetrics(): void {
     const now = Date.now();
-    
+
     // Keep only last 1000 entries per metric
     for (const [key, durations] of this.requestDurations.entries()) {
       if (durations.length > 1000) {
@@ -168,7 +168,7 @@ export class MetricsService {
 
   private checkErrorRates(): void {
     const now = Date.now();
-    
+
     for (const [key] of this.requestCounts.entries()) {
       const route = key.replace('request:', '');
       const errorRate = this.getErrorRate(route);
@@ -176,7 +176,7 @@ export class MetricsService {
       // Alert if error rate exceeds threshold
       if (errorRate.rate > this.alertThreshold && errorRate.total >= 10) {
         const lastAlert = this.lastAlertTime.get(route) || 0;
-        
+
         // Only alert if cooldown period has passed
         if (now - lastAlert > this.alertCooldown) {
           this.logger.error('High error rate detected', undefined, {

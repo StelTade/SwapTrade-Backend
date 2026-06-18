@@ -41,7 +41,9 @@ export const configSchema = Joi.object({
   CACHE_TTL_USER_PROFILE: Joi.number().integer().min(0).default(600),
   CACHE_WARMING_ENABLED: Joi.boolean().default(true),
   CACHE_WARMING_TIMEOUT: Joi.number().integer().min(1000).default(30000),
-  CACHE_WARMING_STRATEGIES: Joi.string().default('user_balances,market_data,portfolio'),
+  CACHE_WARMING_STRATEGIES: Joi.string().default(
+    'user_balances,market_data,portfolio',
+  ),
 
   // Queue Configuration
   QUEUE_CONCURRENCY: Joi.number().integer().min(1).default(5),
@@ -66,10 +68,14 @@ export const configSchema = Joi.object({
   RATE_LIMIT_SKIP_FAILED_REQUESTS: Joi.boolean().default(false),
   RATE_LIMIT_KEY_GENERATOR: Joi.string().default('req.ip'),
   RATE_LIMIT_STANDARD_HEADERS: Joi.boolean().default(true),
-  RATE_LIMIT_MESSAGE: Joi.string().default('Too many requests from this IP, please try again later.'),
+  RATE_LIMIT_MESSAGE: Joi.string().default(
+    'Too many requests from this IP, please try again later.',
+  ),
 
   // Logging
-  LOG_LEVEL: Joi.string().valid('error', 'warn', 'info', 'debug').default('info'),
+  LOG_LEVEL: Joi.string()
+    .valid('error', 'warn', 'info', 'debug')
+    .default('info'),
   LOG_ENABLE_CONSOLE: Joi.boolean().default(true),
   LOG_ENABLE_FILE: Joi.boolean().default(true),
   LOG_DIR: Joi.string().default('logs'),
@@ -84,7 +90,9 @@ export const configSchema = Joi.object({
 
   // Swagger
   SWAGGER_TITLE: Joi.string().default('SwapTrade API'),
-  SWAGGER_DESCRIPTION: Joi.string().default('API documentation for the SwapTrade application'),
+  SWAGGER_DESCRIPTION: Joi.string().default(
+    'API documentation for the SwapTrade application',
+  ),
   SWAGGER_VERSION: Joi.string().default('1.0'),
   SWAGGER_PATH: Joi.string().default('api'),
   SWAGGER_ENABLED: Joi.boolean().default(true),

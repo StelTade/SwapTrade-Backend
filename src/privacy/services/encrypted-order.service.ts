@@ -1,8 +1,15 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { EncryptedOrder, EncryptedOrderStatus } from '../entities/encrypted-order.entity';
+import {
+  EncryptedOrder,
+  EncryptedOrderStatus,
+} from '../entities/encrypted-order.entity';
 import {
   CreateEncryptedOrderDto,
   UpdateEncryptedOrderDto,
@@ -80,7 +87,10 @@ export class EncryptedOrderService {
    * @param updateDto Update DTO
    * @returns Updated order
    */
-  async updateOrder(orderId: string, updateDto: UpdateEncryptedOrderDto): Promise<EncryptedOrder> {
+  async updateOrder(
+    orderId: string,
+    updateDto: UpdateEncryptedOrderDto,
+  ): Promise<EncryptedOrder> {
     const order = await this.getOrderById(orderId);
 
     if (!order) {
@@ -167,7 +177,10 @@ export class EncryptedOrderService {
    * @param orderId Order ID
    * @param encryptedDetails Encrypted decrypted details
    */
-  async storeDecryptedOrderDetails(orderId: string, encryptedDetails: string): Promise<void> {
+  async storeDecryptedOrderDetails(
+    orderId: string,
+    encryptedDetails: string,
+  ): Promise<void> {
     const order = await this.getOrderById(orderId);
 
     if (!order) {
@@ -183,7 +196,9 @@ export class EncryptedOrderService {
    * @param status Order status
    * @returns Array of orders
    */
-  async getOrdersByStatus(status: EncryptedOrderStatus): Promise<EncryptedOrder[]> {
+  async getOrdersByStatus(
+    status: EncryptedOrderStatus,
+  ): Promise<EncryptedOrder[]> {
     return await this.encryptedOrderRepository.find({
       where: { status },
       order: { createdAt: 'DESC' },
@@ -209,10 +224,14 @@ export class EncryptedOrderService {
   async getMatchedOrders(pseudonymousId?: string): Promise<EncryptedOrder[]> {
     const query = this.encryptedOrderRepository
       .createQueryBuilder('order')
-      .where('order.status = :status', { status: EncryptedOrderStatus.MATCHED });
+      .where('order.status = :status', {
+        status: EncryptedOrderStatus.MATCHED,
+      });
 
     if (pseudonymousId) {
-      query.andWhere('order.pseudonymousId = :pseudonymousId', { pseudonymousId });
+      query.andWhere('order.pseudonymousId = :pseudonymousId', {
+        pseudonymousId,
+      });
     }
 
     return await query.orderBy('order.matchedAt', 'DESC').getMany();
@@ -243,7 +262,10 @@ export class EncryptedOrderService {
    * @param endDate End date
    * @returns Array of orders
    */
-  async getOrdersByDateRange(startDate: Date, endDate: Date): Promise<EncryptedOrder[]> {
+  async getOrdersByDateRange(
+    startDate: Date,
+    endDate: Date,
+  ): Promise<EncryptedOrder[]> {
     return await this.encryptedOrderRepository
       .createQueryBuilder('order')
       .where('order.createdAt BETWEEN :startDate AND :endDate', {
@@ -260,7 +282,10 @@ export class EncryptedOrderService {
    * @param expectedHash Expected HMAC hash
    * @returns True if integrity check passes
    */
-  async verifyOrderIntegrity(orderId: string, expectedHash: string): Promise<boolean> {
+  async verifyOrderIntegrity(
+    orderId: string,
+    expectedHash: string,
+  ): Promise<boolean> {
     const order = await this.getOrderById(orderId);
 
     if (!order) {
@@ -276,7 +301,10 @@ export class EncryptedOrderService {
    * @param includeEncrypted Whether to include encrypted data
    * @returns Response DTO
    */
-  toResponseDto(order: EncryptedOrder, includeEncrypted: boolean = false): EncryptedOrderResponseDto {
+  toResponseDto(
+    order: EncryptedOrder,
+    includeEncrypted: boolean = false,
+  ): EncryptedOrderResponseDto {
     const dto: EncryptedOrderResponseDto = {
       id: order.id,
       pseudonymousId: order.pseudonymousId,
@@ -333,10 +361,18 @@ export class EncryptedOrderService {
       cancelledOrders,
     ] = await Promise.all([
       this.encryptedOrderRepository.count(),
-      this.encryptedOrderRepository.count({ where: { status: EncryptedOrderStatus.PENDING } }),
-      this.encryptedOrderRepository.count({ where: { status: EncryptedOrderStatus.MATCHED } }),
-      this.encryptedOrderRepository.count({ where: { status: EncryptedOrderStatus.EXECUTED } }),
-      this.encryptedOrderRepository.count({ where: { status: EncryptedOrderStatus.CANCELLED } }),
+      this.encryptedOrderRepository.count({
+        where: { status: EncryptedOrderStatus.PENDING },
+      }),
+      this.encryptedOrderRepository.count({
+        where: { status: EncryptedOrderStatus.MATCHED },
+      }),
+      this.encryptedOrderRepository.count({
+        where: { status: EncryptedOrderStatus.EXECUTED },
+      }),
+      this.encryptedOrderRepository.count({
+        where: { status: EncryptedOrderStatus.CANCELLED },
+      }),
     ]);
 
     return {

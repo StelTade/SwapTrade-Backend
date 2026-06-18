@@ -21,9 +21,6 @@ import { UserModule } from '../user/user.module';
     }),
     UserModule,
   ],
-  providers: [
-    BigIntScalar,
-    DateTimeScalar,
-  ],
+  providers: [BigIntScalar, DateTimeScalar],
 })
 export class GqlAppModule {}
