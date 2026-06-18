@@ -5,25 +5,42 @@ import {
   ManyToOne,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
+  JoinColumn,
 } from 'typeorm';
-import { Auth } from '../../auth/entities/auth.entity';
+import { Auth } from './auth.entity';
 
-@Entity()
+@Entity('sessions')
+@Index(['authId', 'revoked'])
+@Index(['sessionToken'], { unique: true })
 export class Session {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @ManyToOne(() => Auth)
-  user: Auth;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
-  deviceInfo: string;
+  authId: string;
 
-  @Column()
+  @ManyToOne(() => Auth, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'authId' })
+  auth: Auth;
+
+  @Column({ unique: true })
   sessionToken: string;
+
+  @Column({ nullable: true })
+  deviceInfo?: string;
+
+  @Column({ nullable: true })
+  ipAddress?: string;
+
+  @Column({ nullable: true })
+  userAgent?: string;
 
   @Column({ default: false })
   revoked: boolean;
+
+  @Column({ nullable: true, type: 'timestamp' })
+  expiresAt?: Date;
 
   @CreateDateColumn()
   createdAt: Date;

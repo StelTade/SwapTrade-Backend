@@ -7,16 +7,32 @@ import {
 } from 'typeorm';
 
 export enum AuditEventType {
+  // ─── Balance ───────────────────────────────────────────────────────────────
   BALANCE_CREDIT = 'BALANCE_CREDIT',
   BALANCE_DEBIT = 'BALANCE_DEBIT',
+  // ─── Trading ──────────────────────────────────────────────────────────────
   TRADE_OPENED = 'TRADE_OPENED',
   TRADE_CLOSED = 'TRADE_CLOSED',
   TRADE_CANCELLED = 'TRADE_CANCELLED',
   WITHDRAWAL = 'WITHDRAWAL',
   DEPOSIT = 'DEPOSIT',
+  // ─── Identity / Auth ──────────────────────────────────────────────────────
   LOGIN = 'LOGIN',
+  LOGOUT = 'LOGOUT',
+  REGISTER = 'REGISTER',
+  PASSWORD_CHANGED = 'PASSWORD_CHANGED',
+  PASSWORD_RESET_REQUESTED = 'PASSWORD_RESET_REQUESTED',
+  ACCOUNT_LOCKED = 'ACCOUNT_LOCKED',
+  ACCOUNT_ACTIVATED = 'ACCOUNT_ACTIVATED',
+  ACCOUNT_SUSPENDED = 'ACCOUNT_SUSPENDED',
+  ACCOUNT_DEACTIVATED = 'ACCOUNT_DEACTIVATED',
+  TWO_FA_ENABLED = 'TWO_FA_ENABLED',
+  TWO_FA_DISABLED = 'TWO_FA_DISABLED',
+  TOKEN_REFRESHED = 'TOKEN_REFRESHED',
+  SESSION_REVOKED = 'SESSION_REVOKED',
+  // ─── Security ─────────────────────────────────────────────────────────────
   SUSPICIOUS_ACTIVITY = 'SUSPICIOUS_ACTIVITY',
-  // Referral system events
+  // ─── Referral ─────────────────────────────────────────────────────────────
   REFERRAL_CONFIG_UPDATED = 'REFERRAL_CONFIG_UPDATED',
   REFERRAL_REWARD_ADJUSTED = 'REFERRAL_REWARD_ADJUSTED',
   REFERRAL_BULK_ADJUSTED = 'REFERRAL_BULK_ADJUSTED',

@@ -4,7 +4,69 @@
  * Eliminates circular dependencies through pub/sub pattern
  */
 
-// User Domain Events
+// ─── Identity Domain Events ────────────────────────────────────────────────────
+
+export class UserRegisteredEvent {
+  constructor(
+    public authId: string,
+    public userId: string,
+    public email: string,
+    public correlationId?: string,
+  ) {}
+}
+
+export class UserLoggedInEvent {
+  constructor(
+    public authId: string,
+    public userId: string,
+    public email: string,
+    public ipAddress?: string,
+  ) {}
+}
+
+export class UserLoggedOutEvent {
+  constructor(
+    public authId: string,
+    public userId: string | undefined,
+    public email: string,
+  ) {}
+}
+
+export class PasswordChangedEvent {
+  constructor(
+    public authId: string,
+    public email: string,
+  ) {}
+}
+
+export class PasswordResetRequestedEvent {
+  constructor(
+    public authId: string,
+    public email: string,
+    public resetToken: string,
+  ) {}
+}
+
+export class AccountLockedEvent {
+  constructor(
+    public authId: string,
+    public email: string,
+    public lockedUntil: Date,
+  ) {}
+}
+
+export class UserStatusChangedEvent {
+  constructor(
+    public userId: string,
+    public email: string,
+    public previousStatus: string,
+    public newStatus: string,
+    public reason?: string,
+  ) {}
+}
+
+// ─── Legacy User Domain Events (keep for backward-compat) ─────────────────────
+
 export class UserCreatedEvent {
   constructor(
     public userId: string,

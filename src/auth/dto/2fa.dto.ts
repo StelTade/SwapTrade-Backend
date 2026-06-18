@@ -1,11 +1,8 @@
 import { IsString, IsOptional, IsPhoneNumber } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class TwoFADto {
-  @ApiProperty({
-    example: 'JBSWY3DPEHPK3PXP',
-    description: 'TOTP secret or SMS code',
-  })
+  @ApiProperty({ example: '123456', description: 'TOTP code or SMS OTP' })
   @IsString()
   code: string;
 }
@@ -15,12 +12,18 @@ export class Enable2FADto {
   @IsString()
   method: 'totp' | 'sms';
 
-  @ApiProperty({
-    example: '+1234567890',
-    description: 'Phone number for SMS 2FA',
-    required: false,
-  })
+  @ApiPropertyOptional({ example: '+1234567890', description: 'Phone number — required for SMS 2FA' })
   @IsOptional()
   @IsPhoneNumber()
   phoneNumber?: string;
+}
+
+export class Verify2FASetupDto {
+  @ApiProperty({ example: 'JBSWY3DPEHPK3PXP', description: 'TOTP base32 secret from setup step' })
+  @IsString()
+  secret: string;
+
+  @ApiProperty({ example: '123456', description: 'TOTP token to verify the setup' })
+  @IsString()
+  token: string;
 }

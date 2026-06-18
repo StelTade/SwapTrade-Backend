@@ -1,30 +1,178 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
   Optional,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+
+import { User } from './entities/user.entity';
 import { UserBalance } from '../database/entities/user-balance.entity';
 import { UserRole } from '../common/enums/user-role.enum';
+import { AccountStatus } from '../auth/entities/auth.entity';
+import { Auth } from '../auth/entities/auth.entity';
 import {
   RoleSeparationViolation,
   assertNoGovernanceKycRoleConflict,
   normalizeRoleValues,
 } from '../common/security/role-separation';
-import { User } from './entities/user.entity';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateUserStatusDto } from './dto/user-status.dto';
 import { PortfolioStatsDto } from './dto/portfolio-stats.dto';
+
+// ─── Event Constants ──────────────────────────────────────────────────────────
+export const USER_EVENTS = {
+  PROFILE_CREATED: 'identity.user.profile.created',
+  PROFILE_UPDATED: 'identity.user.profile.updated',
+  STATUS_CHANGED: 'identity.user.status.changed',
+};
 
 @Injectable()
 export class UserService {
+  private readonly logger = new Logger(UserService.name);
+
   constructor(
     @InjectRepository(UserBalance)
     private readonly userBalanceRepository: Repository<UserBalance>,
+
     @Optional()
     @InjectRepository(User)
     private readonly userRepository?: Repository<User>,
+
+    @Optional()
+    @InjectRepository(Auth)
+    private readonly authRepository?: Repository<Auth>,
+
+    @Optional()
+    private readonly eventEmitter?: EventEmitter2,
   ) {}
+
+  // ─── Profile CRUD ────────────────────────────────────────────────────────────
+
+  async findAll(): Promise<User[]> {
+    this.ensureUserRepo();
+    return this.userRepository!.find({ order: { createdAt: 'DESC' } });
+  }
+
+  async findOne(id: string): Promise<User> {
+    this.ensureUserRepo();
+    const user = await this.userRepository!.findOne({ where: { id } });
+    if (!user) {
+      throw new NotFoundException(`User ${id} not found`);
+    }
+    return user;
+  }
+
+  async findByEmail(email: string): Promise<User | null> {
+    this.ensureUserRepo();
+    return this.userRepository!.findOne({ where: { email } });
+  }
+
+  async create(dto: CreateUserDto): Promise<User> {
+    this.ensureUserRepo();
+
+    const existing = await this.userRepository!.findOne({ where: { email: dto.email } });
+    if (existing) {
+      throw new ConflictException(`User with email ${dto.email} already exists`);
+    }
+
+    const roles = this.validateRoleAssignment(dto.roles ?? [dto.role ?? UserRole.USER]);
+    const user = this.userRepository!.create({
+      ...dto,
+      role: roles[0],
+      roles,
+    });
+
+    const saved = await this.userRepository!.save(user);
+
+    this.eventEmitter?.emit(USER_EVENTS.PROFILE_CREATED, {
+      userId: saved.id,
+      email: saved.email,
+    });
+
+    return saved;
+  }
+
+  async update(id: string, dto: UpdateUserDto): Promise<User> {
+    this.ensureUserRepo();
+
+    const user = await this.findOne(id);
+
+    // Role update requires separation check
+    if (dto.roles || dto.role) {
+      const rolesToValidate = dto.roles ?? (dto.role ? [dto.role] : user.roles);
+      const validatedRoles = this.validateRoleAssignment(rolesToValidate);
+      dto.roles = validatedRoles;
+      dto.role = validatedRoles[0];
+    }
+
+    Object.assign(user, dto);
+    const saved = await this.userRepository!.save(user);
+
+    this.eventEmitter?.emit(USER_EVENTS.PROFILE_UPDATED, {
+      userId: saved.id,
+      changes: dto,
+    });
+
+    return saved;
+  }
+
+  // ─── Status Management ───────────────────────────────────────────────────────
+
+  async updateStatus(id: string, dto: UpdateUserStatusDto): Promise<User> {
+    this.ensureUserRepo();
+
+    const user = await this.findOne(id);
+    const previousStatus = user.status;
+
+    if (previousStatus === dto.status) {
+      throw new BadRequestException(`User is already ${dto.status}`);
+    }
+
+    user.status = dto.status;
+    const saved = await this.userRepository!.save(user);
+
+    // Sync status with auth credential if available
+    if (this.authRepository && user.authId) {
+      await this.authRepository.update(
+        { id: user.authId },
+        { status: dto.status },
+      );
+    }
+
+    this.eventEmitter?.emit(USER_EVENTS.STATUS_CHANGED, {
+      userId: user.id,
+      email: user.email,
+      previousStatus,
+      newStatus: dto.status,
+      reason: dto.reason,
+    });
+
+    this.logger.log(
+      `User ${user.email} status changed: ${previousStatus} → ${dto.status}`,
+    );
+
+    return saved;
+  }
+
+  async activate(id: string): Promise<User> {
+    return this.updateStatus(id, { status: AccountStatus.ACTIVE });
+  }
+
+  async suspend(id: string, reason?: string): Promise<User> {
+    return this.updateStatus(id, { status: AccountStatus.SUSPENDED, reason });
+  }
+
+  async deactivate(id: string, reason?: string): Promise<User> {
+    return this.updateStatus(id, { status: AccountStatus.INACTIVE, reason });
+  }
+
+  // ─── Role Management ────────────────────────────────────────────────────────
 
   validateRoleAssignment(roles: UserRole | UserRole[]): UserRole[] {
     const normalizedRoles = normalizeRoleValues(roles) as UserRole[];
@@ -45,31 +193,26 @@ export class UserService {
     return normalizedRoles;
   }
 
-  async assignRoles(
-    userId: number,
-    roles: UserRole | UserRole[],
-  ): Promise<User> {
-    if (!this.userRepository) {
-      throw new BadRequestException('User repository is not configured.');
-    }
+  async assignRoles(userId: string, roles: UserRole | UserRole[]): Promise<User> {
+    this.ensureUserRepo();
 
     const normalizedRoles = this.validateRoleAssignment(roles);
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-
-    if (!user) {
-      throw new NotFoundException(`User ${userId} not found`);
-    }
+    const user = await this.findOne(userId);
 
     user.roles = normalizedRoles;
     user.role = normalizedRoles[0];
 
-    return this.userRepository.save(user);
+    return this.userRepository!.save(user);
   }
 
-  async getPortfolioStats(userId: number): Promise<PortfolioStatsDto> {
+  // ─── Portfolio Stats ─────────────────────────────────────────────────────────
+
+  async getPortfolioStats(userId: string | number): Promise<PortfolioStatsDto> {
+    const numericId = typeof userId === 'string' ? parseInt(userId, 10) : userId;
+
     const userBalances = await this.userBalanceRepository.find({
-      where: { userId },
-      relations: ['asset'], // Eager load virtual asset
+      where: { userId: numericId },
+      relations: ['asset'],
     });
 
     if (!userBalances || userBalances.length === 0) {
@@ -89,21 +232,15 @@ export class UserService {
       0,
     );
 
-    const lastTradeDate = userBalances.reduce(
-      (latest: Date | null, balance) => {
-        if (
-          !latest ||
-          (balance.lastTradeDate && balance.lastTradeDate > latest)
-        ) {
-          return balance.lastTradeDate;
-        }
-        return latest;
-      },
-      null as Date | null,
-    );
+    const lastTradeDate = userBalances.reduce((latest: Date | null, balance) => {
+      if (!latest || (balance.lastTradeDate && balance.lastTradeDate > latest)) {
+        return balance.lastTradeDate;
+      }
+      return latest;
+    }, null as Date | null);
 
-    const portfolioStats: PortfolioStatsDto = {
-      userId,
+    return {
+      userId: numericId,
       totalTrades,
       cumulativePnL,
       totalTradeVolume,
@@ -115,8 +252,6 @@ export class UserService {
         pnl: Number(balance.cumulativePnL),
       })),
     };
-
-    return portfolioStats;
   }
 
   async updatePortfolioAfterTrade(
@@ -127,7 +262,7 @@ export class UserService {
   ): Promise<void> {
     let userBalance = await this.userBalanceRepository.findOne({
       where: { userId, assetId },
-      relations: ['asset'], // Eager load virtual asset
+      relations: ['asset'],
     });
 
     if (!userBalance) {
@@ -150,24 +285,17 @@ export class UserService {
     await this.userBalanceRepository.save(userBalance);
   }
 
-  async getUserBalance(
-    userId: number,
-    assetId: number,
-  ): Promise<UserBalance | null> {
+  async getUserBalance(userId: number, assetId: number): Promise<UserBalance | null> {
     return this.userBalanceRepository.findOne({
       where: { userId, assetId },
-      relations: ['asset'], // Eager load virtual asset
+      relations: ['asset'],
     });
   }
 
-  async updateBalance(
-    userId: number,
-    assetId: number,
-    amount: number,
-  ): Promise<void> {
+  async updateBalance(userId: number, assetId: number, amount: number): Promise<void> {
     let userBalance = await this.userBalanceRepository.findOne({
       where: { userId, assetId },
-      relations: ['asset'], // Eager load virtual asset
+      relations: ['asset'],
     });
 
     if (!userBalance) {
@@ -185,5 +313,13 @@ export class UserService {
 
     userBalance.balance = Number(userBalance.balance) + amount;
     await this.userBalanceRepository.save(userBalance);
+  }
+
+  // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+  private ensureUserRepo() {
+    if (!this.userRepository) {
+      throw new BadRequestException('User repository is not configured.');
+    }
   }
 }
