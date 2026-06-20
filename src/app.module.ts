@@ -16,6 +16,8 @@ import { AppService } from './app.service';
 // Phase 1 — Infrastructure Domain
 import { InfrastructureModule } from './infrastructure/infrastructure.module';
 
+import { AdvancedAnalyticsModule } from './advanced-analytics/advanced-analytics.module';
+
 // Phase 2 — Identity Domain
 import { IdentityModule } from './identity/identity.module';
 
@@ -48,6 +50,13 @@ import { TokenHolding } from './governance/entities/token-holding.entity';
 import { UserBalance } from './database/entities/user-balance.entity';
 import { VirtualAsset } from './database/entities/virtual-asset.entity';
 import { Trade } from './database/entities/trade.entity';
+
+// Exchange Domain Entities (Phase 3 — DeFi Integration)
+import { LiquidityPool } from './exchange/entities/liquidity-pool.entity';
+import { PoolPosition } from './exchange/entities/pool-position.entity';
+import { PoolSwap } from './exchange/entities/pool-swap.entity';
+import { EmergencyWithdrawal } from './exchange/entities/emergency-withdrawal.entity';
+import { ExchangeModule } from './exchange/exchange.module';
 
 @Module({
   imports: [
@@ -131,6 +140,9 @@ import { Trade } from './database/entities/trade.entity';
     InfrastructureModule,
     IdentityModule,
     GovernanceModule,
+
+    // ── Phase 3: Exchange Domain (DeFi Integration) ──
+    ExchangeModule,
 
     // ── Error Handling ──
     ErrorModule,
