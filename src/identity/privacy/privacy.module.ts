@@ -1,15 +1,11 @@
 import { Module } from '@nestjs/common';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { PrivacyModule as OriginalPrivacyModule } from '../../privacy/privacy.module';
+import { IdentityPrivacyService } from './identity-privacy.service';
 
-/**
- * Identity Privacy Facade Module
- *
- * Wraps the original PrivacyModule from src/privacy/.
- * Provides: PrivacyEncryptionService, PrivacyZKPService, PrivacyProfileService,
- *           EncryptedOrderService, PrivacyComplianceService, PrivacyController
- */
 @Module({
-  imports: [OriginalPrivacyModule],
-  exports: [OriginalPrivacyModule],
+  imports: [OriginalPrivacyModule, EventEmitterModule.forRoot()],
+  providers: [IdentityPrivacyService],
+  exports: [OriginalPrivacyModule, IdentityPrivacyService],
 })
 export class IdentityPrivacyModule {}
