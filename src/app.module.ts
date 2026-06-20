@@ -25,8 +25,8 @@ import { ErrorModule } from './error/error.module';
 // ── Identity Domain Entities (Phase 2) ──
 import { User } from './user/entities/user.entity';
 import { Auth } from './auth/entities/auth.entity';
-import { Session } from './auth/entities/session.entity';import { KycRecord } from './kyc/entities/kyc-records.entity';
-import { DidDocument } from './did/entities/did-document.entity';
+import { Session } from './auth/entities/session.entity';
+import { KycRecord } from './kyc/entities/kyc-records.ent { DidDocument } from './did/entities/did-document.entity';
 import { VerifiableCredential } from './did/entities/verifiable-credential.entity';
 import { PrivacyProfile } from './privacy/entities/privacy-profile.entity';
 import { EncryptedOrder } from './privacy/entities/encrypted-order.entity';
@@ -40,6 +40,10 @@ import { RegulatoryReportEntity } from './compliance/entities/regulatory-report.
 import { UserBalance } from './database/entities/user-balance.entity';
 import { VirtualAsset } from './database/entities/virtual-asset.entity';
 import { Trade } from './database/entities/trade.entity';
+
+// Trading Features — Advanced der Types (issue #382)
+import { Order } from './orders/entities/order.entity';
+import { OrdersModule } from './orders/orders.module';
 
 @Module({
   imports: [
@@ -71,7 +75,7 @@ import { Trade } from './database/entities/trade.entity';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         type: configService.get<string>('DB_TYPE', 'postgres') as
-          | 'postgres'
+          | ''
           | 'sqlite',
         host: configService.get<string>('DB_HOST', 'localhost'),
         port: configService.get<number>('DB_PORT', 5432),
@@ -102,6 +106,8 @@ import { Trade } from './database/entities/trade.entity';
           UserBalance,
           VirtualAsset,
           Trade,
+          // Trading Features — Advanced Order Types (issue #382)
+          Order,
         ],
         synchronize: configService.get<boolean>('DB_SYNCHRONIZE', true),
         logging: configService.get<boolean>('DB_LOGGING', false),
@@ -117,6 +123,9 @@ import { Trade } from './database/entities/trade.entity';
 
     // ── Phase 2: Identity Domain ──
     IdentityModule,
+
+    // ── Trading Features — Advanced Order Types (issue #382) ──
+    OrdersModule,
 
     // ── Error Handling ──
     ErrorModule,

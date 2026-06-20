@@ -1,6 +1,1 @@
-export enum OrderStatus {
-  PENDING = 'PENDING',
-  PARTIAL = 'PARTIAL',
-  FILLED = 'FILLED',
-  CANCELLED = 'CANCELLED',
-}
+export { OrderStatus } from './order-type.enum';
