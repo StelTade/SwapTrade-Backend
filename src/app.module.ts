@@ -25,7 +25,8 @@ import { ErrorModule } from './error/error.module';
 // ── Identity Domain Entities (Phase 2) ──
 import { User } from './user/entities/user.entity';
 import { Auth } from './auth/entities/auth.entity';
-import { Session } from './auth/entities/session.entity';import { KycRecord } from './kyc/entities/kyc-records.entity';
+import { Session } from './auth/entities/session.entity';
+import { KycRecord } from './kyc/entities/kyc-records.entity';
 import { DidDocument } from './did/entities/did-document.entity';
 import { VerifiableCredential } from './did/entities/verifiable-credential.entity';
 import { PrivacyProfile } from './privacy/entities/privacy-profile.entity';
@@ -40,6 +41,13 @@ import { RegulatoryReportEntity } from './compliance/entities/regulatory-report.
 import { UserBalance } from './database/entities/user-balance.entity';
 import { VirtualAsset } from './database/entities/virtual-asset.entity';
 import { Trade } from './database/entities/trade.entity';
+
+// Exchange Domain Entities (Phase 3 — DeFi Integration)
+import { LiquidityPool } from './exchange/entities/liquidity-pool.entity';
+import { PoolPosition } from './exchange/entities/pool-position.entity';
+import { PoolSwap } from './exchange/entities/pool-swap.entity';
+import { EmergencyWithdrawal } from './exchange/entities/emergency-withdrawal.entity';
+import { ExchangeModule } from './exchange/exchange.module';
 
 @Module({
   imports: [
@@ -102,6 +110,11 @@ import { Trade } from './database/entities/trade.entity';
           UserBalance,
           VirtualAsset,
           Trade,
+          // Exchange — Liquidity Pools
+          LiquidityPool,
+          PoolPosition,
+          PoolSwap,
+          EmergencyWithdrawal,
         ],
         synchronize: configService.get<boolean>('DB_SYNCHRONIZE', true),
         logging: configService.get<boolean>('DB_LOGGING', false),
@@ -117,6 +130,9 @@ import { Trade } from './database/entities/trade.entity';
 
     // ── Phase 2: Identity Domain ──
     IdentityModule,
+
+    // ── Phase 3: Exchange Domain (DeFi Integration) ──
+    ExchangeModule,
 
     // ── Error Handling ──
     ErrorModule,
