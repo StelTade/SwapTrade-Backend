@@ -16,6 +16,8 @@ import { AppService } from './app.service';
 // Phase 1 — Infrastructure Domain
 import { InfrastructureModule } from './infrastructure/infrastructure.module';
 
+import { AdvancedAnalyticsModule } from './advanced-analytics/advanced-analytics.module';
+
 // Phase 2 — Identity Domain
 import { IdentityModule } from './identity/identity.module';
 
@@ -127,6 +129,9 @@ import { ExchangeModule } from './exchange/exchange.module';
 
     // ── Phase 1: Infrastructure Domain ──
     InfrastructureModule,
+
+    // ── Phase 2.5: Advanced Analytics ──
+    AdvancedAnalyticsModule,
 
     // ── Phase 2: Identity Domain ──
     IdentityModule,
