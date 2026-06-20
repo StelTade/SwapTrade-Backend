@@ -37,6 +37,11 @@ export const PORTFOLIO_WRITE = 'portfolio.write';
 // Support permissions
 export const SUPPORT_TICKETS_MANAGE = 'support.tickets.manage';
 
+// Liquidity pool permissions
+export const POOLS_READ = 'pools.read';
+export const POOLS_WRITE = 'pools.write';
+export const LIQUIDITY_MANAGE = 'liquidity.manage';
+
 /**
  * All available permissions in the system
  */
@@ -56,4 +61,7 @@ export const ALL_PERMISSIONS = [
   PORTFOLIO_READ,
   PORTFOLIO_WRITE,
   SUPPORT_TICKETS_MANAGE,
+  POOLS_READ,
+  POOLS_WRITE,
+  LIQUIDITY_MANAGE,
 ];
