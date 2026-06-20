@@ -38,6 +38,13 @@ import { ComplianceRuleEntity } from './compliance/entities/compliance-rule.enti
 import { ComplianceAlertEntity } from './compliance/entities/compliance-alert.entity';
 import { AuditTrailEntity } from './compliance/entities/audit-trail.entity';
 import { RegulatoryReportEntity } from './compliance/entities/regulatory-report.entity';
+import { GovernanceProposal } from './governance/entities/governance-proposal.entity';
+import { GovernanceVote } from './governance/entities/governance-vote.entity';
+import { GovernanceDiscussion } from './governance/entities/governance-discussion.entity';
+import { VoteDelegation } from './governance/entities/vote-delegation.entity';
+import { GovernanceExecution } from './governance/entities/governance-execution.entity';
+import { GovernanceConfig } from './governance/entities/governance-config.entity';
+import { TokenHolding } from './governance/entities/token-holding.entity';
 
 // Supporting entities (required by Identity & Infrastructure modules)
 import { UserBalance } from './database/entities/user-balance.entity';
@@ -112,11 +119,13 @@ import { ExchangeModule } from './exchange/exchange.module';
           UserBalance,
           VirtualAsset,
           Trade,
-          // Exchange — Liquidity Pools
-          LiquidityPool,
-          PoolPosition,
-          PoolSwap,
-          EmergencyWithdrawal,
+          GovernanceProposal,
+          GovernanceVote,
+          GovernanceDiscussion,
+          VoteDelegation,
+          GovernanceExecution,
+          GovernanceConfig,
+          TokenHolding,
         ],
         synchronize: configService.get<boolean>('DB_SYNCHRONIZE', true),
         logging: configService.get<boolean>('DB_LOGGING', false),
@@ -127,14 +136,10 @@ import { ExchangeModule } from './exchange/exchange.module';
       }),
     }),
 
-    // ── Phase 1: Infrastructure Domain ──
+    // ── Domain Modules ──
     InfrastructureModule,
-
-    // ── Phase 2.5: Advanced Analytics ──
-    AdvancedAnalyticsModule,
-
-    // ── Phase 2: Identity Domain ──
     IdentityModule,
+    GovernanceModule,
 
     // ── Phase 3: Exchange Domain (DeFi Integration) ──
     ExchangeModule,
