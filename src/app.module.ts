@@ -21,6 +21,9 @@ import { AdvancedAnalyticsModule } from './advanced-analytics/advanced-analytics
 // Phase 2 — Identity Domain
 import { IdentityModule } from './identity/identity.module';
 
+// Governance Domain
+import { GovernanceModule } from './governance/governance.module';
+
 // Error handling (infrastructure-level, used by main.ts)
 import { ErrorModule } from './error/error.module';
 
@@ -54,6 +57,14 @@ import { Trade } from './database/entities/trade.entity';
 // Trading Features — Advanced der Types (issue #382)
 import { Order } from './orders/entities/order.entity';
 import { OrdersModule } from './orders/orders.module';
+
+// Institutional Portal
+import { InstitutionalModule } from './institutional/institutional.module';
+import { InstitutionalClient } from './institutional/entities/institutional-client.entity';
+import { SlaPolicy } from './institutional/entities/sla-policy.entity';
+import { SlaViolation } from './institutional/entities/sla-violation.entity';
+import { SupportTicket } from './institutional/entities/support-ticket.entity';
+import { ReconciliationReport } from './institutional/entities/reconciliation-report.entity';
 // Exchange Domain Entities (Phase 3 — DeFi Integration)
 import { LiquidityPool } from './exchange/entities/liquidity-pool.entity';
 import { PoolPosition } from './exchange/entities/pool-position.entity';
@@ -124,6 +135,12 @@ import { ExchangeModule } from './exchange/exchange.module';
           Trade,
           // Trading Features — Advanced Order Types (issue #382)
           Order,
+          // Institutional Portal
+          InstitutionalClient,
+          SlaPolicy,
+          SlaViolation,
+          SupportTicket,
+          ReconciliationReport,
           GovernanceProposal,
           GovernanceVote,
           GovernanceDiscussion,
@@ -151,6 +168,9 @@ import { ExchangeModule } from './exchange/exchange.module';
 
     // ── Trading Features — Advanced Order Types (issue #382) ──
     OrdersModule,
+
+    // ── Institutional Portal ──
+    InstitutionalModule,
 
     // ── Error Handling ──
     ErrorModule,

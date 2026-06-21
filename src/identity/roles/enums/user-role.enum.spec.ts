@@ -14,6 +14,11 @@ describe('UserRole Enum', () => {
       expect(UserRole.KYC_GOVERNANCE).toBeDefined();
     });
 
+    it('should have institutional client role defined', () => {
+      expect(UserRole.INSTITUTIONAL_CLIENT).toBeDefined();
+      expect(UserRole.INSTITUTIONAL_CLIENT).toBe('INSTITUTIONAL_CLIENT');
+    });
+
     it('should have correct string values for roles', () => {
       expect(UserRole.ADMIN).toBe('ADMIN');
       expect(UserRole.USER).toBe('USER');
@@ -48,8 +53,8 @@ describe('UserRole Enum', () => {
   });
 
   describe('Enum integrity', () => {
-    it('should have exactly 10 roles', () => {
-      expect(Object.keys(UserRole).length).toBe(10);
+    it('should have exactly 11 roles', () => {
+      expect(Object.keys(UserRole).length).toBe(11);
     });
 
     it('should have matching descriptions count', () => {

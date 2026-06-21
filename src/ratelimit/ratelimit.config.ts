@@ -36,6 +36,21 @@ export const RATE_LIMIT_CONFIG = {
     windowMs: 60 * 1000, // 1 minute
     name: 'balance',
   },
+  INSTITUTIONAL_BULK_TRADE: {
+    limit: 1000,
+    windowMs: 1 * 1000, // 1 second — supports 1000+ trades/sec
+    name: 'institutional_bulk_trade',
+  },
+  INSTITUTIONAL_API: {
+    limit: 5000,
+    windowMs: 1 * 1000, // 1 second — high-throughput institutional API
+    name: 'institutional_api',
+  },
+  INSTITUTIONAL_REPORTING: {
+    limit: 100,
+    windowMs: 60 * 1000, // 1 minute
+    name: 'institutional_reporting',
+  },
 };
 
 // Endpoint path mappings for rate limiting
@@ -48,6 +63,10 @@ export const ENDPOINT_RATE_LIMIT_MAP = {
   '/bid': RATE_LIMIT_CONFIG.BIDDING,
   '/balance': RATE_LIMIT_CONFIG.BALANCE,
   '/wallet': RATE_LIMIT_CONFIG.BALANCE,
+  '/institutional/bulk-trade': RATE_LIMIT_CONFIG.INSTITUTIONAL_BULK_TRADE,
+  '/institutional/trades/bulk': RATE_LIMIT_CONFIG.INSTITUTIONAL_BULK_TRADE,
+  '/institutional/reports': RATE_LIMIT_CONFIG.INSTITUTIONAL_REPORTING,
+  '/institutional/reconciliation': RATE_LIMIT_CONFIG.INSTITUTIONAL_REPORTING,
   // Default to global for all other endpoints
   default: RATE_LIMIT_CONFIG.GLOBAL,
 };
@@ -57,6 +76,7 @@ export const USER_ROLE_MULTIPLIERS = {
   ADMIN: 5,
   STAFF: 3,
   PREMIUM: 2,
+  INSTITUTIONAL_CLIENT: 10,
   USER: 1,
 };
 
