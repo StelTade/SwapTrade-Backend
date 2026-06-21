@@ -17,6 +17,7 @@ import { AppService } from './app.service';
 import { InfrastructureModule } from './infrastructure/infrastructure.module';
 
 import { AdvancedAnalyticsModule } from './advanced-analytics/advanced-analytics.module';
+import { AiTradingAssistantModule } from './ai-trading-assistant/ai-trading-assistant.module';
 
 // Phase 2 — Identity Domain
 import { IdentityModule } from './identity/identity.module';
@@ -90,9 +91,7 @@ import { ExchangeModule } from './exchange/exchange.module';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        type: configService.get<string>('DB_TYPE', 'postgres') as
-          | ''
-          | 'sqlite',
+        type: configService.get<string>('DB_TYPE', 'postgres') as '' | 'sqlite',
         host: configService.get<string>('DB_HOST', 'localhost'),
         port: configService.get<number>('DB_PORT', 5432),
         username: configService.get<string>('DB_USERNAME', 'postgres'),
@@ -151,6 +150,9 @@ import { ExchangeModule } from './exchange/exchange.module';
 
     // ── Trading Features — Advanced Order Types (issue #382) ──
     OrdersModule,
+
+    // ── AI Features — Trading Assistant (issue #395) ──
+    AiTradingAssistantModule,
 
     // ── Error Handling ──
     ErrorModule,
