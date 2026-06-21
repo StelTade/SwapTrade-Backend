@@ -60,6 +60,7 @@ import { PoolPosition } from './exchange/entities/pool-position.entity';
 import { PoolSwap } from './exchange/entities/pool-swap.entity';
 import { EmergencyWithdrawal } from './exchange/entities/emergency-withdrawal.entity';
 import { ExchangeModule } from './exchange/exchange.module';
+import { MobileModule } from './mobile/mobile.module';
 
 @Module({
   imports: [
@@ -151,6 +152,9 @@ import { ExchangeModule } from './exchange/exchange.module';
 
     // ── Trading Features — Advanced Order Types (issue #382) ──
     OrdersModule,
+
+    // ── Mobile Integration ──
+    MobileModule,
 
     // ── Error Handling ──
     ErrorModule,
