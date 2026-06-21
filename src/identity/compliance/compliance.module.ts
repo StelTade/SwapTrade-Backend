@@ -1,14 +1,11 @@
 import { Module } from '@nestjs/common';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ComplianceModule as OriginalComplianceModule } from '../../compliance/compliance.module';
+import { IdentityComplianceService } from './identity-compliance.service';
 
-/**
- * Identity Compliance Facade Module
- *
- * Wraps the original ComplianceModule from src/compliance/.
- * Provides: ComplianceMonitoringService, RegulatoryReportingService, ComplianceController
- */
 @Module({
-  imports: [OriginalComplianceModule],
-  exports: [OriginalComplianceModule],
+  imports: [OriginalComplianceModule, EventEmitterModule.forRoot()],
+  providers: [IdentityComplianceService],
+  exports: [OriginalComplianceModule, IdentityComplianceService],
 })
 export class IdentityComplianceModule {}
