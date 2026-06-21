@@ -51,6 +51,9 @@ import { UserBalance } from './database/entities/user-balance.entity';
 import { VirtualAsset } from './database/entities/virtual-asset.entity';
 import { Trade } from './database/entities/trade.entity';
 
+// Trading Features — Advanced der Types (issue #382)
+import { Order } from './orders/entities/order.entity';
+import { OrdersModule } from './orders/orders.module';
 // Exchange Domain Entities (Phase 3 — DeFi Integration)
 import { LiquidityPool } from './exchange/entities/liquidity-pool.entity';
 import { PoolPosition } from './exchange/entities/pool-position.entity';
@@ -88,7 +91,7 @@ import { ExchangeModule } from './exchange/exchange.module';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         type: configService.get<string>('DB_TYPE', 'postgres') as
-          | 'postgres'
+          | ''
           | 'sqlite',
         host: configService.get<string>('DB_HOST', 'localhost'),
         port: configService.get<number>('DB_PORT', 5432),
@@ -119,6 +122,8 @@ import { ExchangeModule } from './exchange/exchange.module';
           UserBalance,
           VirtualAsset,
           Trade,
+          // Trading Features — Advanced Order Types (issue #382)
+          Order,
           GovernanceProposal,
           GovernanceVote,
           GovernanceDiscussion,
@@ -143,6 +148,9 @@ import { ExchangeModule } from './exchange/exchange.module';
 
     // ── Phase 3: Exchange Domain (DeFi Integration) ──
     ExchangeModule,
+
+    // ── Trading Features — Advanced Order Types (issue #382) ──
+    OrdersModule,
 
     // ── Error Handling ──
     ErrorModule,

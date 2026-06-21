@@ -27,6 +27,15 @@ export class UserBalance {
   @Column('decimal', { precision: 15, scale: 8, default: 0 })
   balance: number;
 
+  /**
+   * Amount of `balance` currently reserved against open SELL orders
+   * (limit, stop-loss, take-profit, trailing-stop). Only SELL-side
+   * orders reserve funds here — see ORDERS_BUY_LOCKING limitation
+   * note in orders.service.ts for why BUY orders don't.
+   */
+  @Column('decimal', { precision: 15, scale: 8, default: 0 })
+  lockedBalance: number;
+
   @Column({ default: 0 })
   totalTrades: number;
 
@@ -54,4 +63,8 @@ export class UserBalance {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  get availableBalance(): number {
+    return Number(this.balance) - Number(this.lockedBalance);
+  }
 }
