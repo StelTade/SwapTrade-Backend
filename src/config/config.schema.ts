@@ -116,6 +116,19 @@ export const configSchema = Joi.object({
   ENABLE_SHUTDOWN_HOOKS: Joi.boolean().default(true),
   SHUTDOWN_TIMEOUT: Joi.number().integer().min(1000).default(30000),
 
+  // OpenTelemetry / Distributed Tracing (issue #401)
+  OTEL_ENABLED: Joi.boolean().default(false),
+  OTEL_SERVICE_NAME: Joi.string().default('swaptrade-backend'),
+  OTEL_SERVICE_VERSION: Joi.string().optional(),
+  OTEL_EXPORTER_TYPE: Joi.string()
+    .valid('otlp', 'console')
+    .default('otlp'),
+  OTEL_EXPORTER_OTLP_ENDPOINT: Joi.string()
+    .uri()
+    .default('http://localhost:4318/v1/traces'),
+  OTEL_SAMPLING_RATE: Joi.number().min(0).max(1).default(1.0),
+  OTEL_EXPORT_INTERVAL: Joi.number().integer().min(1000).default(5000),
+
   // Exchange and Stellar
   EXCHANGE_RATE_URL: Joi.string()
     .uri()

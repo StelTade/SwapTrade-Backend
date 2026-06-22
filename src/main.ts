@@ -1,3 +1,7 @@
+// IMPORTANT: tracing must be the very first import so the OTel SDK patches
+// Node.js core modules (http, net) before NestJS loads them.
+import './tracing';
+
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';

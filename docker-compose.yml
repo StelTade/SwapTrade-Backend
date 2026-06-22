@@ -11,6 +11,32 @@ services:
       - redis-data:/data
     restart: unless-stopped
 
+  # ── Distributed Tracing — Jaeger all-in-one (issue #401) ─────────────────
+  # Exposes:
+  #   4317 — OTLP gRPC receiver
+  #   4318 — OTLP HTTP receiver  ← used by OTEL_EXPORTER_OTLP_ENDPOINT
+  #   16686 — Jaeger UI
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    container_name: app-jaeger
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      # Retain trace data for 30 days (issue #401 — 30-day retention requirement)
+      - SPAN_STORAGE_TYPE=badger
+      - BADGER_EPHEMERAL=false
+      - BADGER_DIRECTORY_VALUE=/badger/data
+      - BADGER_DIRECTORY_KEY=/badger/key
+      - BADGER_SPAN_STORE_TTL=720h   # 720 h = 30 days
+    ports:
+      - '4317:4317'   # OTLP gRPC
+      - '4318:4318'   # OTLP HTTP
+      - '16686:16686' # Jaeger UI
+    volumes:
+      - jaeger-data:/badger
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    restart: unless-stopped
+
   prometheus:
     image: prom/prometheus:v2.54.1
     container_name: app-prometheus
@@ -37,9 +63,11 @@ services:
       - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
     depends_on:
       - prometheus
+      - jaeger
     restart: unless-stopped
 
 volumes:
   redis-data:
   prometheus-data:
   grafana-data:
+  jaeger-data:

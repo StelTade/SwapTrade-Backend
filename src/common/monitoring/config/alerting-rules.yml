@@ -153,3 +153,91 @@ groups:
           summary: "Fee progression system inactive"
           description: "No fee discounts applied in the last 2 hours"
           runbook_url: "https://docs.swaptrade.com/runbooks/fee-progression"
+
+  # ── Distributed Tracing Alerts (issue #401) ──────────────────────────────
+  - name: swaptrade-tracing.rules
+    rules:
+      # Slow trace alert — fires when P95 request latency exceeds 2 s
+      - alert: SlowTraces
+        expr: >
+          histogram_quantile(0.95,
+            sum by (le, route, method) (
+              rate(http_request_duration_seconds_bucket[5m])
+            )
+          ) > 2
+        for: 3m
+        labels:
+          severity: warning
+          service: swaptrade-backend
+          team: engineering
+        annotations:
+          summary: "Slow traces detected"
+          description: >
+            95th-percentile request latency for {{ $labels.method }}
+            {{ $labels.route }} is {{ $value | humanizeDuration }},
+            exceeding the 2 s threshold.
+          runbook_url: "https://docs.swaptrade.com/runbooks/slow-traces"
+
+      # High trace error rate — fires when > 5 % of requests return 5xx
+      - alert: TraceErrorRateHigh
+        expr: >
+          sum by (route, method) (
+            rate(http_requests_total{status_code=~"5.."}[5m])
+          )
+          /
+          sum by (route, method) (
+            rate(http_requests_total[5m])
+          ) * 100 > 5
+        for: 2m
+        labels:
+          severity: critical
+          service: swaptrade-backend
+          team: engineering
+        annotations:
+          summary: "High trace error rate"
+          description: >
+            Error rate for {{ $labels.method }} {{ $labels.route }} is
+            {{ $value | humanize }}%, which exceeds the 5 % SLO threshold.
+          runbook_url: "https://docs.swaptrade.com/runbooks/trace-errors"
+
+      # Slow database queries — P95 DB query latency > 500 ms
+      - alert: SlowDatabaseQueries
+        expr: >
+          histogram_quantile(0.95,
+            sum by (le, operation, table) (
+              rate(database_query_duration_seconds_bucket[5m])
+            )
+          ) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          service: swaptrade-backend
+          team: engineering
+        annotations:
+          summary: "Slow database queries"
+          description: >
+            P95 database query latency for {{ $labels.operation }}
+            {{ $labels.table }} is {{ $value | humanizeDuration }},
+            exceeding 500 ms.
+          runbook_url: "https://docs.swaptrade.com/runbooks/slow-db-queries"
+
+      # Trace collection overhead — alert if monitoring interceptor adds > 10 ms
+      # (measured via custom histogram if instrumented separately)
+      - alert: TraceCollectionLatencyHigh
+        expr: >
+          histogram_quantile(0.99,
+            rate(http_request_duration_seconds_bucket[5m])
+          ) - histogram_quantile(0.99,
+            rate(http_request_duration_seconds_bucket[5m] offset 10m)
+          ) > 0.01
+        for: 10m
+        labels:
+          severity: info
+          service: swaptrade-backend
+          team: engineering
+        annotations:
+          summary: "Trace collection latency overhead detected"
+          description: >
+            The P99 request latency has increased by more than 10 ms compared
+            to 10 minutes ago, which may indicate tracing overhead.
+          runbook_url: "https://docs.swaptrade.com/runbooks/trace-overhead"
