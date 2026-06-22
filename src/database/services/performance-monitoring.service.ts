@@ -83,6 +83,17 @@ export class PerformanceMonitoringService implements OnModuleInit {
   private initializeDefaultAlertRules(): void {
     const defaultRules: AlertRule[] = [
       {
+        id: 'shard_unhealthy',
+        name: 'Database Shard Unhealthy',
+        metric: 'errorRate', // Using errorRate as a proxy for shard health
+        operator: '>',
+        threshold: 50,
+        duration: 30,
+        severity: 'critical',
+        enabled: true,
+        cooldown: 300,
+      },
+      {
         id: 'slow_query_response',
         name: 'Slow Query Response Time',
         metric: 'queryResponseTime',
@@ -459,27 +470,54 @@ export class PerformanceMonitoringService implements OnModuleInit {
   }
 
   /**
-   * Get shard health metrics
+   * Get detailed shard health metrics
    */
   async getShardHealth(): Promise<any> {
     try {
       const shardHealth = await this.shardingService.getShardHealth();
-      const healthyShards = Object.values(shardHealth).filter(
-        (h: any) => h.status === 'healthy',
+      const shardDetails = Object.entries(shardHealth).map(
+        ([shardId, health]: [string, any]) => {
+          const replicaCount = health.replicas
+            ? Object.keys(health.replicas).length
+            : 0;
+          const healthyReplicas = health.replicas
+            ? Object.values(health.replicas).filter(
+                (r: any) => r.status === 'healthy',
+              ).length
+            : 0;
+
+          return {
+            shardId,
+            status: health.status,
+            tradeCount: health.tradeCount,
+            balanceCount: health.balanceCount,
+            replicaCount,
+            healthyReplicas,
+            replicationFactor: replicaCount > 0 ? healthyReplicas / replicaCount : 1,
+            lastChecked: health.lastChecked,
+          };
+        },
+      );
+
+      const healthyShards = shardDetails.filter(
+        (s) => s.status === 'healthy',
       ).length;
-      const totalShards = Object.keys(shardHealth).length;
+      const totalShards = shardDetails.length;
 
       return {
         healthyShards,
         totalShards,
         shardHealthRatio:
           totalShards > 0 ? (healthyShards / totalShards) * 100 : 0,
+        shards: shardDetails,
       };
     } catch (error) {
+      this.logger.error('Failed to get shard health metrics:', error);
       return {
         healthyShards: 0,
         totalShards: 0,
         shardHealthRatio: 0,
+        shards: [],
       };
     }
   }
