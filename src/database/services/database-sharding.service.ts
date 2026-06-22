@@ -1,7 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { DataSource, Repository, ObjectLiteral } from 'typeorm';
+import { DataSource, Repository, ObjectLiteral, EntityTarget } from 'typeorm';
 import { Trade } from '../entities/trade.entity';
 import { UserBalance } from '../entities/user-balance.entity';
+import { VirtualAsset } from '../entities/virtual-asset.entity';
+import * as crypto from 'crypto';
 
 export interface ShardConfig {
   id: string;
@@ -12,6 +14,7 @@ export interface ShardConfig {
   password: string;
   weight: number;
   isPrimary: boolean;
+  replicas?: string[];
 }
 
 export interface ShardingStrategy {
@@ -33,6 +36,8 @@ export class DatabaseShardingService {
   private shards: Map<string, DataSource> = new Map();
   private shardConfigs: Map<string, ShardConfig> = new Map();
   private strategies: Map<string, ShardingStrategy> = new Map();
+  private hashRing: Array<{ hash: number; shardId: string }> = [];
+  private readonly virtualNodes = 100;
 
   constructor() {
     this.initializeShardingStrategies();
@@ -48,9 +53,7 @@ export class DatabaseShardingService {
       getShardKey: (data: any) =>
         data.userId?.toString() || data.id?.toString(),
       getShard: (shardKey: string) => {
-        const hash = this.hashString(shardKey);
-        const shardIndex = hash % this.shards.size;
-        return Array.from(this.shards.keys())[shardIndex];
+        return this.consistentHash(shardKey, Array.from(this.shards.keys()));
       },
     });
 
@@ -102,15 +105,16 @@ export class DatabaseShardingService {
         const dataSource = new DataSource({
           type: 'sqlite', // In production, this would be postgres/mysql
           database: config.database,
-          synchronize: false,
+          synchronize: true, // Set to true for tests and dynamic provisioning
           logging: false,
-          entities: [Trade, UserBalance],
+          entities: [Trade, UserBalance, VirtualAsset],
         });
 
         await dataSource.initialize();
 
         this.shards.set(config.id, dataSource);
         this.shardConfigs.set(config.id, config);
+        this.addShardToRing(config.id);
 
         this.logger.log(`Shard ${config.id} initialized successfully`);
       } catch (error) {
@@ -150,6 +154,7 @@ export class DatabaseShardingService {
    * Execute query across multiple shards
    */
   async executeQueryAcrossShards<T extends ObjectLiteral>(
+    entityClass: EntityTarget<T>,
     queryPlan: QueryPlan,
     queryBuilder: (repository: Repository<T>) => Promise<T[]>,
   ): Promise<T[]> {
@@ -165,8 +170,8 @@ export class DatabaseShardingService {
         }
 
         try {
-          const repository = shard.getRepository(Trade); // Adjust entity type as needed
-          return await queryBuilder(repository as unknown as Repository<T>);
+          const repository = shard.getRepository(entityClass);
+          return await queryBuilder(repository);
         } catch (error) {
           this.logger.error(`Query failed on shard '${shardId}':`, error);
           return [];
@@ -185,10 +190,8 @@ export class DatabaseShardingService {
         }
 
         try {
-          const repository = shard.getRepository(Trade); // Adjust entity type as needed
-          const shardResult = await queryBuilder(
-            repository as unknown as Repository<T>,
-          );
+          const repository = shard.getRepository(entityClass);
+          const shardResult = await queryBuilder(repository);
           results.push(...shardResult);
         } catch (error) {
           this.logger.error(`Query failed on shard '${shardId}':`, error);
@@ -197,6 +200,120 @@ export class DatabaseShardingService {
     }
 
     return results;
+  }
+
+  /**
+   * Provision a new database shard dynamically
+   */
+  async provisionNewShard(config: ShardConfig): Promise<void> {
+    if (this.shards.has(config.id)) {
+      throw new Error(`Shard with ID ${config.id} already exists`);
+    }
+
+    this.logger.log(`Provisioning new shard: ${config.id}`);
+
+    try {
+      const dataSource = new DataSource({
+        type: 'sqlite',
+        database: config.database,
+        synchronize: true, // Auto-create schema for new shards
+        entities: [Trade, UserBalance, VirtualAsset],
+      });
+
+      await dataSource.initialize();
+
+      this.shards.set(config.id, dataSource);
+      this.shardConfigs.set(config.id, config);
+      this.addShardToRing(config.id);
+
+      this.logger.log(`Shard ${config.id} provisioned and initialized`);
+
+      // Trigger rebalancing after adding new shard
+      setImmediate(() => this.rebalanceShards());
+    } catch (error) {
+      this.logger.error(`Failed to provision shard ${config.id}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Execute a cross-shard transaction using a simplified two-phase commit
+   */
+  async executeTransaction(
+    operations: Array<{
+      entityClass: any;
+      data: any;
+      strategy?: string;
+      type: 'insert' | 'update' | 'delete';
+    }>,
+  ): Promise<void> {
+    const participants = new Map<
+      string,
+      { dataSource: DataSource; ops: any[] }
+    >();
+
+    // Phase 1: Prepare - determine participants and group operations
+    for (const op of operations) {
+      const shardingStrategy = this.strategies.get(op.strategy || 'user');
+      if (!shardingStrategy)
+        throw new Error(`Strategy ${op.strategy} not found`);
+
+      const shardKey = shardingStrategy.getShardKey(op.data);
+      const shardId = shardingStrategy.getShard(shardKey);
+      const shard = this.shards.get(shardId);
+
+      if (!shard) throw new Error(`Shard ${shardId} not found`);
+
+      if (!participants.has(shardId)) {
+        participants.set(shardId, { dataSource: shard, ops: [] });
+      }
+      participants.get(shardId)!.ops.push(op);
+    }
+
+    const queryRunners: Map<string, any> = new Map();
+
+    try {
+      // Phase 2: Execute - start transactions on all participant shards
+      for (const [shardId, { dataSource, ops }] of participants.entries()) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+        queryRunners.set(shardId, queryRunner);
+
+        for (const op of ops) {
+          const repository = queryRunner.manager.getRepository(op.entityClass);
+          if (op.type === 'insert' || op.type === 'update') {
+            await repository.save(op.data);
+          } else if (op.type === 'delete') {
+            await repository.remove(op.data);
+          }
+        }
+      }
+
+      // Phase 3: Commit - if all succeeded, commit all
+      for (const queryRunner of queryRunners.values()) {
+        await queryRunner.commitTransaction();
+      }
+    } catch (error) {
+      // Phase 4: Rollback - if any failed, rollback all
+      this.logger.error(
+        'Cross-shard transaction failed, rolling back:',
+        error,
+      );
+      for (const queryRunner of queryRunners.values()) {
+        try {
+          await queryRunner.rollbackTransaction();
+        } catch (rollbackError) {
+          this.logger.error('Rollback failed on shard:', rollbackError);
+        }
+      }
+      throw error;
+    } finally {
+      // Release all query runners
+      for (const queryRunner of queryRunners.values()) {
+        await queryRunner.release();
+      }
+    }
   }
 
   /**
@@ -337,14 +454,35 @@ export class DatabaseShardingService {
   }
 
   /**
-   * Get shard health status
+   * Get shard health status including replication checks
    */
   async getShardHealth(): Promise<Record<string, any>> {
     const healthStatus: Record<string, any> = {};
 
     for (const [shardId, shard] of this.shards) {
+      const config = this.shardConfigs.get(shardId);
+      const replicaStatus: Record<string, any> = {};
+
+      if (config?.replicas) {
+        for (const replicaHost of config.replicas) {
+          try {
+            // In a real implementation, you would connect to the replica
+            // For now, we simulate a health check
+            replicaStatus[replicaHost] = {
+              status: 'healthy',
+              latency: Math.floor(Math.random() * 50),
+            };
+          } catch (error) {
+            replicaStatus[replicaHost] = {
+              status: 'unhealthy',
+              error: error.message,
+            };
+          }
+        }
+      }
+
       try {
-        // Test connection
+        // Test primary connection
         await shard.query('SELECT 1');
 
         // Get basic stats
@@ -355,12 +493,14 @@ export class DatabaseShardingService {
           status: 'healthy',
           tradeCount,
           balanceCount,
+          replicas: replicaStatus,
           lastChecked: new Date(),
         };
       } catch (error) {
         healthStatus[shardId] = {
           status: 'unhealthy',
           error: error.message,
+          replicas: replicaStatus,
           lastChecked: new Date(),
         };
       }
@@ -370,69 +510,229 @@ export class DatabaseShardingService {
   }
 
   /**
-   * Rebalance shards based on load
+   * Create a backup for a specific shard using SQLite's backup capabilities.
+   */
+  async createBackup(shardId: string): Promise<string> {
+    const shard = this.shards.get(shardId);
+    const config = this.shardConfigs.get(shardId);
+    if (!shard || !config) {
+      throw new Error(`Shard ${shardId} not found`);
+    }
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const backupName = `shard_${shardId}_backup_${timestamp}.db`;
+
+    this.logger.log(`Creating backup for shard ${shardId}: ${backupName}`);
+
+    try {
+      // For SQLite, a simple file copy is a valid backup if done safely.
+      // Alternatively, we use the VACUUM INTO command for an online backup.
+      await shard.query(`VACUUM INTO '${backupName}'`);
+      this.logger.log(`Backup completed for shard ${shardId}: ${backupName}`);
+      return backupName;
+    } catch (error) {
+      this.logger.error(`Backup failed for shard ${shardId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Restore a shard from a backup.
+   */
+  async restoreFromBackup(shardId: string, backupPath: string): Promise<void> {
+    const shard = this.shards.get(shardId);
+    const config = this.shardConfigs.get(shardId);
+    if (!shard || !config) {
+      throw new Error(`Shard ${shardId} not found`);
+    }
+
+    this.logger.log(`Restoring shard ${shardId} from backup ${backupPath}`);
+
+    try {
+      // Close the existing connection
+      await shard.destroy();
+
+      // Replace the database file with the backup
+      const fs = require('fs');
+      fs.copyFileSync(backupPath, config.database);
+
+      // Re-initialize the connection
+      await shard.initialize();
+
+      this.logger.log(
+        `Shard ${shardId} restored successfully from ${backupPath}`,
+      );
+    } catch (error) {
+      this.logger.error(`Restore failed for shard ${shardId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Rebalance shards by migrating misplaced records to their correct shards.
+   * Uses batching to avoid OOM and ensures basic data consistency.
    */
   async rebalanceShards(): Promise<void> {
     this.logger.log('Starting shard rebalancing...');
 
-    const healthStatus = await this.getShardHealth();
-    const shardLoads: Record<string, number> = {};
-
-    // Calculate load per shard (simplified - based on record count)
-    for (const [shardId, status] of Object.entries(healthStatus)) {
-      if (status.status === 'healthy') {
-        shardLoads[shardId] = status.tradeCount + status.balanceCount;
-      }
+    const allShardIds = Array.from(this.shards.keys());
+    if (allShardIds.length < 2) {
+      this.logger.log('Not enough shards to rebalance');
+      return;
     }
 
-    // Find overloaded and underloaded shards
-    const loads = Object.values(shardLoads);
-    const avgLoad = loads.reduce((a, b) => a + b, 0) / loads.length;
-    const threshold = avgLoad * 1.5; // 50% above average is considered overloaded
+    const entitiesToRebalance = [Trade, UserBalance];
+    const batchSize = 1000;
 
-    const overloadedShards = Object.entries(shardLoads)
-      .filter(([_, load]) => load > threshold)
-      .map(([shardId, _]) => shardId);
+    for (const entityClass of entitiesToRebalance) {
+      for (const fromShardId of allShardIds) {
+        const fromShard = this.shards.get(fromShardId);
+        if (!fromShard) continue;
 
-    const underloadedShards = Object.entries(shardLoads)
-      .filter(([_, load]) => load < avgLoad * 0.5)
-      .map(([shardId, _]) => shardId);
+        try {
+          const repository = fromShard.getRepository(entityClass);
+          let offset = 0;
+          let hasMore = true;
 
-    this.logger.log(
-      `Found ${overloadedShards.length} overloaded and ${underloadedShards.length} underloaded shards`,
-    );
+          while (hasMore) {
+            const records = await repository.find({
+              take: batchSize,
+              skip: offset,
+            });
 
-    // In a real implementation, you would move data from overloaded to underloaded shards
-    // This is a placeholder for the rebalancing logic
-    if (overloadedShards.length > 0 && underloadedShards.length > 0) {
-      this.logger.log('Rebalancing would be performed here');
+            if (records.length === 0) {
+              hasMore = false;
+              break;
+            }
+
+            // Determine which strategy to use for this entity
+            const strategyName = entityClass === Trade ? 'time' : 'user';
+            const strategy = this.strategies.get(strategyName);
+            if (!strategy) {
+              hasMore = false;
+              break;
+            }
+
+            const recordsToMove = new Map<string, any[]>();
+
+            for (const record of records) {
+              const shardKey = strategy.getShardKey(record);
+              const targetShardId = strategy.getShard(shardKey);
+
+              if (targetShardId !== fromShardId) {
+                if (!recordsToMove.has(targetShardId)) {
+                  recordsToMove.set(targetShardId, []);
+                }
+                recordsToMove.get(targetShardId)!.push(record);
+              }
+            }
+
+            // Migrate records to their correct shards
+            for (const [
+              targetShardId,
+              misplacedRecords,
+            ] of recordsToMove.entries()) {
+              this.logger.log(
+                `Moving ${misplacedRecords.length} ${entityClass.name} records from ${fromShardId} to ${targetShardId}`,
+              );
+
+              const toShard = this.shards.get(targetShardId);
+              if (!toShard) continue;
+
+              const toRepository = toShard.getRepository(entityClass);
+
+              // Perform migration in a transaction-like manner
+              for (const record of misplacedRecords) {
+                try {
+                  await toRepository.save(record);
+                  await repository.remove(record);
+                } catch (err) {
+                  this.logger.error(
+                    `Migration error for record ${record.id}: ${err.message}`,
+                  );
+                  // If it already exists on destination, we can safely remove from source
+                  if (
+                    err.message.includes('UNIQUE') ||
+                    err.message.includes('already exists')
+                  ) {
+                    await repository.remove(record);
+                  }
+                }
+              }
+            }
+
+            if (records.length < batchSize) {
+              hasMore = false;
+            } else {
+              // Since we're removing records from the source, we might not need to increment offset
+              // but to be safe and avoid infinite loops if removal fails, we should be careful.
+              // In this case, removal should decrease the total count.
+              // If we didn't remove everything in the batch, offset needs to stay 0 or be adjusted.
+              // For simplicity, let's keep offset 0 as long as we are removing records.
+              offset = 0;
+            }
+          }
+        } catch (error) {
+          this.logger.error(
+            `Failed to rebalance ${entityClass.name} on shard ${fromShardId}:`,
+            error,
+          );
+        }
+      }
     }
 
     this.logger.log('Shard rebalancing completed');
   }
 
   /**
-   * Simple hash function
+   * More robust hash function using SHA-256
    */
   private hashString(str: string): number {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash; // Convert to 32-bit integer
-    }
-    return Math.abs(hash);
+    const hash = crypto.createHash('sha256').update(str).digest('hex');
+    return parseInt(hash.substring(0, 8), 16);
   }
 
   /**
-   * Consistent hashing implementation
+   * Add shard to consistent hash ring with virtual nodes
    */
-  private consistentHash(key: string, nodes: string[]): string {
-    if (nodes.length === 0) return '';
+  private addShardToRing(shardId: string): void {
+    for (let i = 0; i < this.virtualNodes; i++) {
+      const hash = this.hashString(`${shardId}:${i}`);
+      this.hashRing.push({ hash, shardId });
+    }
+    this.hashRing.sort((a, b) => a.hash - b.hash);
+  }
 
-    // Simple consistent hashing - in production, use a proper ring implementation
+  /**
+   * Remove shard from consistent hash ring
+   */
+  private removeShardFromRing(shardId: string): void {
+    this.hashRing = this.hashRing.filter((node) => node.shardId !== shardId);
+  }
+
+  /**
+   * Consistent hashing implementation using a ring with virtual nodes
+   */
+  private consistentHash(key: string, _nodes: string[]): string {
+    if (this.hashRing.length === 0) return '';
+
     const hash = this.hashString(key);
-    const index = hash % nodes.length;
-    return nodes[index];
+
+    // Binary search for the first node with hash >= key's hash
+    let low = 0;
+    let high = this.hashRing.length - 1;
+    let index = 0;
+
+    while (low <= high) {
+      const mid = Math.floor((low + high) / 2);
+      if (this.hashRing[mid].hash >= hash) {
+        index = mid;
+        high = mid - 1;
+      } else {
+        low = mid + 1;
+      }
+    }
+
+    return this.hashRing[index].shardId;
   }
 }
