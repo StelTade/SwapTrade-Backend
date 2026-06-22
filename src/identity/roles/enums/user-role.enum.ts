@@ -20,9 +20,8 @@ export enum UserRole {
   USER = 'USER',
   STAFF = 'STAFF',
 
-  // Trading roles
-  TRADER = 'TRADER',
-  USER = 'USER',
+  // Institutional roles
+  INSTITUTIONAL_CLIENT = 'INSTITUTIONAL_CLIENT',
 
   // Specialized governance roles
   GOVERNANCE_OPERATOR = 'GOVERNANCE_OPERATOR',
@@ -47,6 +46,8 @@ export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
     'Trader - Advanced trading capabilities and portfolio management',
   [UserRole.USER]: 'Standard user - Trading and account access',
   [UserRole.STAFF]: 'Staff member - Support and monitoring',
+  [UserRole.INSTITUTIONAL_CLIENT]:
+    'Institutional Client - Dedicated high-volume trading, custom reporting, SLA-backed support, and compliance features',
   [UserRole.GOVERNANCE_OPERATOR]: 'Governance operator - Policy enforcement',
   [UserRole.KYC_OPERATOR]: 'KYC operator - Document review',
   [UserRole.KYC_GOVERNANCE]: 'KYC governance - Process oversight',
