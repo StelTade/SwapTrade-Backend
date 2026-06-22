@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import * as redisStoreFactory from 'cache-manager-redis-store';
 import cacheConfig from '../config/cache.config';
 import { CacheWarmingService } from './cache-warming.service';
+import { AdvancedCacheWarmingService } from './cache-warming-advanced.service';
 import { CacheController } from './cache.controller';
 import { CacheService } from '../services/cache.service';
 import { VirtualAsset } from '../../database/entities/virtual-asset.entity';
@@ -54,7 +55,13 @@ import { RedisModule } from './redis.module';
     }),
   ],
   controllers: [CacheController],
-  providers: [CacheService, CacheWarmingService],
-  exports: [NestCacheModule, CacheService, CacheWarmingService, RedisModule],
+  providers: [CacheService, CacheWarmingService, AdvancedCacheWarmingService],
+  exports: [
+    NestCacheModule,
+    CacheService,
+    CacheWarmingService,
+    AdvancedCacheWarmingService,
+    RedisModule,
+  ],
 })
 export class CustomCacheModule {}
