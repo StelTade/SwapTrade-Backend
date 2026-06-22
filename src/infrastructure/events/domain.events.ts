@@ -212,3 +212,33 @@ export class SwapSettledEvent {
     public finalAmount: number,
   ) {}
 }
+
+// Protection / Insurance Domain Events
+export class LiquidationShortfallEvent {
+  constructor(
+    public liquidationId: string,
+    public userId: number,
+    public shortfallAmount: number,
+    public coveredAmount: number,
+    public cascadePrevented: boolean,
+  ) {}
+}
+
+export class InsurancePayoutEvent {
+  constructor(
+    public liquidationId: string,
+    public userId: number,
+    public amount: number,
+    public fundsUsed: Array<{ fundId: number; amount: number; tier: string }>,
+  ) {}
+}
+
+export class FundHealthAlertEvent {
+  constructor(
+    public fundId: number,
+    public tier: string,
+    public healthPercent: number,
+    public balance: number,
+    public targetReserve: number,
+  ) {}
+}

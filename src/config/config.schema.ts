@@ -106,6 +106,9 @@ export const configSchema = Joi.object({
   FEATURE_AB_TESTING: Joi.boolean().default(false),
   FEATURE_PERFORMANCE_MONITORING: Joi.boolean().default(true),
   FEATURE_ERROR_TRACKING: Joi.boolean().default(true),
+  FEATURE_INSURANCE_ENABLED: Joi.boolean().default(true),
+  INSURANCE_MIN_RESERVE_PCT: Joi.number().min(0).max(100).default(20),
+  INSURANCE_FEE_CONTRIBUTION_PCT: Joi.number().min(0).max(100).default(10),
 
   // Vault/Secrets
   VAULT_URL: Joi.string().uri().optional(),

@@ -74,6 +74,13 @@ import { EmergencyWithdrawal } from './exchange/entities/emergency-withdrawal.en
 import { ExchangeModule } from './exchange/exchange.module';
 import { MobileModule } from './mobile/mobile.module';
 
+// Protection Domain — Insurance Fund (issue #380)
+import { InsuranceFund } from './protection/entities/insurance-fund.entity';
+import { InsuranceFundTier } from './protection/entities/insurance-fund-tier.entity';
+import { InsuranceTransaction } from './protection/entities/insurance-transaction.entity';
+import { LiquidationEvent } from './protection/entities/liquidation-event.entity';
+import { ProtectionModule } from './protection/protection.module';
+
 @Module({
   imports: [
     // ── Core NestJS ──
@@ -148,6 +155,11 @@ import { MobileModule } from './mobile/mobile.module';
           GovernanceExecution,
           GovernanceConfig,
           TokenHolding,
+          // Protection — Insurance Fund
+          InsuranceFund,
+          InsuranceFundTier,
+          InsuranceTransaction,
+          LiquidationEvent,
         ],
         synchronize: configService.get<boolean>('DB_SYNCHRONIZE', true),
         logging: configService.get<boolean>('DB_LOGGING', false),
@@ -165,6 +177,9 @@ import { MobileModule } from './mobile/mobile.module';
 
     // ── Phase 3: Exchange Domain (DeFi Integration) ──
     ExchangeModule,
+
+    // ── Protection Domain — Insurance Fund (issue #380) ──
+    ProtectionModule,
 
     // ── Trading Features — Advanced Order Types (issue #382) ──
     OrdersModule,

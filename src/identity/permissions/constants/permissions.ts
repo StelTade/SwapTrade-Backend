@@ -42,6 +42,11 @@ export const POOLS_READ = 'pools.read';
 export const POOLS_WRITE = 'pools.write';
 export const LIQUIDITY_MANAGE = 'liquidity.manage';
 
+// Insurance fund permissions
+export const INSURANCE_READ = 'insurance.read';
+export const INSURANCE_WRITE = 'insurance.write';
+export const INSURANCE_ADMIN = 'insurance.admin';
+
 /**
  * All available permissions in the system
  */
@@ -64,4 +69,7 @@ export const ALL_PERMISSIONS = [
   POOLS_READ,
   POOLS_WRITE,
   LIQUIDITY_MANAGE,
+  INSURANCE_READ,
+  INSURANCE_WRITE,
+  INSURANCE_ADMIN,
 ];
