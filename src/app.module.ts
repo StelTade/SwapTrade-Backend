@@ -73,6 +73,7 @@ import { PoolSwap } from './exchange/entities/pool-swap.entity';
 import { EmergencyWithdrawal } from './exchange/entities/emergency-withdrawal.entity';
 import { ExchangeModule } from './exchange/exchange.module';
 import { MobileModule } from './mobile/mobile.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -81,7 +82,7 @@ import { MobileModule } from './mobile/mobile.module';
     I18nModule.forRoot({
       fallbackLanguage: 'en',
       loaderOptions: {
-        path: path.join(__dirname, '/i18n/'),
+        path: path.join(__dirname, '/notifications/templates/i18n/'),
         watch: true,
       },
       resolvers: [
@@ -103,7 +104,7 @@ import { MobileModule } from './mobile/mobile.module';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        type: configService.get<string>('DB_TYPE', 'postgres') as '' | 'sqlite',
+        type: configService.get<string>('DB_TYPE', 'postgres') as 'postgres' | 'sqlite',
         host: configService.get<string>('DB_HOST', 'localhost'),
         port: configService.get<number>('DB_PORT', 5432),
         username: configService.get<string>('DB_USERNAME', 'postgres'),
@@ -169,12 +170,15 @@ import { MobileModule } from './mobile/mobile.module';
     // ── Trading Features — Advanced Order Types (issue #382) ──
     OrdersModule,
 
-    // ── Mobile Integration ──
+    // Mobile Integration ──
     MobileModule,
     // ── Institutional Portal ──
     InstitutionalModule,
     // ── AI Features — Trading Assistant (issue #395) ──
     AiTradingAssistantModule,
+
+    // ── Notifications Module ──
+    NotificationsModule,
 
     // ── Error Handling ──
     ErrorModule,

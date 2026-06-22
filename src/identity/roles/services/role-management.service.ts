@@ -22,7 +22,7 @@ import { ROLE_METADATA } from '../types/role-metadata';
 /** Events emitted by this service */
 export class RoleAssignedEvent {
   constructor(
-    public readonly userId: number,
+    public readonly userId: string,
     public readonly roles: UserRole[],
     public readonly actorId: string,
   ) {}
@@ -30,7 +30,7 @@ export class RoleAssignedEvent {
 
 export class RoleRevokedEvent {
   constructor(
-    public readonly userId: number,
+    public readonly userId: string,
     public readonly roles: UserRole[],
     public readonly actorId: string,
   ) {}
@@ -142,7 +142,7 @@ export class RoleManagementService {
   // ─── User Role Assignment ────────────────────────────────────────────────────
 
   async assignRolesToUser(dto: AssignRoleDto, actorId: string): Promise<User> {
-    const user = await this.userRepo.findOne({ where: { id: dto.userId } });
+    const user = await this.userRepo.findOne({ where: { id: String(dto.userId) } });
     if (!user) throw new NotFoundException(`User ${dto.userId} not found`);
 
     const validation = this.roleService.validateRoleCombination([
@@ -173,14 +173,14 @@ export class RoleManagementService {
 
     this.eventEmitter.emit(
       'role.assigned',
-      new RoleAssignedEvent(dto.userId, dto.roles, actorId),
+      new RoleAssignedEvent(String(dto.userId), dto.roles, actorId),
     );
 
     return savedUser;
   }
 
   async revokeRolesFromUser(dto: RevokeRoleDto, actorId: string): Promise<User> {
-    const user = await this.userRepo.findOne({ where: { id: dto.userId } });
+    const user = await this.userRepo.findOne({ where: { id: String(dto.userId) } });
     if (!user) throw new NotFoundException(`User ${dto.userId} not found`);
 
     const beforeState = { roles: [...user.roles] };
@@ -207,13 +207,13 @@ export class RoleManagementService {
 
     this.eventEmitter.emit(
       'role.revoked',
-      new RoleRevokedEvent(dto.userId, dto.roles, actorId),
+      new RoleRevokedEvent(String(dto.userId), dto.roles, actorId),
     );
 
     return savedUser;
   }
 
-  async getUserRoles(userId: number): Promise<{
+  async getUserRoles(userId: string): Promise<{
     roles: UserRole[];
     primaryRole: UserRole;
     permissions: string[];

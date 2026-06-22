@@ -74,4 +74,10 @@ export class GovernanceProposal {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @Column('decimal', { precision: 18, scale: 8, default: 51 })
+  passThresholdVotes: number;
+
+  @Column({ nullable: true })
+  executionReason: string;
 }

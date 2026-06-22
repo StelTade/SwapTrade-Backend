@@ -4,7 +4,7 @@ import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagg
 import { MFAService } from './mfa.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
-import { JwtPayload } from './guards/jwt-auth.guard';
+import type { JwtPayload } from './guards/jwt-auth.guard';
 
 @ApiTags('identity/auth/mfa')
 @UseGuards(JwtAuthGuard)

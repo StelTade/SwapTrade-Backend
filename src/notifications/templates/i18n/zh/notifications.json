@@ -1,0 +1,72 @@
+{
+  "trade_executed": {
+    "email": {
+      "subject": "您的交易已成功执行",
+      "body": "<h1>交易已执行！</h1><p>您的{{amount}} {{asset}}交易已以{{price}}的价格执行。</p><p>总价值：{{totalValue}}</p>"
+    },
+    "sms": {
+      "subject": "交易已执行",
+      "body": "SwapTrade：您的{{amount}} {{asset}}交易已以${{price}}执行。总计：${{totalValue}}。"
+    },
+    "push": {
+      "subject": "交易已执行",
+      "body": "您的{{asset}}交易成功完成！"
+    }
+  },
+  "liquidation": {
+    "email": {
+      "subject": "紧急：仓位清算通知",
+      "body": "<h1>⚠️ 仓位已清算</h1><p>您的{{amount}} {{asset}}仓位已以{{price}}的价格清算。</p><p>如有疑问，请立即联系客服。"
+    },
+    "sms": {
+      "subject": "紧急：清算通知",
+      "body": "紧急SwapTrade：您的{{asset}}仓位已被清算。请立即查看您的账户。"
+    },
+    "push": {
+      "subject": "⚠️ 仓位已清算",
+      "body": "您的{{asset}}仓位已被清算。请在账户中查看详情。"
+    }
+  },
+  "deposit_received": {
+    "email": {
+      "subject": "充值已成功到账",
+      "body": "<h1>充值已确认！</h1><p>我们已收到您的{{amount}} {{asset}}充值。</p><p>交易哈希：{{txHash}}</p><p>资金现已在您的账户中可用。"
+    },
+    "sms": {
+      "subject": "充值已到账",
+      "body": "SwapTrade：已收到{{amount}} {{asset}}充值！交易号：{{txHash}}。资金现已可用。"
+    },
+    "push": {
+      "subject": "充值已到账",
+      "body": "{{amount}} {{asset}}已存入您的账户！"
+    }
+  },
+  "withdrawal_completed": {
+    "email": {
+      "subject": "提现已成功处理",
+      "body": "<h1>提现完成</h1><p>您的{{amount}} {{asset}}提现已处理完成。</p><p>目标地址：{{address}}</p><p>交易哈希：{{txHash}}</p>"
+    },
+    "sms": {
+      "subject": "提现完成",
+      "body": "SwapTrade：{{amount}} {{asset}}提现已处理。交易号：{{txHash}}"
+    },
+    "push": {
+      "subject": "提现已处理",
+      "body": "{{amount}} {{asset}}提现完成"
+    }
+  },
+  "security_alert": {
+    "email": {
+      "subject": "安全提醒：检测到新登录",
+      "body": "<h1>⚠️ 检测到新登录</h1><p>检测到从{{ipAddress}}在{{timestamp}}登录了您的账户。</p><p>如果这不是您本人，请立即保护您的账户安全。"
+    },
+    "sms": {
+      "subject": "安全提醒",
+      "body": "SwapTrade安全警告：从{{ipAddress}}检测到新登录。如果不是您，请立即重置密码。"
+    },
+    "push": {
+      "subject": "⚠️ 安全提醒",
+      "body": "您的账户检测到新登录"
+    }
+  }
+}

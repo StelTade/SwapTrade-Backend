@@ -1,0 +1,72 @@
+{
+  "trade_executed": {
+    "email": {
+      "subject": "Tu Operación se Ha Ejecutado Exitosamente",
+      "body": "<h1>¡Operación Ejecutada!</h1><p>Tu operación por {{amount}} {{asset}} ha sido ejecutada a {{price}}.</p><p>Valor total: {{totalValue}}</p>"
+    },
+    "sms": {
+      "subject": "Operación Ejecutada",
+      "body": "SwapTrade: Tu operación por {{amount}} {{asset}} se ejecutó a ${{price}}. Total: ${{totalValue}}."
+    },
+    "push": {
+      "subject": "Operación Ejecutada",
+      "body": "¡Tu operación de {{asset}} se completó exitosamente!"
+    }
+  },
+  "liquidation": {
+    "email": {
+      "subject": "URGENTE: Aviso de Liquidación de Posición",
+      "body": "<h1>⚠️ Posición Liquidad</h1><p>Tu posición de {{amount}} {{asset}} ha sido liquidada a {{price}}.</p><p>Si tienes preguntas, contacta a soporte inmediatamente."
+    },
+    "sms": {
+      "subject": "URGENTE: Liquidación",
+      "body": "URGENTE SwapTrade: Tu posición de {{asset}} ha sido liquidada. Revisa tu cuenta ahora."
+    },
+    "push": {
+      "subject": "⚠️ Posición Liquidad",
+      "body": "Tu posición de {{asset}} fue liquidada. Ver detalles en tu cuenta."
+    }
+  },
+  "deposit_received": {
+    "email": {
+      "subject": "Depósito Recibido Exitosamente",
+      "body": "<h1>¡Depósito Confirmado!</h1><p>Hemos recibido tu depósito de {{amount}} {{asset}}.</p><p>Hash de transacción: {{txHash}}</p><p>Los fondos están disponibles en tu cuenta."
+    },
+    "sms": {
+      "subject": "Depósito Recibido",
+      "body": "SwapTrade: ¡Depósito de {{amount}} {{asset}} recibido! Tx: {{txHash}}. Fondos disponibles ahora."
+    },
+    "push": {
+      "subject": "Depósito Recibido",
+      "body": "¡{{amount}} {{asset}} depositados en tu cuenta!"
+    }
+  },
+  "withdrawal_completed": {
+    "email": {
+      "subject": "Retiro Procesado Exitosamente",
+      "body": "<h1>Retiro Completado</h1><p>Tu retiro de {{amount}} {{asset}} ha sido procesado.</p><p>Dirección de destino: {{address}}</p><p>Hash de transacción: {{txHash}}</p>"
+    },
+    "sms": {
+      "subject": "Retiro Completado",
+      "body": "SwapTrade: Retiro de {{amount}} {{asset}} procesado. Tx: {{txHash}}"
+    },
+    "push": {
+      "subject": "Retiro Procesado",
+      "body": "Retiro de {{amount}} {{asset}} completado"
+    }
+  },
+  "security_alert": {
+    "email": {
+      "subject": "Alerta de Seguridad: Nuevo Inicio de Sesión Detectado",
+      "body": "<h1>⚠️ Nuevo Inicio de Sesión Detectado</h1><p>Se detectó un nuevo inicio de sesión en tu cuenta desde {{ipAddress}} a las {{timestamp}}.</p><p>Si no fuiste tú, por favor asegura tu cuenta inmediatamente."
+    },
+    "sms": {
+      "subject": "Alerta de Seguridad",
+      "body": "SwapTrade SEGURIDAD: Nuevo inicio de sesión desde {{ipAddress}}. Si no fuiste tú, restablece tu contraseña ahora."
+    },
+    "push": {
+      "subject": "⚠️ Alerta de Seguridad",
+      "body": "Nuevo inicio de sesión detectado en tu cuenta"
+    }
+  }
+}
