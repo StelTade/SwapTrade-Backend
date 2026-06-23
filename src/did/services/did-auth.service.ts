@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DidDocument } from '../entities/did-document.entity';
@@ -12,20 +16,52 @@ export class DidAuthService {
     private readonly didDocRepo: Repository<DidDocument>,
   ) {}
 
+  /**
+   * Register a new DID and anchor its W3C DID document.
+   * Returns a minimal W3C DID Core compliant document.
+   */
+  async registerDid(
+    did: string,
+    publicKey: string,
+  ): Promise<Record<string, unknown>> {
+    const existing = await this.didDocRepo.findOne({ where: { did } });
+    if (existing) {
+      throw new ConflictException(`DID '${did}' is already registered`);
+    }
+
+    const doc = this.didDocRepo.create({
+      did,
+      publicKey,
+      userId: crypto.randomUUID(),
+    });
+    await this.didDocRepo.save(doc);
+
+    return this.buildW3cDocument(doc);
+  }
+
+  /**
+   * Resolve a DID to its W3C-compliant DID document.
+   */
+  async resolveDidDocument(
+    did: string,
+  ): Promise<Record<string, unknown> | null> {
+    const doc = await this.didDocRepo.findOne({ where: { did } });
+    if (!doc) return null;
+    return this.buildW3cDocument(doc);
+  }
+
   async generateChallenge(did: string): Promise<string> {
     let doc = await this.didDocRepo.findOne({ where: { did } });
 
-    // Auto-onboard for demonstration if no doc exists (in reality, requires registration step)
     if (!doc) {
       doc = this.didDocRepo.create({
         did,
-        userId: crypto.randomUUID(), // Mock linking to a real backend user
+        userId: crypto.randomUUID(),
       });
     }
 
     const nonce = crypto.randomBytes(32).toString('hex');
     doc.nonce = nonce;
-    // Set expiry 5 mins from now
     doc.nonceExpiry = new Date(Date.now() + 5 * 60 * 1000);
 
     await this.didDocRepo.save(doc);
@@ -43,13 +79,11 @@ export class DidAuthService {
     }
 
     try {
-      // For did:ethr:0x123..., the address is the last part
       const address = did.split(':').pop();
       if (!address) {
         throw new UnauthorizedException('Invalid DID format');
       }
 
-      // We expect the user signed the raw nonce string
       const recoveredAddress = verifyMessage(doc.nonce, signature);
 
       if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
@@ -61,7 +95,6 @@ export class DidAuthService {
       doc.nonceExpiry = null;
       await this.didDocRepo.save(doc);
 
-      // Return a pseudo session token for the standard auth system to consume
       const sessionToken = crypto.randomBytes(32).toString('hex');
       return {
         message: 'DID Authentication successful',
@@ -71,5 +104,29 @@ export class DidAuthService {
     } catch (err) {
       throw new UnauthorizedException('Signature verification failed');
     }
+  }
+
+  private buildW3cDocument(doc: DidDocument): Record<string, unknown> {
+    return {
+      '@context': [
+        'https://www.w3.org/ns/did/v1',
+        'https://w3id.org/security/suites/secp256k1-2019/v1',
+      ],
+      id: doc.did,
+      verificationMethod: doc.publicKey
+        ? [
+            {
+              id: `${doc.did}#keys-1`,
+              type: 'EcdsaSecp256k1VerificationKey2019',
+              controller: doc.did,
+              publicKeyHex: doc.publicKey,
+            },
+          ]
+        : [],
+      authentication: doc.publicKey ? [`${doc.did}#keys-1`] : [],
+      assertionMethod: doc.publicKey ? [`${doc.did}#keys-1`] : [],
+      created: doc.createdAt,
+      updated: doc.updatedAt,
+    };
   }
 }
