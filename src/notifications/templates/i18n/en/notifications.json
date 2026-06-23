@@ -1,0 +1,72 @@
+{
+  "trade_executed": {
+    "email": {
+      "subject": "Your Trade Has Been Executed Successfully",
+      "body": "<h1>Trade Executed!</h1><p>Your trade for {{amount}} {{asset}} has been executed at {{price}}.</p><p>Total value: {{totalValue}}</p>"
+    },
+    "sms": {
+      "subject": "Trade Executed",
+      "body": "SwapTrade: Your trade for {{amount}} {{asset}} has been executed at ${{price}}. Total: ${{totalValue}}."
+    },
+    "push": {
+      "subject": "Trade Executed",
+      "body": "Your {{asset}} trade completed successfully!"
+    }
+  },
+  "liquidation": {
+    "email": {
+      "subject": "URGENT: Position Liquidation Notice",
+      "body": "<h1>⚠️ Position Liquidated</h1><p>Your position of {{amount}} {{asset}} has been liquidated at {{price}}.</p><p>If you have questions, please contact support immediately."
+    },
+    "sms": {
+      "subject": "URGENT: Liquidation",
+      "body": "URGENT SwapTrade: Your {{asset}} position has been liquidated. Check your account now."
+    },
+    "push": {
+      "subject": "⚠️ Position Liquidated",
+      "body": "Your {{asset}} position was liquidated. View details in your account."
+    }
+  },
+  "deposit_received": {
+    "email": {
+      "subject": "Deposit Received Successfully",
+      "body": "<h1>Deposit Confirmed!</h1><p>We've received your deposit of {{amount}} {{asset}}.</p><p>Transaction hash: {{txHash}}</p><p>The funds are now available in your account."
+    },
+    "sms": {
+      "subject": "Deposit Received",
+      "body": "SwapTrade: Deposit of {{amount}} {{asset}} received! Tx: {{txHash}}. Funds available now."
+    },
+    "push": {
+      "subject": "Deposit Received",
+      "body": "{{amount}} {{asset}} deposited to your account!"
+    }
+  },
+  "withdrawal_completed": {
+    "email": {
+      "subject": "Withdrawal Processed Successfully",
+      "body": "<h1>Withdrawal Complete</h1><p>Your withdrawal of {{amount}} {{asset}} has been processed.</p><p>Destination address: {{address}}</p><p>Transaction hash: {{txHash}}</p>"
+    },
+    "sms": {
+      "subject": "Withdrawal Complete",
+      "body": "SwapTrade: Withdrawal of {{amount}} {{asset}} processed. Tx: {{txHash}}"
+    },
+    "push": {
+      "subject": "Withdrawal Processed",
+      "body": "{{amount}} {{asset}} withdrawal completed"
+    }
+  },
+  "security_alert": {
+    "email": {
+      "subject": "Security Alert: New Login Detected",
+      "body": "<h1>⚠️ New Login Detected</h1><p>A new login was detected on your account from {{ipAddress}} at {{timestamp}}.</p><p>If this wasn't you, please secure your account immediately."
+    },
+    "sms": {
+      "subject": "Security Alert",
+      "body": "SwapTrade SECURITY: New login from {{ipAddress}}. If not you, reset your password now."
+    },
+    "push": {
+      "subject": "⚠️ Security Alert",
+      "body": "New login detected on your account"
+    }
+  }
+}

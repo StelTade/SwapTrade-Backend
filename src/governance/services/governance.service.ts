@@ -6,8 +6,8 @@ import {
   ProposalType,
   VoteType,
   DiscussionMessageType,
-  GOVERNANCE_PARAMS,
-} from '../constants/governance.constants';
+} from '../enums/governance.enum';
+import { GOVERNANCE_PARAMS } from '../constants/governance.constants';
 import {
   GovernanceProposal,
   GovernanceVote,

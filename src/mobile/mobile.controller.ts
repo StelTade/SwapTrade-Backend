@@ -18,7 +18,8 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
-import { JwtAuthGuard, JwtPayload } from '../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import type { JwtPayload } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 

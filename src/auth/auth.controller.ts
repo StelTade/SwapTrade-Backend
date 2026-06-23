@@ -17,7 +17,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { Request } from 'express';
+import type { Request } from 'express';
 
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
@@ -29,7 +29,8 @@ import {
   ChangePasswordDto,
 } from './dto/password-reset.dto';
 import { Enable2FADto, TwoFADto, Verify2FASetupDto } from './dto/2fa.dto';
-import { JwtAuthGuard, JwtPayload } from './guards/jwt-auth.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import type { JwtPayload } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { Public } from './decorators/public.decorator';
 import { ApiAuthErrorResponses } from '../common/decorators/swagger-error-responses.decorator';

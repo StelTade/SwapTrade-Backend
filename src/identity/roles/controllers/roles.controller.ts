@@ -75,8 +75,8 @@ export class RolesController {
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.SUPPORT_AGENT)
   @RequirePermissions('roles.read')
   @ApiOperation({ summary: 'Get all roles and permissions for a user' })
-  @ApiParam({ name: 'userId', type: Number })
-  getUserRoles(@Param('userId', ParseIntPipe) userId: number) {
+  @ApiParam({ name: 'userId', type: String })
+  getUserRoles(@Param('userId') userId: string) {
     return this.roleManagement.getUserRoles(userId);
   }
 }
