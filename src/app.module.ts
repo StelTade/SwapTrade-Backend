@@ -81,6 +81,12 @@ import { InsuranceTransaction } from './protection/entities/insurance-transactio
 import { LiquidationEvent } from './protection/entities/liquidation-event.entity';
 import { ProtectionModule } from './protection/protection.module';
 
+// Blockchain — Cross-Chain Bridge (issue #386)
+import { CrossChainBridgeModule } from './blockchain/cross-chain-bridge.module';
+import { CrossChainBridge } from './blockchain/entities/cross-chain-bridge.entity';
+import { BlockchainTransaction } from './blockchain/entities/blockchain-transaction.entity';
+import { WalletAddress } from './blockchain/entities/wallet-address.entity';
+
 @Module({
   imports: [
     // ── Core NestJS ──
@@ -160,6 +166,10 @@ import { ProtectionModule } from './protection/protection.module';
           InsuranceFundTier,
           InsuranceTransaction,
           LiquidationEvent,
+          // Blockchain — Cross-Chain Bridge (issue #386)
+          CrossChainBridge,
+          BlockchainTransaction,
+          WalletAddress,
         ],
         synchronize: configService.get<boolean>('DB_SYNCHRONIZE', true),
         logging: configService.get<boolean>('DB_LOGGING', false),
@@ -180,6 +190,9 @@ import { ProtectionModule } from './protection/protection.module';
 
     // ── Protection Domain — Insurance Fund (issue #380) ──
     ProtectionModule,
+
+    // ── Blockchain — Cross-Chain Bridge (issue #386) ──
+    CrossChainBridgeModule,
 
     // ── Trading Features — Advanced Order Types (issue #382) ──
     OrdersModule,
