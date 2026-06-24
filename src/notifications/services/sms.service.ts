@@ -22,7 +22,9 @@ export class SmsService {
       this.twilioClient = new Twilio(accountSid, authToken);
       this.logger.log('Twilio client initialized');
     } else {
-      this.logger.warn('Twilio credentials not configured, SMS service will be unavailable');
+      this.logger.warn(
+        'Twilio credentials not configured, SMS service will be unavailable',
+      );
     }
   }
 
@@ -38,10 +40,15 @@ export class SmsService {
         to: notification.recipient,
       });
 
-      this.logger.log(`SMS sent to ${notification.recipient}, messageId: ${message.sid}`);
+      this.logger.log(
+        `SMS sent to ${notification.recipient}, messageId: ${message.sid}`,
+      );
       return true;
     } catch (error) {
-      this.logger.error(`Failed to send SMS to ${notification.recipient}`, error.stack);
+      this.logger.error(
+        `Failed to send SMS to ${notification.recipient}`,
+        error.stack,
+      );
       throw error;
     }
   }

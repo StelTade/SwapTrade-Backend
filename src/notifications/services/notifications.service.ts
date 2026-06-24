@@ -45,20 +45,25 @@ export class NotificationsService {
 
     const userLang = language || preferences.preferredLanguage;
     const eventPrefs = preferences.preferences[type];
-    
+
     if (!eventPrefs) {
-      this.logger.warn(`No preferences found for event type ${type}, using defaults`);
+      this.logger.warn(
+        `No preferences found for event type ${type}, using defaults`,
+      );
       return;
     }
 
     if (!preferences.allNotificationsEnabled) {
-      this.logger.log(`All notifications disabled for user ${userId}, skipping`);
+      this.logger.log(
+        `All notifications disabled for user ${userId}, skipping`,
+      );
       return;
     }
 
     // Process each enabled channel
-    const channelsToProcess = forceChannels || this.getEnabledChannels(eventPrefs);
-    
+    const channelsToProcess =
+      forceChannels || this.getEnabledChannels(eventPrefs);
+
     for (const channel of channelsToProcess) {
       if (!eventPrefs[channel]?.enabled && !forceChannels?.includes(channel)) {
         continue;
@@ -67,7 +72,9 @@ export class NotificationsService {
       // Validate recipient information exists for this channel
       const recipient = this.getRecipientForChannel(preferences, channel);
       if (!recipient && channel !== NotificationChannel.PUSH) {
-        this.logger.warn(`No recipient found for channel ${channel} for user ${userId}`);
+        this.logger.warn(
+          `No recipient found for channel ${channel} for user ${userId}`,
+        );
         continue;
       }
 
@@ -86,30 +93,42 @@ export class NotificationsService {
         channel,
         status: NotificationStatus.PENDING,
         data,
-        recipient: channel === NotificationChannel.PUSH ? undefined : (recipient || undefined),
+        recipient:
+          channel === NotificationChannel.PUSH
+            ? undefined
+            : recipient || undefined,
         subject,
         body,
         retryCount: 0,
       });
 
-      const savedNotification = await this.notificationRepository.save(notification);
-      
-      // Add to queue for processing
-      await this.notificationsQueue.add('send', {
-        notificationId: savedNotification.id,
-      }, {
-        attempts: 5,
-        backoff: {
-          type: 'exponential',
-          delay: 1000,
-        },
-      });
+      const savedNotification =
+        await this.notificationRepository.save(notification);
 
-      this.logger.log(`Notification ${savedNotification.id} queued for ${channel} to user ${userId}`);
+      // Add to queue for processing
+      await this.notificationsQueue.add(
+        'send',
+        {
+          notificationId: savedNotification.id,
+        },
+        {
+          attempts: 5,
+          backoff: {
+            type: 'exponential',
+            delay: 1000,
+          },
+        },
+      );
+
+      this.logger.log(
+        `Notification ${savedNotification.id} queued for ${channel} to user ${userId}`,
+      );
     }
   }
 
-  async getUserPreferences(userId: string): Promise<UserNotificationPreferences> {
+  async getUserPreferences(
+    userId: string,
+  ): Promise<UserNotificationPreferences> {
     let preferences = await this.preferencesRepository.findOneBy({ userId });
     if (!preferences) {
       preferences = this.preferencesRepository.create({
@@ -128,7 +147,7 @@ export class NotificationsService {
     updateDto: UpdateNotificationPreferencesDto,
   ): Promise<UserNotificationPreferences> {
     let preferences = await this.preferencesRepository.findOneBy({ userId });
-    
+
     if (!preferences) {
       preferences = this.preferencesRepository.create({
         userId,
@@ -139,7 +158,7 @@ export class NotificationsService {
     }
 
     Object.assign(preferences, updateDto);
-    
+
     // Merge preferences if they're being updated
     if (updateDto.preferences) {
       preferences.preferences = {
@@ -156,20 +175,24 @@ export class NotificationsService {
     page: number = 1,
     limit: number = 20,
   ): Promise<{ notifications: Notification[]; total: number }> {
-    const [notifications, total] = await this.notificationRepository.findAndCount({
-      where: { userId },
-      order: { createdAt: 'DESC' },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+    const [notifications, total] =
+      await this.notificationRepository.findAndCount({
+        where: { userId },
+        order: { createdAt: 'DESC' },
+        skip: (page - 1) * limit,
+        take: limit,
+      });
 
     return { notifications, total };
   }
 
-  async markAsRead(userId: string, notificationId: string): Promise<Notification> {
-    const notification = await this.notificationRepository.findOneBy({ 
-      id: notificationId, 
-      userId 
+  async markAsRead(
+    userId: string,
+    notificationId: string,
+  ): Promise<Notification> {
+    const notification = await this.notificationRepository.findOneBy({
+      id: notificationId,
+      userId,
     });
 
     if (!notification) {
@@ -178,7 +201,7 @@ export class NotificationsService {
 
     notification.status = NotificationStatus.READ;
     notification.readAt = new Date();
-    
+
     return this.notificationRepository.save(notification);
   }
 
@@ -192,7 +215,10 @@ export class NotificationsService {
     return channels;
   }
 
-  private getRecipientForChannel(preferences: UserNotificationPreferences, channel: NotificationChannel): string | null {
+  private getRecipientForChannel(
+    preferences: UserNotificationPreferences,
+    channel: NotificationChannel,
+  ): string | null {
     switch (channel) {
       case NotificationChannel.EMAIL:
         return preferences.email;

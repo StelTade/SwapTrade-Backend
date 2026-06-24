@@ -15,7 +15,10 @@ import { CreateRoleDto } from '../dto/create-role.dto';
 import { AssignRoleDto, RevokeRoleDto } from '../dto/assign-role.dto';
 import { RoleService } from './role.service';
 import { AuditLogService } from '../../../audit-log/audit-log.service';
-import { AuditEventType, AuditSeverity } from '../../../common/security/audit-log.entity';
+import {
+  AuditEventType,
+  AuditSeverity,
+} from '../../../common/security/audit-log.entity';
 import { ROLE_HIERARCHY, ROLE_PRIORITY } from '../constants/role-hierarchy';
 import { ROLE_METADATA } from '../types/role-metadata';
 
@@ -84,7 +87,8 @@ export class RoleManagementService {
 
   async create(dto: CreateRoleDto): Promise<RoleEntity> {
     const existing = await this.roleRepo.findOne({ where: { name: dto.name } });
-    if (existing) throw new ConflictException(`Role ${dto.name} already exists`);
+    if (existing)
+      throw new ConflictException(`Role ${dto.name} already exists`);
 
     let permissions: Permission[] = [];
     if (dto.permissionSlugs?.length) {
@@ -116,7 +120,9 @@ export class RoleManagementService {
       (slug) => !permissions.find((p) => p.slug === slug),
     );
     if (missing.length) {
-      throw new NotFoundException(`Permissions not found: ${missing.join(', ')}`);
+      throw new NotFoundException(
+        `Permissions not found: ${missing.join(', ')}`,
+      );
     }
 
     // Merge without duplicates
@@ -142,7 +148,9 @@ export class RoleManagementService {
   // ─── User Role Assignment ────────────────────────────────────────────────────
 
   async assignRolesToUser(dto: AssignRoleDto, actorId: string): Promise<User> {
-    const user = await this.userRepo.findOne({ where: { id: String(dto.userId) } });
+    const user = await this.userRepo.findOne({
+      where: { id: String(dto.userId) },
+    });
     if (!user) throw new NotFoundException(`User ${dto.userId} not found`);
 
     const validation = this.roleService.validateRoleCombination([
@@ -155,7 +163,7 @@ export class RoleManagementService {
 
     const beforeState = { roles: [...user.roles] };
     const combinedRoles = Array.from(new Set([...user.roles, ...dto.roles]));
-    user.roles = combinedRoles as UserRole[];
+    user.roles = combinedRoles;
     user.role = this.roleService.getHighestPriorityRole(user.roles);
 
     const savedUser = await this.userRepo.save(user);
@@ -179,8 +187,13 @@ export class RoleManagementService {
     return savedUser;
   }
 
-  async revokeRolesFromUser(dto: RevokeRoleDto, actorId: string): Promise<User> {
-    const user = await this.userRepo.findOne({ where: { id: String(dto.userId) } });
+  async revokeRolesFromUser(
+    dto: RevokeRoleDto,
+    actorId: string,
+  ): Promise<User> {
+    const user = await this.userRepo.findOne({
+      where: { id: String(dto.userId) },
+    });
     if (!user) throw new NotFoundException(`User ${dto.userId} not found`);
 
     const beforeState = { roles: [...user.roles] };

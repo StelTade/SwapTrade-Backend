@@ -2,7 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import { CrossChainBridgeService } from './cross-chain-bridge.service';
-import { CrossChainBridge, BridgeStatus } from '../entities/cross-chain-bridge.entity';
+import {
+  CrossChainBridge,
+  BridgeStatus,
+} from '../entities/cross-chain-bridge.entity';
 import { BlockchainNetwork } from '../entities/blockchain-transaction.entity';
 import { StellarService } from './stellar.service';
 import { BlockchainException } from '../../error/exceptions/blockchain.exception';
@@ -33,19 +36,25 @@ describe('CrossChainBridgeService', () => {
           provide: ConfigService,
           useValue: { get: jest.fn().mockReturnValue(2) },
         },
-        { provide: getRepositoryToken(CrossChainBridge), useFactory: mockBridgeRepo },
+        {
+          provide: getRepositoryToken(CrossChainBridge),
+          useFactory: mockBridgeRepo,
+        },
         { provide: StellarService, useFactory: mockStellarService },
       ],
     }).compile();
 
     service = module.get(CrossChainBridgeService);
     bridgeRepo = module.get(getRepositoryToken(CrossChainBridge));
-    stellarService = module.get(StellarService) as jest.Mocked<StellarService>;
+    stellarService = module.get(StellarService);
   });
 
   describe('initiateBridge', () => {
     it('creates and saves a bridge record', async () => {
-      const bridge = { id: 'b1', status: BridgeStatus.INITIATED } as CrossChainBridge;
+      const bridge = {
+        id: 'b1',
+        status: BridgeStatus.INITIATED,
+      } as CrossChainBridge;
       bridgeRepo.create.mockReturnValue(bridge);
       bridgeRepo.save.mockResolvedValue(bridge);
 
@@ -71,7 +80,9 @@ describe('CrossChainBridgeService', () => {
   describe('addApproval', () => {
     it('throws if bridge not found', async () => {
       bridgeRepo.findOne.mockResolvedValue(null);
-      await expect(service.addApproval('missing-id')).rejects.toThrow(BlockchainException);
+      await expect(service.addApproval('missing-id')).rejects.toThrow(
+        BlockchainException,
+      );
     });
 
     it('increments approval count without executing when below threshold', async () => {
@@ -127,7 +138,9 @@ describe('CrossChainBridgeService', () => {
       bridgeRepo.save.mockImplementation(async (b) => b as CrossChainBridge);
       stellarService.withdraw.mockRejectedValue(new Error('network error'));
 
-      await expect(service.addApproval('b1')).rejects.toThrow(BlockchainException);
+      await expect(service.addApproval('b1')).rejects.toThrow(
+        BlockchainException,
+      );
     });
   });
 

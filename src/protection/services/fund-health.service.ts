@@ -42,7 +42,8 @@ export class FundHealthService {
 
   resolveHealthStatus(healthPercent: number): FundHealthStatus {
     if (healthPercent <= 0) return FundHealthStatus.DEPLETED;
-    if (healthPercent < HEALTH_WARNING_THRESHOLD) return FundHealthStatus.CRITICAL;
+    if (healthPercent < HEALTH_WARNING_THRESHOLD)
+      return FundHealthStatus.CRITICAL;
     if (healthPercent < 50) return FundHealthStatus.WARNING;
     return FundHealthStatus.HEALTHY;
   }

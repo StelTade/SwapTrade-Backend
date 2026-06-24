@@ -27,15 +27,24 @@ export class PricePredictionService {
 
     const predictions: AssetPrediction[] = assets.map((asset, idx) => {
       const x = ((seed + idx * 997) % 100000) / 100000; // 0..0.99999
-      const basePrice = asset.startsWith('BTC') ? 45000 : asset.startsWith('ETH') ? 3200 : 1;
+      const basePrice = asset.startsWith('BTC')
+        ? 45000
+        : asset.startsWith('ETH')
+          ? 3200
+          : 1;
       const drift = (x - 0.5) * (asset.startsWith('USDC') ? 0.01 : 0.12);
       const predictedPrice = basePrice * (1 + drift);
-      const confidence = Math.max(0.15, Math.min(0.9, 0.45 + (0.5 - Math.abs(x - 0.5))));
+      const confidence = Math.max(
+        0.15,
+        Math.min(0.9, 0.45 + (0.5 - Math.abs(x - 0.5))),
+      );
 
       return {
         asset,
         horizonDays: 7,
-        predictedPrice: Number(predictedPrice.toFixed(asset.startsWith('USDC') ? 4 : 2)),
+        predictedPrice: Number(
+          predictedPrice.toFixed(asset.startsWith('USDC') ? 4 : 2),
+        ),
         confidence: Number(confidence.toFixed(3)),
       };
     });
@@ -56,4 +65,3 @@ export class PricePredictionService {
     return Math.abs(h);
   }
 }
-

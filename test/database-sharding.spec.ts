@@ -80,7 +80,10 @@ describe('DatabaseShardingService', () => {
     await service.insert(Trade, trade2);
 
     const health = await service.getShardHealth();
-    const totalTrades = Object.values(health).reduce((sum: number, h: any) => sum + (h.tradeCount || 0), 0);
+    const totalTrades = Object.values(health).reduce(
+      (sum: number, h: any) => sum + (h.tradeCount || 0),
+      0,
+    );
 
     expect(totalTrades).toBe(2);
   });

@@ -16,13 +16,21 @@ export class MobileAnalyticsService {
     await this.eventRepo.save(event);
   }
 
-  async trackBatch(userId: string | undefined, dto: BatchTrackDto): Promise<{ tracked: number }> {
-    const events = dto.events.map((e) => this.eventRepo.create({ userId, ...e }));
+  async trackBatch(
+    userId: string | undefined,
+    dto: BatchTrackDto,
+  ): Promise<{ tracked: number }> {
+    const events = dto.events.map((e) =>
+      this.eventRepo.create({ userId, ...e }),
+    );
     await this.eventRepo.save(events);
     return { tracked: events.length };
   }
 
-  async getStats(from: Date, to: Date): Promise<{
+  async getStats(
+    from: Date,
+    to: Date,
+  ): Promise<{
     totalEvents: number;
     byPlatform: Record<string, number>;
     topEvents: Array<{ name: string; count: number }>;

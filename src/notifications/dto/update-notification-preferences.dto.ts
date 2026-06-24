@@ -1,4 +1,10 @@
-import { IsOptional, IsBoolean, IsString, IsObject, IsArray } from 'class-validator';
+import {
+  IsOptional,
+  IsBoolean,
+  IsString,
+  IsObject,
+  IsArray,
+} from 'class-validator';
 import { NotificationEventType } from '../../common/enums/notification-event-type.enum';
 import { NotificationChannel } from '../../common/enums/notification-channel.enum';
 

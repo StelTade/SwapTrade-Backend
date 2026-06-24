@@ -74,6 +74,6 @@ describe('IdentityComplianceService', () => {
     const { service } = make();
     service.raiseFlag('u1', 'dup');
     const r = service.raiseFlag('u1', 'dup');
-    expect(r.riskFlags.filter(f => f === 'dup')).toHaveLength(1);
+    expect(r.riskFlags.filter((f) => f === 'dup')).toHaveLength(1);
   });
 });

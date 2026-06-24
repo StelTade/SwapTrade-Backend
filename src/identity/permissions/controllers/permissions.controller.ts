@@ -68,10 +68,7 @@ export class PermissionsController {
   @RequirePermissions('permissions.manage')
   @ApiOperation({ summary: 'Assign permissions to a role (SUPER_ADMIN only)' })
   @ApiResponse({ status: 200, description: 'Permissions assigned to role' })
-  assignToRole(
-    @Body() dto: AssignPermissionsToRoleDto,
-    @Request() req: any,
-  ) {
+  assignToRole(@Body() dto: AssignPermissionsToRoleDto, @Request() req: any) {
     return this.roleManagement.assignPermissionsToRole(
       dto.roleName,
       dto.permissionSlugs,
@@ -81,11 +78,10 @@ export class PermissionsController {
   @Post('revoke-from-role')
   @Roles(UserRole.SUPER_ADMIN)
   @RequirePermissions('permissions.manage')
-  @ApiOperation({ summary: 'Revoke permissions from a role (SUPER_ADMIN only)' })
-  revokeFromRole(
-    @Body() dto: AssignPermissionsToRoleDto,
-    @Request() req: any,
-  ) {
+  @ApiOperation({
+    summary: 'Revoke permissions from a role (SUPER_ADMIN only)',
+  })
+  revokeFromRole(@Body() dto: AssignPermissionsToRoleDto, @Request() req: any) {
     return this.roleManagement.revokePermissionsFromRole(
       dto.roleName,
       dto.permissionSlugs,

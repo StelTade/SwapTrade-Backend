@@ -49,4 +49,3 @@ describe('AnalyticsExportService', () => {
     expect(out.buffer.length).toBeGreaterThan(0);
   });
 });
-

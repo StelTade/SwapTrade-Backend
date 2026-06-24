@@ -1,8 +1,37 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Order } from '../entities/order.entity';
 import { Trade } from '../../database/entities/trade.entity';
-import { OrderSide, OrderStatus, OrderType } from '../../common/enums/order-type.enum';
+import {
+  OrderSide,
+  OrderStatus,
+  OrderType,
+} from '../../common/enums/order-type.enum';
+
+/**
+ * Event payload emitted on every successful fill in the order book.
+ * The SocialTradingModule listens for this and attempts to mirror the
+ * master's trade to every active CopySubscription targeting the master.
+ *
+ * `masterUserId` is a string UUID (matches JwtPayload.userId shape),
+ * which is WHY OrderBookService carries it alongside the numeric
+ * takerOrder.userId — the order-book engine uses numeric userIds
+ * internally (legacy schema), but social-trading matches against the
+ * User.id UUID. The listener uses masterUserId directly.
+ */
+export interface TradeExecutedEvent {
+  masterUserId: string;
+  assetId: number;
+  side: OrderSide;
+  amount: number;
+  price: number;
+  totalValue: number;
+  /** Order type of the taker — used by followers' orderTypeFilter. */
+  orderType: OrderType;
+  /** Both timestamps in epoch ms so listeners can measure their own lag. */
+  filledAt: number;
+}
 
 export interface FillResult {
   takerOrder: Order;
@@ -43,7 +72,10 @@ export interface OrderBookSnapshot {
 export class OrderBookService {
   private readonly logger = new Logger(OrderBookService.name);
 
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(
+    private readonly dataSource: DataSource,
+    @Optional() private readonly eventEmitter?: EventEmitter2,
+  ) {}
 
   /**
    * Attempts to match `takerOrder` against resting opposite-side LIMIT
@@ -117,6 +149,28 @@ export class OrderBookService {
       });
       await manager.save(Trade, trade);
 
+      // Fire-and-forget event for the social-trading copy-trade listener
+      // (and any future analytics consumers). We emit AFTER the row is
+      // persisted so listeners can SELECT the Trade safely; emitting
+      // before would risk a race where the listener queries and finds
+      // nothing. The listener is responsible for its own transaction
+      // boundary when creating follower orders.
+      //
+      // NOTE: masterUserId is sent as a STRING UUID. OrderBookService
+      // operates on numeric userIds internally (legacy schema), so we
+      // convert here. Listeners must use this string-form masterUserId
+      // for any matching against TraderProfile.userId / User.id.
+      this.eventEmitter?.emit('trading.trade.executed', {
+        masterUserId: String(takerOrder.userId),
+        assetId: takerOrder.assetId,
+        side: takerOrder.side,
+        amount: fillAmount,
+        price: fillPrice,
+        totalValue: fillAmount * fillPrice,
+        orderType: takerOrder.type,
+        filledAt: Date.now(),
+      } satisfies TradeExecutedEvent);
+
       fills.push({ takerOrder, makerOrder, fillAmount, fillPrice });
     }
 
@@ -130,7 +184,8 @@ export class OrderBookService {
 
     // Recompute volume-weighted average fill price.
     const prevNotional = prevFilled * Number(order.averageFillPrice ?? 0);
-    order.averageFillPrice = (prevNotional + fillAmount * fillPrice) / newFilled;
+    order.averageFillPrice =
+      (prevNotional + fillAmount * fillPrice) / newFilled;
     order.filledAmount = newFilled;
 
     if (newFilled >= Number(order.amount)) {

@@ -9,7 +9,11 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { VirtualAsset } from '../../database/entities/virtual-asset.entity';
-import { OrderSide, OrderType, OrderStatus } from '../../common/enums/order-type.enum';
+import {
+  OrderSide,
+  OrderType,
+  OrderStatus,
+} from '../../common/enums/order-type.enum';
 
 /**
  * Order entity — supports market, limit, stop-loss, take-profit,

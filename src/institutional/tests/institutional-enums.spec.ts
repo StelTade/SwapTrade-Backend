@@ -51,19 +51,26 @@ describe('Institutional Enums', () => {
     });
 
     it('should have PLATINUM tier with stricter targets than GOLD', () => {
-      const platinumApi = DEFAULT_SLA_TARGETS[SlaTier.PLATINUM][SlaMetricType.API_RESPONSE_TIME];
-      const goldApi = DEFAULT_SLA_TARGETS[SlaTier.GOLD][SlaMetricType.API_RESPONSE_TIME];
+      const platinumApi =
+        DEFAULT_SLA_TARGETS[SlaTier.PLATINUM][SlaMetricType.API_RESPONSE_TIME];
+      const goldApi =
+        DEFAULT_SLA_TARGETS[SlaTier.GOLD][SlaMetricType.API_RESPONSE_TIME];
       expect(platinumApi.target).toBeLessThan(goldApi.target);
     });
 
     it('should have GOLD tier with stricter targets than SILVER', () => {
-      const goldApi = DEFAULT_SLA_TARGETS[SlaTier.GOLD][SlaMetricType.API_RESPONSE_TIME];
-      const silverApi = DEFAULT_SLA_TARGETS[SlaTier.SILVER][SlaMetricType.API_RESPONSE_TIME];
+      const goldApi =
+        DEFAULT_SLA_TARGETS[SlaTier.GOLD][SlaMetricType.API_RESPONSE_TIME];
+      const silverApi =
+        DEFAULT_SLA_TARGETS[SlaTier.SILVER][SlaMetricType.API_RESPONSE_TIME];
       expect(goldApi.target).toBeLessThan(silverApi.target);
     });
 
     it('should have PLATINUM uptime target at 99.99%', () => {
-      expect(DEFAULT_SLA_TARGETS[SlaTier.PLATINUM][SlaMetricType.SYSTEM_UPTIME].target).toBe(99.99);
+      expect(
+        DEFAULT_SLA_TARGETS[SlaTier.PLATINUM][SlaMetricType.SYSTEM_UPTIME]
+          .target,
+      ).toBe(99.99);
     });
   });
 
@@ -72,20 +79,26 @@ describe('Institutional Enums', () => {
       for (const priority of Object.values(TicketPriority)) {
         for (const tier of Object.values(SlaTier)) {
           expect(TICKET_SLA_RESPONSE_MINUTES[priority][tier]).toBeDefined();
-          expect(TICKET_SLA_RESPONSE_MINUTES[priority][tier]).toBeGreaterThan(0);
+          expect(TICKET_SLA_RESPONSE_MINUTES[priority][tier]).toBeGreaterThan(
+            0,
+          );
         }
       }
     });
 
     it('should have CRITICAL tickets with fastest response times', () => {
-      const criticalPlatinum = TICKET_SLA_RESPONSE_MINUTES[TicketPriority.CRITICAL][SlaTier.PLATINUM];
-      const lowPlatinum = TICKET_SLA_RESPONSE_MINUTES[TicketPriority.LOW][SlaTier.PLATINUM];
+      const criticalPlatinum =
+        TICKET_SLA_RESPONSE_MINUTES[TicketPriority.CRITICAL][SlaTier.PLATINUM];
+      const lowPlatinum =
+        TICKET_SLA_RESPONSE_MINUTES[TicketPriority.LOW][SlaTier.PLATINUM];
       expect(criticalPlatinum).toBeLessThan(lowPlatinum);
     });
 
     it('should have PLATINUM tier with fastest response times', () => {
-      const platinum = TICKET_SLA_RESPONSE_MINUTES[TicketPriority.HIGH][SlaTier.PLATINUM];
-      const silver = TICKET_SLA_RESPONSE_MINUTES[TicketPriority.HIGH][SlaTier.SILVER];
+      const platinum =
+        TICKET_SLA_RESPONSE_MINUTES[TicketPriority.HIGH][SlaTier.PLATINUM];
+      const silver =
+        TICKET_SLA_RESPONSE_MINUTES[TicketPriority.HIGH][SlaTier.SILVER];
       expect(platinum).toBeLessThan(silver);
     });
   });
@@ -95,7 +108,9 @@ describe('Institutional Enums', () => {
       for (const priority of Object.values(TicketPriority)) {
         for (const tier of Object.values(SlaTier)) {
           expect(TICKET_SLA_RESOLUTION_MINUTES[priority][tier]).toBeDefined();
-          expect(TICKET_SLA_RESOLUTION_MINUTES[priority][tier]).toBeGreaterThan(0);
+          expect(TICKET_SLA_RESOLUTION_MINUTES[priority][tier]).toBeGreaterThan(
+            0,
+          );
         }
       }
     });
@@ -114,19 +129,32 @@ describe('Institutional Enums', () => {
   describe('Ticket enums', () => {
     it('should define all ticket statuses', () => {
       expect(Object.values(TicketStatus)).toEqual([
-        'OPEN', 'IN_PROGRESS', 'WAITING_ON_CLIENT', 'ESCALATED', 'RESOLVED', 'CLOSED',
+        'OPEN',
+        'IN_PROGRESS',
+        'WAITING_ON_CLIENT',
+        'ESCALATED',
+        'RESOLVED',
+        'CLOSED',
       ]);
     });
 
     it('should define all ticket priorities', () => {
       expect(Object.values(TicketPriority)).toEqual([
-        'LOW', 'MEDIUM', 'HIGH', 'CRITICAL',
+        'LOW',
+        'MEDIUM',
+        'HIGH',
+        'CRITICAL',
       ]);
     });
 
     it('should define all ticket categories', () => {
       expect(Object.values(TicketCategory)).toEqual([
-        'GENERAL', 'TRADING', 'TECHNICAL', 'COMPLIANCE', 'BILLING', 'ONBOARDING',
+        'GENERAL',
+        'TRADING',
+        'TECHNICAL',
+        'COMPLIANCE',
+        'BILLING',
+        'ONBOARDING',
       ]);
     });
   });
@@ -134,13 +162,19 @@ describe('Institutional Enums', () => {
   describe('Reconciliation enums', () => {
     it('should define all report statuses', () => {
       expect(Object.values(ReconciliationReportStatus)).toEqual([
-        'PENDING', 'GENERATING', 'COMPLETED', 'FAILED',
+        'PENDING',
+        'GENERATING',
+        'COMPLETED',
+        'FAILED',
       ]);
     });
 
     it('should define all report types', () => {
       expect(Object.values(ReconciliationReportType)).toEqual([
-        'DAILY', 'WEEKLY', 'MONTHLY', 'CUSTOM',
+        'DAILY',
+        'WEEKLY',
+        'MONTHLY',
+        'CUSTOM',
       ]);
     });
   });

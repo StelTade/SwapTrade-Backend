@@ -15,14 +15,16 @@ export class RegisterDto {
   @MaxLength(30, { message: 'Username must be at most 30 characters' })
   username: string;
 
-  @ApiProperty({ example: 'john@example.com', description: 'User email address' })
+  @ApiProperty({
+    example: 'john@example.com',
+    description: 'User email address',
+  })
   @IsEmail({}, { message: 'Invalid email format' })
   email: string;
 
   @ApiProperty({
     example: 'StrongPassword123!',
-    description:
-      'Password (min 8 chars, uppercase, number, special character)',
+    description: 'Password (min 8 chars, uppercase, number, special character)',
   })
   @IsString()
   @MinLength(8, { message: 'Password must be at least 8 characters' })

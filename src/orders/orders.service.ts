@@ -75,13 +75,15 @@ export class OrdersService {
         amount: dto.amount,
         filledAmount: 0,
         averageFillPrice: null,
-        price: dto.type === OrderType.LIMIT ? dto.price ?? null : null,
+        price: dto.type === OrderType.LIMIT ? (dto.price ?? null) : null,
         stopPrice:
           dto.type === OrderType.STOP_LOSS || dto.type === OrderType.TAKE_PROFIT
-            ? dto.stopPrice ?? null
+            ? (dto.stopPrice ?? null)
             : null,
         trailingDelta:
-          dto.type === OrderType.TRAILING_STOP ? dto.trailingDelta ?? null : null,
+          dto.type === OrderType.TRAILING_STOP
+            ? (dto.trailingDelta ?? null)
+            : null,
         trailingReferencePrice: null,
         status: OrderStatus.PENDING,
         expiresAt: dto.expiresInSeconds
@@ -114,7 +116,7 @@ export class OrdersService {
 
       if (!existing) throw new NotFoundException('Order not found');
       if (existing.userId !== userId) {
-        throw new ForbiddenException('Cannot cancel another user\'s order');
+        throw new ForbiddenException("Cannot cancel another user's order");
       }
       if (
         existing.status === OrderStatus.FILLED ||
@@ -162,7 +164,7 @@ export class OrdersService {
 
       if (!existing) throw new NotFoundException('Order not found');
       if (existing.userId !== userId) {
-        throw new ForbiddenException('Cannot modify another user\'s order');
+        throw new ForbiddenException("Cannot modify another user's order");
       }
       if (
         existing.status !== OrderStatus.PENDING &&
@@ -253,15 +255,12 @@ export class OrdersService {
     });
     if (!order) throw new NotFoundException('Order not found');
     if (order.userId !== userId) {
-      throw new ForbiddenException('Cannot view another user\'s order');
+      throw new ForbiddenException("Cannot view another user's order");
     }
     return order;
   }
 
-  async getUserOrders(
-    userId: number,
-    status?: OrderStatus,
-  ): Promise<Order[]> {
+  async getUserOrders(userId: number, status?: OrderStatus): Promise<Order[]> {
     const where: any = { userId };
     if (status) where.status = status;
     return this.dataSource.getRepository(Order).find({
@@ -282,7 +281,7 @@ export class OrdersService {
   private broadcastOrder(order: Order): void {
     const statusMap: Record<OrderStatus, OrderUpdate['status']> = {
       [OrderStatus.PENDING]: 'pending',
-    [OrderStatus.PARTIAL]: 'partially_filled',
+      [OrderStatus.PARTIAL]: 'partially_filled',
       [OrderStatus.FILLED]: 'filled',
       [OrderStatus.CANCELLED]: 'cancelled',
       [OrderStatus.TRIGGERED]: 'pending',
@@ -310,7 +309,8 @@ export class OrdersService {
       throw new BadRequestException('price is required for LIMIT orders');
     }
     if (
-      (dto.type === OrderType.STOP_LOSS || dto.type === OrderType.TAKE_PROFIT) &&
+      (dto.type === OrderType.STOP_LOSS ||
+        dto.type === OrderType.TAKE_PROFIT) &&
       dto.stopPrice == null
     ) {
       throw new BadRequestException(

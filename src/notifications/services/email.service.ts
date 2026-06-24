@@ -29,17 +29,25 @@ export class EmailService {
   async sendEmail(notification: Notification): Promise<boolean> {
     try {
       const mailOptions = {
-        from: this.configService.get<string>('EMAIL_FROM', 'notifications@swaptrade.com'),
+        from: this.configService.get<string>(
+          'EMAIL_FROM',
+          'notifications@swaptrade.com',
+        ),
         to: notification.recipient,
         subject: notification.subject,
         html: notification.body,
       };
 
       const info = await this.transporter.sendMail(mailOptions);
-      this.logger.log(`Email sent to ${notification.recipient}, messageId: ${info.messageId}`);
+      this.logger.log(
+        `Email sent to ${notification.recipient}, messageId: ${info.messageId}`,
+      );
       return true;
     } catch (error) {
-      this.logger.error(`Failed to send email to ${notification.recipient}`, error.stack);
+      this.logger.error(
+        `Failed to send email to ${notification.recipient}`,
+        error.stack,
+      );
       throw error;
     }
   }

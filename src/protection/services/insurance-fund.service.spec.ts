@@ -35,8 +35,14 @@ describe('InsuranceFundService', () => {
           useValue: fundHealthService,
         },
         { provide: getRepositoryToken(InsuranceFund), useFactory: mockRepo },
-        { provide: getRepositoryToken(InsuranceFundTier), useFactory: mockRepo },
-        { provide: getRepositoryToken(InsuranceTransaction), useFactory: mockRepo },
+        {
+          provide: getRepositoryToken(InsuranceFundTier),
+          useFactory: mockRepo,
+        },
+        {
+          provide: getRepositoryToken(InsuranceTransaction),
+          useFactory: mockRepo,
+        },
       ],
     }).compile();
 

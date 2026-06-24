@@ -11,7 +11,9 @@ export class PushService {
       this.pushSubscriptions.set(userId, new Set());
     }
     this.pushSubscriptions.get(userId)!.add(socketId);
-    this.logger.log(`User ${userId} registered for push notifications with socket ${socketId}`);
+    this.logger.log(
+      `User ${userId} registered for push notifications with socket ${socketId}`,
+    );
   }
 
   unregisterDevice(userId: string, socketId: string) {
@@ -20,16 +22,23 @@ export class PushService {
       if (this.pushSubscriptions.get(userId)!.size === 0) {
         this.pushSubscriptions.delete(userId);
       }
-      this.logger.log(`User ${userId} unregistered from push notifications for socket ${socketId}`);
+      this.logger.log(
+        `User ${userId} unregistered from push notifications for socket ${socketId}`,
+      );
     }
   }
 
-  async sendPushNotification(notification: Notification, socketServer?: any): Promise<boolean> {
+  async sendPushNotification(
+    notification: Notification,
+    socketServer?: any,
+  ): Promise<boolean> {
     try {
       const userSubscriptions = this.pushSubscriptions.get(notification.userId);
-      
+
       if (!userSubscriptions || userSubscriptions.size === 0) {
-        this.logger.warn(`No active push subscriptions for user ${notification.userId}`);
+        this.logger.warn(
+          `No active push subscriptions for user ${notification.userId}`,
+        );
         return false;
       }
 
@@ -41,18 +50,23 @@ export class PushService {
           createdAt: notification.createdAt,
         };
 
-        userSubscriptions.forEach(socketId => {
+        userSubscriptions.forEach((socketId) => {
           socketServer.to(socketId).emit('notification', payload);
         });
 
-        this.logger.log(`Push notification sent to user ${notification.userId} to ${userSubscriptions.size} connected devices`);
+        this.logger.log(
+          `Push notification sent to user ${notification.userId} to ${userSubscriptions.size} connected devices`,
+        );
         return true;
       } else {
         this.logger.warn('Socket server not available for push notifications');
         return false;
       }
     } catch (error) {
-      this.logger.error(`Failed to send push notification to user ${notification.userId}`, error.stack);
+      this.logger.error(
+        `Failed to send push notification to user ${notification.userId}`,
+        error.stack,
+      );
       throw error;
     }
   }

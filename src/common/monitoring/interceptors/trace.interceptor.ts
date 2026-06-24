@@ -50,8 +50,7 @@ export class TraceInterceptor implements NestInterceptor {
     const className = executionContext.getClass().name;
     const handlerName = handler.name;
 
-    const spanName =
-      options?.name ?? `${className}.${handlerName}`;
+    const spanName = options?.name ?? `${className}.${handlerName}`;
 
     const spanKind = this.resolveKind(options?.kind);
 
@@ -100,9 +99,7 @@ export class TraceInterceptor implements NestInterceptor {
     });
   }
 
-  private resolveKind(
-    kind?: TraceOptions['kind'],
-  ): SpanKind {
+  private resolveKind(kind?: TraceOptions['kind']): SpanKind {
     switch (kind) {
       case 'SERVER':
         return SpanKind.SERVER;

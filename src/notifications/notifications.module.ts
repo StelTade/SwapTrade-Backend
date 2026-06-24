@@ -18,10 +18,7 @@ import { NotificationEventListeners } from './usage-examples';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      Notification,
-      UserNotificationPreferences,
-    ]),
+    TypeOrmModule.forFeature([Notification, UserNotificationPreferences]),
     BullModule.registerQueue({
       name: QueueName.NOTIFICATIONS,
     }),

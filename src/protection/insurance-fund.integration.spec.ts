@@ -39,8 +39,8 @@ describe('Insurance Fund Integration', () => {
     fundIdCounter = 1;
 
     const tierRepo = {
-      findOne: jest.fn(async ({ where }) =>
-        tiers.find((t) => t.tier === where.tier) ?? null,
+      findOne: jest.fn(
+        async ({ where }) => tiers.find((t) => t.tier === where.tier) ?? null,
       ),
       find: jest.fn(async () => tiers),
       create: jest.fn((d) => d),
@@ -169,9 +169,9 @@ describe('Insurance Fund Integration', () => {
       history.some((t) => t.type === InsuranceTxType.FEE_CONTRIBUTION),
     ).toBe(true);
     expect(history.some((t) => t.type === InsuranceTxType.PAYOUT)).toBe(true);
-    expect(
-      history.some((t) => t.type === InsuranceTxType.REPLENISHMENT),
-    ).toBe(true);
+    expect(history.some((t) => t.type === InsuranceTxType.REPLENISHMENT)).toBe(
+      true,
+    );
   });
 
   it('should trigger health alert when reserves drop below 20%', async () => {

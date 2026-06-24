@@ -53,4 +53,3 @@ export class UserBehaviorAnalysisService {
     return Math.abs(h);
   }
 }
-

@@ -19,7 +19,9 @@ export class WithdrawDto {
   @IsEnum(BlockchainNetwork)
   network: BlockchainNetwork;
 
-  @ApiProperty({ example: 'GBXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX' })
+  @ApiProperty({
+    example: 'GBXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
+  })
   @IsString()
   @IsNotEmpty()
   toAddress: string;

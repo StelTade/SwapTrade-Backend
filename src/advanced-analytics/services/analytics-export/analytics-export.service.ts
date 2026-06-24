@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import * as XLSX from 'xlsx';
 
-
 @Injectable()
 export class AnalyticsExportService {
   async exportAnalytics(
@@ -61,4 +60,3 @@ export class AnalyticsExportService {
     };
   }
 }
-

@@ -1,9 +1,4 @@
-import {
-  IsOptional,
-  IsEnum,
-  IsDateString,
-  IsUUID,
-} from 'class-validator';
+import { IsOptional, IsEnum, IsDateString, IsUUID } from 'class-validator';
 
 /**
  * DTO for requesting a reconciliation report.

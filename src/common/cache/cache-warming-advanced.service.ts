@@ -79,7 +79,11 @@ export class AdvancedCacheWarmingService {
     }
 
     const value = await loader();
-    await this.cacheService.set(key, { value, cachedAt: Date.now() }, ttlSeconds);
+    await this.cacheService.set(
+      key,
+      { value, cachedAt: Date.now() },
+      ttlSeconds,
+    );
     return value;
   }
 
@@ -115,7 +119,11 @@ export class AdvancedCacheWarmingService {
     const start = Date.now();
     const keys = [...(this.tagIndex.get(tag) ?? [])];
     await Promise.allSettled(keys.map((key) => this.cacheService.del(key)));
-    return { tag, keysInvalidated: keys.length, durationMs: Date.now() - start };
+    return {
+      tag,
+      keysInvalidated: keys.length,
+      durationMs: Date.now() - start,
+    };
   }
 
   private async warmOne(entry: WarmingEntry): Promise<void> {

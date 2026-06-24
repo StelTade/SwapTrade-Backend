@@ -1,4 +1,7 @@
-export const GOVERNANCE_PARAMS: Record<string, { value: number; description: string }> = {
+export const GOVERNANCE_PARAMS: Record<
+  string,
+  { value: number; description: string }
+> = {
   VOTING_PERIOD_DAYS: {
     value: 7,
     description: 'Default voting period in days',
@@ -39,8 +42,6 @@ export const GOVERNANCE_CONFIG_KEYS: Record<string, number> = {
   EMERGENCY_VOTING_PERIOD_DAYS: 1,
 };
 
-export const getDefaultConfig = (
-  key: string,
-): number => {
+export const getDefaultConfig = (key: string): number => {
   return GOVERNANCE_CONFIG_KEYS[key] ?? 0;
 };

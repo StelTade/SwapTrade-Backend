@@ -7,9 +7,11 @@ describe('PortfolioRiskScoringService', () => {
 
     expect(r.riskScore).toBeGreaterThanOrEqual(0);
     expect(r.riskScore).toBeLessThanOrEqual(100);
-    expect(r.riskLevel).toBe(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].includes(r.riskLevel)
-      ? r.riskLevel
-      : r.riskLevel);
+    expect(r.riskLevel).toBe(
+      ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].includes(r.riskLevel)
+        ? r.riskLevel
+        : r.riskLevel,
+    );
 
     expect(r.annualizedVolatility).toBeGreaterThan(0);
     expect(r.maxDrawdownEstimate).toBeGreaterThan(0);
@@ -38,4 +40,3 @@ describe('PortfolioRiskScoringService', () => {
     expect(recLow.strategy).toBe('Maintain and optimize returns');
   });
 });
-

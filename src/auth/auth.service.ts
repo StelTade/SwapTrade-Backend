@@ -64,12 +64,16 @@ export class AuthService {
   // ─── Registration ───────────────────────────────────────────────────────────
 
   async register(dto: RegisterDto, correlationId?: string) {
-    const existing = await this.authRepo.findOne({ where: { email: dto.email } });
+    const existing = await this.authRepo.findOne({
+      where: { email: dto.email },
+    });
     if (existing) {
       throw new ConflictException('An account with this email already exists');
     }
 
-    const usernameExists = await this.userRepo.findOne({ where: { email: dto.email } });
+    const usernameExists = await this.userRepo.findOne({
+      where: { email: dto.email },
+    });
     if (usernameExists) {
       throw new ConflictException('Email already in use');
     }
@@ -115,7 +119,8 @@ export class AuthService {
     this.logger.log(`User registered: ${auth.email}`);
 
     return {
-      message: 'Registration successful. Please check your email to activate your account.',
+      message:
+        'Registration successful. Please check your email to activate your account.',
       userId: user.id,
       // NOTE: In production, remove activationToken from response and send via email only
       activationToken,
@@ -128,8 +133,12 @@ export class AuthService {
     const auth = await this.authRepo.findOne({
       where: { activationToken: token },
       select: [
-        'id', 'email', 'status', 'activationToken',
-        'activationTokenExpiry', 'staffId',
+        'id',
+        'email',
+        'status',
+        'activationToken',
+        'activationTokenExpiry',
+        'staffId',
       ],
     });
 
@@ -172,15 +181,24 @@ export class AuthService {
 
     // Account status checks
     if (auth.status === AccountStatus.INACTIVE) {
-      throw new UnauthorizedException('Account not yet activated. Please check your email.');
+      throw new UnauthorizedException(
+        'Account not yet activated. Please check your email.',
+      );
     }
     if (auth.status === AccountStatus.SUSPENDED) {
-      throw new ForbiddenException('Account has been suspended. Please contact support.');
+      throw new ForbiddenException(
+        'Account has been suspended. Please contact support.',
+      );
     }
     if (auth.status === AccountStatus.LOCKED) {
-      const lockoutDuration = this.configService.get<number>('AUTH_LOCKOUT_DURATION', 900000);
+      const lockoutDuration = this.configService.get<number>(
+        'AUTH_LOCKOUT_DURATION',
+        900000,
+      );
       if (auth.lockedUntil && auth.lockedUntil > new Date()) {
-        const retryAfterSeconds = Math.ceil((auth.lockedUntil.getTime() - Date.now()) / 1000);
+        const retryAfterSeconds = Math.ceil(
+          (auth.lockedUntil.getTime() - Date.now()) / 1000,
+        );
         throw new ForbiddenException(
           `Account is temporarily locked. Try again in ${retryAfterSeconds} seconds.`,
         );
@@ -234,7 +252,9 @@ export class AuthService {
       ipAddress,
       userAgent,
       expiresAt: new Date(
-        Date.now() + this.configService.get<number>('JWT_REFRESH_EXPIRES_IN', 604800) * 1000,
+        Date.now() +
+          this.configService.get<number>('JWT_REFRESH_EXPIRES_IN', 604800) *
+            1000,
       ),
     });
     await this.sessionRepo.save(session);
@@ -283,7 +303,10 @@ export class AuthService {
     }
 
     // Revoke all active sessions for security — or only the current session
-    await this.sessionRepo.update({ authId, revoked: false }, { revoked: true });
+    await this.sessionRepo.update(
+      { authId, revoked: false },
+      { revoked: true },
+    );
 
     const auth = await this.authRepo.findOne({ where: { id: authId } });
     if (auth) {
@@ -304,9 +327,12 @@ export class AuthService {
     let payload: JwtPayload;
 
     try {
-      payload = await this.jwtService.verifyAsync<JwtPayload>(dto.refreshToken, {
-        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-      });
+      payload = await this.jwtService.verifyAsync<JwtPayload>(
+        dto.refreshToken,
+        {
+          secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+        },
+      );
     } catch {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
@@ -332,7 +358,9 @@ export class AuthService {
       // Possible token reuse — revoke all sessions
       await this.sessionRepo.update({ authId: auth.id }, { revoked: true });
       await this.authRepo.update({ id: auth.id }, { refreshTokenHashes: [] });
-      throw new UnauthorizedException('Refresh token reuse detected. All sessions invalidated.');
+      throw new UnauthorizedException(
+        'Refresh token reuse detected. All sessions invalidated.',
+      );
     }
 
     const user = await this.userRepo.findOne({ where: { authId: auth.id } });
@@ -346,7 +374,10 @@ export class AuthService {
     const newHash = this.hashToken(tokens.refreshToken);
     const updatedHashes = storedHashes.filter((h) => h !== hash);
     updatedHashes.push(newHash);
-    await this.authRepo.update({ id: auth.id }, { refreshTokenHashes: updatedHashes.slice(-10) });
+    await this.authRepo.update(
+      { id: auth.id },
+      { refreshTokenHashes: updatedHashes.slice(-10) },
+    );
 
     return {
       accessToken: tokens.accessToken,
@@ -364,7 +395,8 @@ export class AuthService {
     // Always return 200 to prevent email enumeration
     if (!auth) {
       return {
-        message: 'If an account with that email exists, a reset link has been sent.',
+        message:
+          'If an account with that email exists, a reset link has been sent.',
       };
     }
 
@@ -384,7 +416,8 @@ export class AuthService {
     this.logger.log(`Password reset requested for: ${auth.email}`);
 
     return {
-      message: 'If an account with that email exists, a reset link has been sent.',
+      message:
+        'If an account with that email exists, a reset link has been sent.',
       // NOTE: In production remove this and send via email only
       resetToken: token,
     };
@@ -490,7 +523,10 @@ export class AuthService {
   }
 
   async revokeAllSessions(authId: string) {
-    await this.sessionRepo.update({ authId, revoked: false }, { revoked: true });
+    await this.sessionRepo.update(
+      { authId, revoked: false },
+      { revoked: true },
+    );
     await this.authRepo.update({ id: authId }, { refreshTokenHashes: [] });
 
     return { message: 'All sessions revoked successfully' };
@@ -512,7 +548,7 @@ export class AuthService {
       await this.authRepo.save(auth);
 
       const qrcode = await import('qrcode');
-      const qrCodeDataUrl = await qrcode.toDataURL(secret.otpauth_url!);
+      const qrCodeDataUrl = await qrcode.toDataURL(secret.otpauth_url);
 
       return {
         method: 'totp',
@@ -535,7 +571,11 @@ export class AuthService {
       // TODO: send via SMS provider
       this.logger.log(`SMS code generated for ${auth.email}: ${code}`);
 
-      return { method: 'sms', message: 'SMS code sent', phoneNumber: dto.phoneNumber };
+      return {
+        method: 'sms',
+        message: 'SMS code sent',
+        phoneNumber: dto.phoneNumber,
+      };
     }
 
     throw new BadRequestException('Unsupported 2FA method');
@@ -602,8 +642,14 @@ export class AuthService {
   // ─── Helpers ─────────────────────────────────────────────────────────────────
 
   private async handleFailedLogin(auth: Auth) {
-    const maxAttempts = this.configService.get<number>('AUTH_MAX_LOGIN_ATTEMPTS', 5);
-    const lockoutDuration = this.configService.get<number>('AUTH_LOCKOUT_DURATION', 900000);
+    const maxAttempts = this.configService.get<number>(
+      'AUTH_MAX_LOGIN_ATTEMPTS',
+      5,
+    );
+    const lockoutDuration = this.configService.get<number>(
+      'AUTH_LOCKOUT_DURATION',
+      900000,
+    );
 
     auth.failedLoginAttempts = (auth.failedLoginAttempts ?? 0) + 1;
 
@@ -670,7 +716,10 @@ export class AuthService {
       }),
       this.jwtService.signAsync(refreshPayload, {
         secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-        expiresIn: this.configService.get<number>('JWT_REFRESH_EXPIRES_IN', 604800),
+        expiresIn: this.configService.get<number>(
+          'JWT_REFRESH_EXPIRES_IN',
+          604800,
+        ),
       }),
     ]);
 

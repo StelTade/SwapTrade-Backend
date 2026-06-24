@@ -5,7 +5,14 @@ import { IsOptional, IsEnum, IsInt, Min, Max } from 'class-validator';
  */
 export class SupportTicketFilterDto {
   @IsOptional()
-  @IsEnum(['OPEN', 'IN_PROGRESS', 'WAITING_ON_CLIENT', 'ESCALATED', 'RESOLVED', 'CLOSED'])
+  @IsEnum([
+    'OPEN',
+    'IN_PROGRESS',
+    'WAITING_ON_CLIENT',
+    'ESCALATED',
+    'RESOLVED',
+    'CLOSED',
+  ])
   status?: string;
 
   @IsOptional()
@@ -13,7 +20,14 @@ export class SupportTicketFilterDto {
   priority?: string;
 
   @IsOptional()
-  @IsEnum(['GENERAL', 'TRADING', 'TECHNICAL', 'COMPLIANCE', 'BILLING', 'ONBOARDING'])
+  @IsEnum([
+    'GENERAL',
+    'TRADING',
+    'TECHNICAL',
+    'COMPLIANCE',
+    'BILLING',
+    'ONBOARDING',
+  ])
   category?: string;
 
   @IsOptional()

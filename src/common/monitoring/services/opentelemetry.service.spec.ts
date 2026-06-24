@@ -185,8 +185,7 @@ describe('OpenTelemetryService', () => {
       });
 
       const ctx = service.extractTraceContext({
-        traceparent:
-          '00-aabbccddaabbccddaabbccddaabbccdd-1122334455667788-01',
+        traceparent: '00-aabbccddaabbccddaabbccddaabbccdd-1122334455667788-01',
       });
 
       // Should at minimum contain a correlationId
@@ -194,14 +193,11 @@ describe('OpenTelemetryService', () => {
     });
 
     it('falls back to manual parsing when propagation returns no span', () => {
-      jest
-        .spyOn(propagation, 'extract')
-        .mockReturnValue(ROOT_CONTEXT);
+      jest.spyOn(propagation, 'extract').mockReturnValue(ROOT_CONTEXT);
       jest.spyOn(trace, 'getSpan').mockReturnValue(undefined);
 
       const ctx = service.extractTraceContext({
-        traceparent:
-          '00-aabbccddaabbccddaabbccddaabbccdd-1122334455667788-01',
+        traceparent: '00-aabbccddaabbccddaabbccddaabbccdd-1122334455667788-01',
       });
 
       expect(ctx.traceId).toBe('aabbccddaabbccddaabbccddaabbccdd');
@@ -209,9 +205,7 @@ describe('OpenTelemetryService', () => {
     });
 
     it('returns a uuid correlationId when no traceparent is present', () => {
-      jest
-        .spyOn(propagation, 'extract')
-        .mockReturnValue(ROOT_CONTEXT);
+      jest.spyOn(propagation, 'extract').mockReturnValue(ROOT_CONTEXT);
       jest.spyOn(trace, 'getSpan').mockReturnValue(undefined);
 
       const ctx = service.extractTraceContext({});
@@ -231,10 +225,7 @@ describe('OpenTelemetryService', () => {
       const carrier: Record<string, string> = {};
       service.injectTraceContext(carrier);
 
-      expect(injectSpy).toHaveBeenCalledWith(
-        context.active(),
-        carrier,
-      );
+      expect(injectSpy).toHaveBeenCalledWith(context.active(), carrier);
     });
   });
 

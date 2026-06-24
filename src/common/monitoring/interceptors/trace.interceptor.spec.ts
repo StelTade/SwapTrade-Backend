@@ -1,7 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Reflector } from '@nestjs/core';
 import { TraceInterceptor } from './trace.interceptor';
-import { TRACE_METADATA_KEY, TraceOptions } from '../decorators/trace.decorator';
+import {
+  TRACE_METADATA_KEY,
+  TraceOptions,
+} from '../decorators/trace.decorator';
 import { ExecutionContext, CallHandler } from '@nestjs/common';
 import { of, throwError } from 'rxjs';
 import { trace, SpanKind, SpanStatusCode } from '@opentelemetry/api';
@@ -63,7 +66,7 @@ describe('TraceInterceptor', () => {
     it('starts an active span with the custom name', (done) => {
       jest
         .spyOn(reflector, 'getAllAndOverride')
-        .mockReturnValue({ name: 'custom.operation' } as TraceOptions);
+        .mockReturnValue({ name: 'custom.operation' });
 
       const ctx = buildContext();
       const handler = buildCallHandler(of('result'));
@@ -82,9 +85,7 @@ describe('TraceInterceptor', () => {
     });
 
     it('uses className.handlerName when no name is provided', (done) => {
-      jest
-        .spyOn(reflector, 'getAllAndOverride')
-        .mockReturnValue({} as TraceOptions);
+      jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue({});
 
       const ctx = buildContext();
       const handler = buildCallHandler(of('ok'));
@@ -102,7 +103,7 @@ describe('TraceInterceptor', () => {
     it('sets OK status on successful completion', (done) => {
       jest
         .spyOn(reflector, 'getAllAndOverride')
-        .mockReturnValue({ name: 'op' } as TraceOptions);
+        .mockReturnValue({ name: 'op' });
 
       const ctx = buildContext();
       const handler = buildCallHandler(of('ok'));
@@ -122,7 +123,7 @@ describe('TraceInterceptor', () => {
     it('records exception and sets ERROR status on handler error', (done) => {
       jest
         .spyOn(reflector, 'getAllAndOverride')
-        .mockReturnValue({ name: 'op' } as TraceOptions);
+        .mockReturnValue({ name: 'op' });
 
       const err = new Error('handler-fail');
       const ctx = buildContext();
@@ -145,7 +146,7 @@ describe('TraceInterceptor', () => {
       jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue({
         name: 'client.call',
         kind: 'CLIENT',
-      } as TraceOptions);
+      });
 
       const ctx = buildContext();
       const handler = buildCallHandler(of('ok'));
@@ -167,7 +168,7 @@ describe('TraceInterceptor', () => {
       jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue({
         name: 'trade.create',
         attributes: { 'trade.type': 'limit' },
-      } as TraceOptions);
+      });
 
       const ctx = buildContext();
       const handler = buildCallHandler(of('ok'));
@@ -190,9 +191,7 @@ describe('TraceInterceptor', () => {
 
   describe('when @Trace decorator is absent', () => {
     it('passes through without creating a span', (done) => {
-      jest
-        .spyOn(reflector, 'getAllAndOverride')
-        .mockReturnValue(undefined);
+      jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(undefined);
 
       const ctx = buildContext();
       const handler = buildCallHandler(of('passthrough'));

@@ -493,7 +493,8 @@ export class PerformanceMonitoringService implements OnModuleInit {
             balanceCount: health.balanceCount,
             replicaCount,
             healthyReplicas,
-            replicationFactor: replicaCount > 0 ? healthyReplicas / replicaCount : 1,
+            replicationFactor:
+              replicaCount > 0 ? healthyReplicas / replicaCount : 1,
             lastChecked: health.lastChecked,
           };
         },

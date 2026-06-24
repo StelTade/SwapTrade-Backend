@@ -20,9 +20,7 @@ import { trace, SpanKind, SpanStatusCode, context } from '@opentelemetry/api';
  */
 @Injectable()
 @EventSubscriber()
-export class TypeOrmTracingSubscriber
-  implements EntitySubscriberInterface
-{
+export class TypeOrmTracingSubscriber implements EntitySubscriberInterface {
   private readonly logger = new Logger(TypeOrmTracingSubscriber.name);
 
   constructor(@InjectDataSource() private readonly dataSource: DataSource) {
@@ -103,7 +101,18 @@ export class TypeOrmTracingSubscriber
 
   private extractOperation(query: string): string {
     const trimmed = query.trimStart().toUpperCase();
-    for (const op of ['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP', 'ALTER', 'BEGIN', 'COMMIT', 'ROLLBACK']) {
+    for (const op of [
+      'SELECT',
+      'INSERT',
+      'UPDATE',
+      'DELETE',
+      'CREATE',
+      'DROP',
+      'ALTER',
+      'BEGIN',
+      'COMMIT',
+      'ROLLBACK',
+    ]) {
       if (trimmed.startsWith(op)) return op;
     }
     return 'QUERY';

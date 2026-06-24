@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -90,7 +86,7 @@ export class ReconciliationService {
       const trades = await this.tradeRepo.find({
         where: {
           userId: Number(client.userId),
-          createdAt: Between(dayStart, dayEnd) as any,
+          createdAt: Between(dayStart, dayEnd),
         },
         order: { createdAt: 'ASC' },
       });
@@ -99,7 +95,7 @@ export class ReconciliationService {
       const orders = await this.orderRepo.find({
         where: {
           userId: client.userId,
-          createdAt: Between(dayStart, dayEnd) as any,
+          createdAt: Between(dayStart, dayEnd),
         },
       });
 
@@ -110,7 +106,9 @@ export class ReconciliationService {
       let netPnl = 0;
 
       for (const trade of trades) {
-        const value = Number(trade.totalValue) || Number(trade.amount) * Number(trade.price);
+        const value =
+          Number(trade.totalValue) ||
+          Number(trade.amount) * Number(trade.price);
         if (trade.type === 'BUY') {
           totalBuyVolume += value;
         } else {
@@ -142,9 +140,13 @@ export class ReconciliationService {
       // Store metadata
       report.metadata = JSON.stringify({
         totalOrders: orders.length,
-        filledOrders: orders.filter((o) => o.status === OrderStatus.FILLED).length,
-        cancelledOrders: orders.filter((o) => o.status === OrderStatus.CANCELLED).length,
-        partialOrders: orders.filter((o) => o.status === OrderStatus.PARTIAL).length,
+        filledOrders: orders.filter((o) => o.status === OrderStatus.FILLED)
+          .length,
+        cancelledOrders: orders.filter(
+          (o) => o.status === OrderStatus.CANCELLED,
+        ).length,
+        partialOrders: orders.filter((o) => o.status === OrderStatus.PARTIAL)
+          .length,
         assets: [...new Set(trades.map((t) => t.asset))],
         generatedAt: new Date().toISOString(),
       });
@@ -153,7 +155,7 @@ export class ReconciliationService {
 
       this.logger.log(
         `Reconciliation report generated for client ${dto.institutionalClientId} on ${dto.reportDate}: ` +
-        `${trades.length} trades, discrepancy=${discrepancy}`,
+          `${trades.length} trades, discrepancy=${discrepancy}`,
       );
 
       return report;
@@ -241,7 +243,9 @@ export class ReconciliationService {
   async getReportById(reportId: string): Promise<ReconciliationReport> {
     const report = await this.reportRepo.findOne({ where: { id: reportId } });
     if (!report) {
-      throw new NotFoundException(`Reconciliation report ${reportId} not found`);
+      throw new NotFoundException(
+        `Reconciliation report ${reportId} not found`,
+      );
     }
     return report;
   }

@@ -106,7 +106,9 @@ export class AuthController {
   @Public()
   @Post('token/refresh')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Rotate refresh token and obtain new access + refresh tokens' })
+  @ApiOperation({
+    summary: 'Rotate refresh token and obtain new access + refresh tokens',
+  })
   @ApiResponse({ status: 200, description: 'Tokens refreshed' })
   refreshToken(@Body() dto: RefreshTokenDto) {
     return this.authService.refreshTokens(dto);
@@ -118,7 +120,10 @@ export class AuthController {
   @Post('password/forgot')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Request a password reset link' })
-  @ApiResponse({ status: 200, description: 'Reset link sent (if email exists)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Reset link sent (if email exists)',
+  })
   forgotPassword(@Body() dto: ForgotPasswordDto) {
     return this.authService.forgotPassword(dto);
   }
@@ -190,7 +195,10 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Verify and activate 2FA after setup' })
   @ApiResponse({ status: 200, description: '2FA enabled' })
-  verify2FASetup(@CurrentUser() user: JwtPayload, @Body() dto: Verify2FASetupDto) {
+  verify2FASetup(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: Verify2FASetupDto,
+  ) {
     return this.authService.verify2FASetup(user.sub, dto);
   }
 

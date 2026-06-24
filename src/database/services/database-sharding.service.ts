@@ -296,10 +296,7 @@ export class DatabaseShardingService {
       }
     } catch (error) {
       // Phase 4: Rollback - if any failed, rollback all
-      this.logger.error(
-        'Cross-shard transaction failed, rolling back:',
-        error,
-      );
+      this.logger.error('Cross-shard transaction failed, rolling back:', error);
       for (const queryRunner of queryRunners.values()) {
         try {
           await queryRunner.rollbackTransaction();
