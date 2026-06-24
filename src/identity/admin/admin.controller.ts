@@ -21,7 +21,7 @@ import { UserRole } from '../roles/enums/user-role.enum';
 
 interface AuthenticatedRequest extends ExpressRequest {
   user: {
-    id: number;
+    id: string;
     roles: UserRole[];
   };
 }
@@ -39,7 +39,7 @@ export class IdentityAdminController {
   @HttpCode(HttpStatus.OK)
   @RequirePermissions('users.write')
   async assignRole(
-    @Param('userId') userId: number,
+    @Param('userId') userId: string,
     @Body() dto: RoleAssignmentDto,
     @Request() req: AuthenticatedRequest,
   ) {
@@ -57,7 +57,7 @@ export class IdentityAdminController {
   @HttpCode(HttpStatus.OK)
   @RequirePermissions('users.write')
   async revokeRole(
-    @Param('userId') userId: number,
+    @Param('userId') userId: string,
     @Param('role') role: UserRole,
     @Request() req: AuthenticatedRequest,
   ) {
@@ -73,7 +73,7 @@ export class IdentityAdminController {
    */
   @Get(':userId/roles')
   @RequirePermissions('users.read')
-  async getUserRoles(@Param('userId') userId: number) {
+  async getUserRoles(@Param('userId') userId: string) {
     return this.roleManagementService.getUserRoles(userId);
   }
 
@@ -85,7 +85,7 @@ export class IdentityAdminController {
   @HttpCode(HttpStatus.OK)
   @RequirePermissions('users.write')
   async suspendUser(
-    @Param('userId') userId: number,
+    @Param('userId') userId: string,
     @Body() body: { reason: string },
     @Request() req: AuthenticatedRequest,
   ) {
@@ -104,7 +104,7 @@ export class IdentityAdminController {
   @HttpCode(HttpStatus.OK)
   @RequirePermissions('users.write')
   async unsuspendUser(
-    @Param('userId') userId: number,
+    @Param('userId') userId: string,
     @Request() req: AuthenticatedRequest,
   ) {
     return this.roleManagementService.unsuspendUser(userId, {

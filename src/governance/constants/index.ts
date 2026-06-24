@@ -1,1 +1,1 @@
-export * from './constants/governance.constants';
+export * from './governance.constants';

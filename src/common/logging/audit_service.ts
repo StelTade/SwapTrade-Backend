@@ -56,7 +56,7 @@ interface UserAuditData {
 }
 
 interface CreateEntryDto {
-  userId: number;
+  userId: string;
   eventType: string;
   entityType: string;
   entityId: string;

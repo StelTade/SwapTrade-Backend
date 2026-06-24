@@ -126,8 +126,6 @@ export class MonitoringInterceptor implements NestInterceptor {
       // eslint-disable-next-line @typescript-eslint/no-this-alias
       const self = this;
 
-      context.active(); // keep TypeScript happy — using OTel context below
-
       // Bind the handler execution to the active span context
       const handlerResult$ = (
         require('@opentelemetry/api').context as typeof import('@opentelemetry/api').context

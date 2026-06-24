@@ -28,9 +28,9 @@ export class RoleManagementService {
    * Performs role compatibility checks and publishes RoleAssigned event
    */
   async assignRole(
-    userId: number,
+    userId: string,
     dto: RoleAssignmentDto,
-    assignedBy: { id: number; roles: UserRole[] },
+    assignedBy: { id: string; roles: UserRole[] },
   ): Promise<User> {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) {
@@ -76,9 +76,9 @@ export class RoleManagementService {
    * Publishes RoleRevoked event
    */
   async revokeRole(
-    userId: number,
+    userId: string,
     roleToRevoke: UserRole,
-    revokedBy: { id: number; roles: UserRole[] },
+    revokedBy: { id: string; roles: UserRole[] },
   ): Promise<User> {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) {
@@ -118,7 +118,7 @@ export class RoleManagementService {
   /**
    * Get all roles assigned to a user
    */
-  async getUserRoles(userId: number): Promise<UserRole[]> {
+  async getUserRoles(userId: string): Promise<UserRole[]> {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException('User not found');
@@ -131,8 +131,8 @@ export class RoleManagementService {
    * Publishes UserSuspended event
    */
   async suspendUser(
-    userId: number,
-    suspendedBy: { id: number; roles: UserRole[] },
+    userId: string,
+    suspendedBy: { id: string; roles: UserRole[] },
     reason: string,
   ): Promise<User> {
     const user = await this.userRepo.findOne({ where: { id: userId } });
@@ -165,8 +165,8 @@ export class RoleManagementService {
    * Publishes UserActivated event
    */
   async unsuspendUser(
-    userId: number,
-    unsuspendedBy: { id: number; roles: UserRole[] },
+    userId: string,
+    unsuspendedBy: { id: string; roles: UserRole[] },
   ): Promise<User> {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) {
@@ -180,8 +180,8 @@ export class RoleManagementService {
     }
 
     user.isSuspended = false;
-    user.suspensionReason = null;
-    user.suspendedAt = null;
+    user.suspensionReason = null as unknown as string;
+    user.suspendedAt = null as unknown as Date;
     await this.userRepo.save(user);
 
     await this.auditService.createEntry({
