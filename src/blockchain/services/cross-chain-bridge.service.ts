@@ -2,17 +2,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import {
-  CrossChainBridge,
-  BridgeStatus,
-} from '../entities/cross-chain-bridge.entity';
-import {
-  BlockchainNetwork,
-} from '../entities/blockchain-transaction.entity';
+import { CrossChainBridge, BridgeStatus } from '../entities/cross-chain-bridge.entity';
+import { BlockchainNetwork } from '../entities/blockchain-transaction.entity';
 import { BlockchainException } from '../../error/exceptions/blockchain.exception';
 import { StellarService } from './stellar.service';
 
-/** Minimum bridge reserve in USDC before an alert is raised */
 const BRIDGE_RESERVE_THRESHOLD = 10_000;
 
 @Injectable()
@@ -29,7 +23,6 @@ export class CrossChainBridgeService {
     this.multisigThreshold = this.configService.get<number>('BRIDGE_MULTISIG_THRESHOLD', 2);
   }
 
-  /** Initiate a cross-chain bridge transfer */
   async initiateBridge(
     userId: string,
     sourceNetwork: BlockchainNetwork,
@@ -53,13 +46,19 @@ export class CrossChainBridgeService {
     return this.bridgeRepo.save(record);
   }
 
-  /** Add a multi-sig approval; executes the bridge once threshold is reached */
   async addApproval(bridgeId: string): Promise<CrossChainBridge> {
     const bridge = await this.bridgeRepo.findOne({ where: { id: bridgeId } });
-    if (!bridge) throw BlockchainException.transactionFailed({ reason: 'Bridge record not found', bridgeId });
+    if (!bridge)
+      throw BlockchainException.transactionFailed({ reason: 'Bridge record not found', bridgeId });
 
-    if (bridge.status !== BridgeStatus.INITIATED && bridge.status !== BridgeStatus.SOURCE_CONFIRMED) {
-      throw BlockchainException.transactionFailed({ reason: 'Bridge is not awaiting approvals', bridgeId });
+    if (
+      bridge.status !== BridgeStatus.INITIATED &&
+      bridge.status !== BridgeStatus.SOURCE_CONFIRMED
+    ) {
+      throw BlockchainException.transactionFailed({
+        reason: 'Bridge is not awaiting approvals',
+        bridgeId,
+      });
     }
 
     bridge.multisigApprovals += 1;
@@ -73,7 +72,6 @@ export class CrossChainBridgeService {
     return this.bridgeRepo.save(bridge);
   }
 
-  /** Execute the bridge once multi-sig threshold is met */
   private async executeBridge(bridge: CrossChainBridge): Promise<CrossChainBridge> {
     try {
       bridge.status = BridgeStatus.DESTINATION_PENDING;
@@ -88,8 +86,7 @@ export class CrossChainBridgeService {
         );
         bridge.destinationTxHash = tx.txHash;
       } else {
-        // Ethereum destination: log intent and mark pending
-        // Actual ETH signing requires a hot-wallet signer configured externally
+        // Ethereum destination: log intent and mark pending (hot-wallet signer external)
         this.logger.log(
           `Bridge ${bridge.id}: ETH destination tx queued for ${bridge.destinationAddress}`,
         );
@@ -108,7 +105,6 @@ export class CrossChainBridgeService {
     return this.bridgeRepo.save(bridge);
   }
 
-  /** Auto-refund a failed bridge back to source via Stellar */
   private async refundBridge(bridge: CrossChainBridge): Promise<void> {
     try {
       if (bridge.sourceNetwork === BlockchainNetwork.STELLAR) {
@@ -127,17 +123,16 @@ export class CrossChainBridgeService {
     }
   }
 
-  /** Returns bridge health: whether reserves are above threshold */
   async getBridgeHealth(): Promise<{ healthy: boolean; alertMessage?: string }> {
-    const pendingBridges = await this.bridgeRepo.count({
-      where: { status: BridgeStatus.BRIDGE_PROCESSING },
-    });
-
     const totalLockedResult = await this.bridgeRepo
       .createQueryBuilder('b')
       .select('COALESCE(SUM(CAST(b.amount AS DECIMAL)), 0)', 'total')
       .where('b.status IN (:...statuses)', {
-        statuses: [BridgeStatus.INITIATED, BridgeStatus.SOURCE_CONFIRMED, BridgeStatus.BRIDGE_PROCESSING],
+        statuses: [
+          BridgeStatus.INITIATED,
+          BridgeStatus.SOURCE_CONFIRMED,
+          BridgeStatus.BRIDGE_PROCESSING,
+        ],
       })
       .getRawOne<{ total: string }>();
 
@@ -148,7 +143,7 @@ export class CrossChainBridgeService {
       healthy,
       alertMessage: healthy
         ? undefined
-        : `Bridge reserves critically low: ${totalLocked} USDC locked across ${pendingBridges} pending operations`,
+        : `Bridge reserves critically low: ${totalLocked} USDC locked in pending operations`,
     };
   }
 
@@ -157,9 +152,6 @@ export class CrossChainBridgeService {
   }
 
   async getBridgeHistory(userId: string): Promise<CrossChainBridge[]> {
-    return this.bridgeRepo.find({
-      where: { userId },
-      order: { createdAt: 'DESC' },
-    });
+    return this.bridgeRepo.find({ where: { userId }, order: { createdAt: 'DESC' } });
   }
 }

@@ -20,9 +20,6 @@ export class StellarService {
   private readonly usdcIssuer: string;
   private readonly platformKeypair: StellarSdk.Keypair;
 
-  /** Minimum confirmations (ledger closings) before a deposit is accepted */
-  private readonly REQUIRED_CONFIRMATIONS = 2;
-
   constructor(
     private readonly configService: ConfigService,
     @InjectRepository(BlockchainTransaction)
@@ -38,10 +35,7 @@ export class StellarService {
       'STELLAR_NETWORK_PASSPHRASE',
       StellarSdk.Networks.TESTNET,
     );
-    this.usdcIssuer = this.configService.get<string>(
-      'STELLAR_USDC_ISSUER',
-      '',
-    );
+    this.usdcIssuer = this.configService.get<string>('STELLAR_USDC_ISSUER', '');
     this.server = new StellarSdk.Horizon.Server(horizonUrl);
 
     const platformSecret = this.configService.get<string>('STELLAR_PLATFORM_SECRET', '');
@@ -50,7 +44,6 @@ export class StellarService {
       : StellarSdk.Keypair.random();
   }
 
-  /** Create or retrieve a Stellar wallet for the given user */
   async getOrCreateWallet(userId: string): Promise<WalletAddress> {
     const existing = await this.walletRepo.findOne({
       where: { userId, network: BlockchainNetwork.STELLAR, isActive: true },
@@ -67,71 +60,6 @@ export class StellarService {
     return this.walletRepo.save(wallet);
   }
 
-  /** Verify a Stellar transaction hash and credit the deposit if valid */
-  async verifyDeposit(
-    userId: string,
-    txHash: string,
-  ): Promise<BlockchainTransaction> {
-    // Idempotency: return existing record if already processed
-    const existing = await this.txRepo.findOne({ where: { txHash } });
-    if (existing) return existing;
-
-    const wallet = await this.walletRepo.findOne({
-      where: { userId, network: BlockchainNetwork.STELLAR, isActive: true },
-    });
-    if (!wallet) throw BlockchainException.transactionFailed({ reason: 'No Stellar wallet found for user' });
-
-    let txRecord: BlockchainTransaction;
-    try {
-      const tx = await this.server.transactions().transaction(txHash).call();
-      const ops = await this.server
-        .operations()
-        .forTransaction(txHash)
-        .call();
-
-      const paymentOp = ops.records.find(
-        (op: any) =>
-          op.type === 'payment' &&
-          op.to === wallet.address &&
-          op.asset_code === 'USDC' &&
-          op.asset_issuer === this.usdcIssuer,
-      ) as any;
-
-      if (!paymentOp) {
-        throw BlockchainException.transactionFailed({
-          reason: 'No matching USDC payment found in transaction',
-          txHash,
-        });
-      }
-
-      const ledger = await this.server.ledgers().ledger(tx.ledger_attr).call();
-      const confirmations = ledger ? 1 : 0; // Ledger finality on Stellar is near-instant
-
-      txRecord = this.txRepo.create({
-        userId,
-        network: BlockchainNetwork.STELLAR,
-        type: TransactionType.DEPOSIT,
-        status:
-          confirmations >= this.REQUIRED_CONFIRMATIONS
-            ? TransactionStatus.CONFIRMED
-            : TransactionStatus.PENDING,
-        txHash,
-        fromAddress: paymentOp.from,
-        toAddress: wallet.address,
-        amount: paymentOp.amount,
-        asset: 'USDC',
-        confirmations,
-        memo: (tx as any).memo ?? undefined,
-      });
-    } catch (err) {
-      if (err instanceof BlockchainException) throw err;
-      this.logger.error(`Failed to verify Stellar deposit ${txHash}`, err);
-      throw BlockchainException.networkError({ txHash, error: err.message });
-    }
-
-    return this.txRepo.save(txRecord);
-  }
-
   /** Send USDC from the platform wallet to a recipient Stellar address */
   async withdraw(
     userId: string,
@@ -142,7 +70,8 @@ export class StellarService {
     const wallet = await this.walletRepo.findOne({
       where: { userId, network: BlockchainNetwork.STELLAR, isActive: true },
     });
-    if (!wallet) throw BlockchainException.transactionFailed({ reason: 'No Stellar wallet for user' });
+    if (!wallet)
+      throw BlockchainException.transactionFailed({ reason: 'No Stellar wallet for user' });
 
     const txRecord = this.txRepo.create({
       userId,
@@ -191,22 +120,5 @@ export class StellarService {
     }
 
     return this.txRepo.save(txRecord);
-  }
-
-  /** Settle a completed trade on-chain by recording a SETTLEMENT transaction */
-  async settleOnChain(
-    userId: string,
-    amount: string,
-    counterpartyAddress: string,
-    tradeId: string,
-  ): Promise<BlockchainTransaction> {
-    return this.withdraw(userId, counterpartyAddress, amount, `settlement:${tradeId}`);
-  }
-
-  async getTransactionHistory(userId: string): Promise<BlockchainTransaction[]> {
-    return this.txRepo.find({
-      where: { userId, network: BlockchainNetwork.STELLAR },
-      order: { createdAt: 'DESC' },
-    });
   }
 }

@@ -6,7 +6,7 @@ import {
   UpdateDateColumn,
   Index,
 } from 'typeorm';
-import { BlockchainNetwork } from './blockchain-transaction.entity';
+import { BlockchainNetwork } from '../../blockchain/entities/blockchain-transaction.entity';
 
 export enum BridgeStatus {
   INITIATED = 'initiated',
