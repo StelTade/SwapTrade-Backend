@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Get,
+  Patch,
   Body,
   Param,
   HttpException,
@@ -28,6 +29,38 @@ export class DidController {
     @InjectRepository(VerifiableCredential)
     private readonly vcRepo: Repository<VerifiableCredential>,
   ) {}
+
+  // ── DID Document Management ────────────────────────────────────────────────
+
+  @Post('register')
+  @ApiOperation({ summary: 'Register a new DID and anchor its DID document' })
+  @ApiResponse({ status: 201, description: 'DID document created' })
+  async registerDid(
+    @Body('did') did: string,
+    @Body('publicKey') publicKey: string,
+  ) {
+    if (!did || !publicKey) {
+      throw new HttpException(
+        'did and publicKey are required',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    const document = await this.didAuthService.registerDid(did, publicKey);
+    return document;
+  }
+
+  @Get('document/:did')
+  @ApiOperation({ summary: 'Resolve a W3C-compliant DID document' })
+  @ApiResponse({ status: 200, description: 'W3C DID document' })
+  async resolveDidDocument(@Param('did') did: string) {
+    const document = await this.didAuthService.resolveDidDocument(did);
+    if (!document) {
+      throw new HttpException('DID not found', HttpStatus.NOT_FOUND);
+    }
+    return document;
+  }
+
+  // ── DID Authentication ─────────────────────────────────────────────────────
 
   @Post('auth/challenge')
   @ApiOperation({
@@ -58,18 +91,48 @@ export class DidController {
       did,
       signature,
     );
-    return sessionToken; // Returns standard app token session
+    return sessionToken;
+  }
+
+  // ── Verifiable Credentials ─────────────────────────────────────────────────
+
+  @Post('credentials/issue')
+  @ApiOperation({ summary: 'Issue a KYC verifiable credential for a DID' })
+  @ApiResponse({ status: 201, description: 'VC issued successfully' })
+  async issueCredential(
+    @Body('userDid') userDid: string,
+    @Body('kycTier') kycTier: number,
+    @Body('fullName') fullName: string,
+    @Body('dateOfBirth') dateOfBirth: string,
+  ) {
+    if (!userDid || kycTier === undefined || !fullName || !dateOfBirth) {
+      throw new HttpException(
+        'userDid, kycTier, fullName, and dateOfBirth are required',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    const vc = await this.vcIssuerService.issueKycCredential(
+      userDid,
+      kycTier,
+      fullName,
+      dateOfBirth,
+    );
+    return {
+      id: vc.id,
+      did: vc.did,
+      issuerDid: vc.issuerDid,
+      credentialType: vc.credentialType,
+      status: vc.status,
+      issuedAt: vc.issuedAt,
+    };
   }
 
   @Get('credentials/:did')
   @ApiOperation({
-    summary:
-      'Retrieve public privacy-preserving schemas for a particular DID profile',
+    summary: 'Retrieve public credential metadata for a DID (no PII exposed)',
   })
   async getCredentials(@Param('did') did: string) {
-    // Only return non-PII attributes off the VCs (hiding the encrypted payloads)
     const vcs = await this.vcRepo.find({ where: { did } });
-
     return vcs.map((vc) => ({
       id: vc.id,
       credentialType: vc.credentialType,
@@ -79,15 +142,23 @@ export class DidController {
     }));
   }
 
+  @Patch('credentials/:id/revoke')
+  @ApiOperation({ summary: 'Revoke a verifiable credential by ID' })
+  @ApiResponse({ status: 200, description: 'Credential revoked' })
+  async revokeCredential(@Param('id') id: string) {
+    const revoked = await this.vcIssuerService.revokeCredential(id);
+    return { revoked, vcId: id, revokedAt: new Date().toISOString() };
+  }
+
+  // ── Zero-Knowledge Proofs ──────────────────────────────────────────────────
+
   @Post('verify-proof')
   @ApiOperation({
-    summary:
-      'Third-party API for ZKP credential verification (KYC/AML Compliance Rules)',
+    summary: 'Verify a ZKP credential proof without revealing raw KYC data',
   })
   @ApiResponse({
     status: 200,
-    description:
-      'Returns boolean validating the zero-knowledge proof constraint',
+    description: 'Returns boolean validating the zero-knowledge proof',
   })
   async verifyZkp(@Body() payload: ZkProofPayload) {
     if (!payload.userDid || !payload.vcId || !payload.zkpProofSignature) {
