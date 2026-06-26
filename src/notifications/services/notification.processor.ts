@@ -16,6 +16,10 @@ import { NotificationChannel } from '../../common/enums/notification-channel.enu
 export class NotificationProcessor {
   private readonly logger = new Logger(NotificationProcessor.name);
   private readonly maxRetries = 5;
+  private readonly fallbackChannels: Record<string, NotificationChannel[]> = {
+    [NotificationChannel.EMAIL]: [NotificationChannel.PUSH],
+    [NotificationChannel.SMS]: [NotificationChannel.PUSH],
+  };
 
   constructor(
     @InjectRepository(Notification)
@@ -45,19 +49,23 @@ export class NotificationProcessor {
       
       let success = false;
       
-      switch (notification.channel) {
-        case NotificationChannel.EMAIL:
-          success = await this.emailService.sendEmail(notification);
-          break;
-        case NotificationChannel.SMS:
-          success = await this.smsService.sendSms(notification);
-          break;
-        case NotificationChannel.PUSH:
-          success = await this.pushService.sendPushNotification(
-            notification, 
-            this.notificationsGateway.getServer()
+      success = await this.sendViaChannel(notification);
+
+      // Failover: if the primary channel failed, try fallback channels
+      if (!success) {
+        const fallbacks = this.fallbackChannels[notification.channel] || [];
+        for (const fallbackChannel of fallbacks) {
+          this.logger.warn(
+            `Primary channel ${notification.channel} failed for notification ${notification.id}, attempting failover to ${fallbackChannel}`,
           );
-          break;
+          success = await this.sendViaChannel({ ...notification, channel: fallbackChannel });
+          if (success) {
+            await this.notificationRepository.update(notificationId, {
+              metadata: { ...(notification.metadata || {}), failoverChannel: fallbackChannel } as Record<string, any>,
+            });
+            break;
+          }
+        }
       }
 
       if (success) {
@@ -93,6 +101,22 @@ export class NotificationProcessor {
         });
         this.logger.error(`Notification ${notificationId} permanently failed after ${this.maxRetries} retries`);
       }
+    }
+  }
+
+  private async sendViaChannel(notification: Notification): Promise<boolean> {
+    switch (notification.channel) {
+      case NotificationChannel.EMAIL:
+        return this.emailService.sendEmail(notification);
+      case NotificationChannel.SMS:
+        return this.smsService.sendSms(notification);
+      case NotificationChannel.PUSH:
+        return this.pushService.sendPushNotification(
+          notification,
+          this.notificationsGateway.getServer(),
+        );
+      default:
+        return false;
     }
   }
 

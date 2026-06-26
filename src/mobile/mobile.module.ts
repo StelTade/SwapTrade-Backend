@@ -14,6 +14,9 @@ import { MobileAnalyticsService } from './services/mobile-analytics.service';
 
 import { MobileController } from './mobile.controller';
 import { AuthModule } from '../auth/auth.module';
+import { CircuitBreakerService } from '../common/services/circuit-breaker.service';
+import { BulkheadService } from '../common/services/bulkhead.service';
+import { CorrelationIdService } from '../common/services/correlation-id.service';
 
 @Module({
   imports: [
@@ -32,7 +35,10 @@ import { AuthModule } from '../auth/auth.module';
     AppVersionService,
     OfflineSyncService,
     MobileAnalyticsService,
+    CircuitBreakerService,
+    BulkheadService,
+    CorrelationIdService,
   ],
-  exports: [FcmService, MobileService],
+  exports: [FcmService, MobileService, CircuitBreakerService, BulkheadService],
 })
 export class MobileModule {}

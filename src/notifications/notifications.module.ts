@@ -15,6 +15,9 @@ import { NotificationProcessor } from './services/notification.processor';
 import { NotificationsGateway } from './gateways/notifications.gateway';
 import { NotificationsController } from './controllers/notifications.controller';
 import { NotificationEventListeners } from './usage-examples';
+import { CircuitBreakerService } from '../common/services/circuit-breaker.service';
+import { BulkheadService } from '../common/services/bulkhead.service';
+import { CorrelationIdService } from '../common/services/correlation-id.service';
 
 @Module({
   imports: [
@@ -44,6 +47,9 @@ import { NotificationEventListeners } from './usage-examples';
     NotificationProcessor,
     NotificationsGateway,
     NotificationEventListeners,
+    CircuitBreakerService,
+    BulkheadService,
+    CorrelationIdService,
   ],
   exports: [NotificationsService],
 })
