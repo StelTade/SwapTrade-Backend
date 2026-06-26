@@ -83,6 +83,7 @@ import { LiquidationEvent } from './protection/entities/liquidation-event.entity
 import { ProtectionModule } from './protection/protection.module';
 
 // Blockchain — Cross-Chain Bridge (issue #386)
+import { BlockchainModule } from './blockchain/blockchain.module';
 import { CrossChainBridgeModule } from './blockchain/cross-chain-bridge.module';
 import { CrossChainBridge } from './blockchain/entities/cross-chain-bridge.entity';
 import { BlockchainTransaction } from './blockchain/entities/blockchain-transaction.entity';
