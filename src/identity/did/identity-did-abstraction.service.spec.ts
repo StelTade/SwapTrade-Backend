@@ -1,4 +1,7 @@
-import { IdentityDidAbstractionService, IdentityProvider } from './identity-did-abstraction.service';
+import {
+  IdentityDidAbstractionService,
+  IdentityProvider,
+} from './identity-did-abstraction.service';
 
 const makeProvider = (name = 'test-provider'): IdentityProvider => ({
   name,
@@ -8,7 +11,12 @@ const makeProvider = (name = 'test-provider'): IdentityProvider => ({
     resolvedAt: new Date(),
   }),
   associate: jest.fn().mockImplementation((userId, did) =>
-    Promise.resolve({ userId, did, provider: name, associatedAt: new Date() }),
+    Promise.resolve({
+      userId,
+      did,
+      provider: name,
+      associatedAt: new Date(),
+    }),
   ),
 });
 
@@ -22,7 +30,9 @@ describe('IdentityDidAbstractionService', () => {
     const service = make();
     service.registerProvider(makeProvider('stellar'));
     service.registerProvider(makeProvider('ethereum'));
-    expect(service.listProviders()).toEqual(expect.arrayContaining(['stellar', 'ethereum']));
+    expect(service.listProviders()).toEqual(
+      expect.arrayContaining(['stellar', 'ethereum']),
+    );
   });
 
   it('resolveDid delegates to registered provider', async () => {

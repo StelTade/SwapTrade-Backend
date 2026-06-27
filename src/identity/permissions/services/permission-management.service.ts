@@ -13,7 +13,10 @@ import {
   PermissionDefinition,
 } from '../constants/permission-registry';
 import { AuditLogService } from '../../../audit-log/audit-log.service';
-import { AuditEventType, AuditSeverity } from '../../../common/security/audit-log.entity';
+import {
+  AuditEventType,
+  AuditSeverity,
+} from '../../../common/security/audit-log.entity';
 
 export class PermissionGrantedEvent {
   constructor(
@@ -73,7 +76,8 @@ export class PermissionManagementService implements OnModuleInit {
 
   async findBySlug(slug: string): Promise<Permission> {
     const permission = await this.permissionRepo.findOne({ where: { slug } });
-    if (!permission) throw new NotFoundException(`Permission '${slug}' not found`);
+    if (!permission)
+      throw new NotFoundException(`Permission '${slug}' not found`);
     return permission;
   }
 
@@ -85,9 +89,15 @@ export class PermissionManagementService implements OnModuleInit {
       .getMany();
   }
 
-  async create(def: PermissionDefinition, actorId: string): Promise<Permission> {
-    const existing = await this.permissionRepo.findOne({ where: { slug: def.slug } });
-    if (existing) throw new ConflictException(`Permission '${def.slug}' already exists`);
+  async create(
+    def: PermissionDefinition,
+    actorId: string,
+  ): Promise<Permission> {
+    const existing = await this.permissionRepo.findOne({
+      where: { slug: def.slug },
+    });
+    if (existing)
+      throw new ConflictException(`Permission '${def.slug}' already exists`);
 
     const permission = await this.permissionRepo.save(
       this.permissionRepo.create({

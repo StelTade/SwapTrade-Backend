@@ -62,7 +62,11 @@ export class NotificationEventListeners {
         asset: payload.asset,
         price: payload.price,
       },
-      forceChannels: [NotificationChannel.EMAIL, NotificationChannel.SMS, NotificationChannel.PUSH], // Always send all channels for liquidations
+      forceChannels: [
+        NotificationChannel.EMAIL,
+        NotificationChannel.SMS,
+        NotificationChannel.PUSH,
+      ], // Always send all channels for liquidations
     });
   }
 
@@ -100,7 +104,11 @@ export class NotificationEventListeners {
         ipAddress: payload.ipAddress,
         timestamp: payload.timestamp,
       },
-      forceChannels: [NotificationChannel.EMAIL, NotificationChannel.SMS, NotificationChannel.PUSH],
+      forceChannels: [
+        NotificationChannel.EMAIL,
+        NotificationChannel.SMS,
+        NotificationChannel.PUSH,
+      ],
     });
   }
 }

@@ -22,8 +22,21 @@ export class CreateSupportTicketDto {
   description: string;
 
   @IsOptional()
-  @IsEnum(['GENERAL', 'TRADING', 'TECHNICAL', 'COMPLIANCE', 'BILLING', 'ONBOARDING'])
-  category?: 'GENERAL' | 'TRADING' | 'TECHNICAL' | 'COMPLIANCE' | 'BILLING' | 'ONBOARDING';
+  @IsEnum([
+    'GENERAL',
+    'TRADING',
+    'TECHNICAL',
+    'COMPLIANCE',
+    'BILLING',
+    'ONBOARDING',
+  ])
+  category?:
+    | 'GENERAL'
+    | 'TRADING'
+    | 'TECHNICAL'
+    | 'COMPLIANCE'
+    | 'BILLING'
+    | 'ONBOARDING';
 
   @IsOptional()
   @IsEnum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'])

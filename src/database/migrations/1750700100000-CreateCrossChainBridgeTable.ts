@@ -26,8 +26,12 @@ export class CreateCrossChainBridgeTable1750700100000 implements MigrationInterf
         CONSTRAINT "PK_cross_chain_bridges" PRIMARY KEY ("id")
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_ccb_userId" ON "cross_chain_bridges" ("userId")`);
-    await queryRunner.query(`CREATE INDEX "IDX_ccb_status" ON "cross_chain_bridges" ("status")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_ccb_userId" ON "cross_chain_bridges" ("userId")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_ccb_status" ON "cross_chain_bridges" ("status")`,
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

@@ -29,7 +29,9 @@ export class NotificationProcessor {
   @Process('send')
   async processNotification(job: Job<{ notificationId: string }>) {
     const { notificationId } = job.data;
-    const notification = await this.notificationRepository.findOneBy({ id: notificationId });
+    const notification = await this.notificationRepository.findOneBy({
+      id: notificationId,
+    });
 
     if (!notification) {
       this.logger.error(`Notification ${notificationId} not found`);
@@ -41,10 +43,12 @@ export class NotificationProcessor {
         status: NotificationStatus.PROCESSING,
       });
 
-      this.logger.log(`Processing notification ${notificationId} of type ${notification.channel}`);
-      
+      this.logger.log(
+        `Processing notification ${notificationId} of type ${notification.channel}`,
+      );
+
       let success = false;
-      
+
       switch (notification.channel) {
         case NotificationChannel.EMAIL:
           success = await this.emailService.sendEmail(notification);
@@ -54,8 +58,8 @@ export class NotificationProcessor {
           break;
         case NotificationChannel.PUSH:
           success = await this.pushService.sendPushNotification(
-            notification, 
-            this.notificationsGateway.getServer()
+            notification,
+            this.notificationsGateway.getServer(),
           );
           break;
       }
@@ -67,11 +71,16 @@ export class NotificationProcessor {
         });
         this.logger.log(`Notification ${notificationId} sent successfully`);
       } else {
-        throw new Error(`Failed to send notification through ${notification.channel}`);
+        throw new Error(
+          `Failed to send notification through ${notification.channel}`,
+        );
       }
     } catch (error) {
-      this.logger.error(`Failed to process notification ${notificationId}`, error.stack);
-      
+      this.logger.error(
+        `Failed to process notification ${notificationId}`,
+        error.stack,
+      );
+
       const currentRetryCount = notification.retryCount;
       if (currentRetryCount < this.maxRetries) {
         await this.notificationRepository.update(notificationId, {
@@ -80,18 +89,24 @@ export class NotificationProcessor {
           lastRetryAt: new Date(),
           errorMessage: error.message,
         });
-        
+
         // Exponential backoff: 1min, 5min, 15min, 1hr, 6hr
         const delayMs = this.calculateExponentialBackoff(currentRetryCount);
-        this.logger.log(`Scheduling retry ${currentRetryCount + 1} for notification ${notificationId} in ${delayMs}ms`);
-        
-        throw new Error(`Will retry notification ${notificationId} (attempt ${currentRetryCount + 1}/${this.maxRetries})`);
+        this.logger.log(
+          `Scheduling retry ${currentRetryCount + 1} for notification ${notificationId} in ${delayMs}ms`,
+        );
+
+        throw new Error(
+          `Will retry notification ${notificationId} (attempt ${currentRetryCount + 1}/${this.maxRetries})`,
+        );
       } else {
         await this.notificationRepository.update(notificationId, {
           status: NotificationStatus.PERMANENTLY_FAILED,
           errorMessage: error.message,
         });
-        this.logger.error(`Notification ${notificationId} permanently failed after ${this.maxRetries} retries`);
+        this.logger.error(
+          `Notification ${notificationId} permanently failed after ${this.maxRetries} retries`,
+        );
       }
     }
   }

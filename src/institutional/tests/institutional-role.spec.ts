@@ -1,4 +1,7 @@
-import { UserRole, ROLE_DESCRIPTIONS } from '../../identity/roles/enums/user-role.enum';
+import {
+  UserRole,
+  ROLE_DESCRIPTIONS,
+} from '../../identity/roles/enums/user-role.enum';
 import {
   ROLE_HIERARCHY,
   ROLE_PRIORITY,
@@ -15,7 +18,9 @@ describe('Institutional Client Role Integration', () => {
 
     it('should have a description for INSTITUTIONAL_CLIENT', () => {
       expect(ROLE_DESCRIPTIONS[UserRole.INSTITUTIONAL_CLIENT]).toBeDefined();
-      expect(ROLE_DESCRIPTIONS[UserRole.INSTITUTIONAL_CLIENT]).toContain('Institutional');
+      expect(ROLE_DESCRIPTIONS[UserRole.INSTITUTIONAL_CLIENT]).toContain(
+        'Institutional',
+      );
     });
   });
 
@@ -61,7 +66,9 @@ describe('Institutional Client Role Integration', () => {
       expect(metadata.permissions).toContain('INSTITUTIONAL_RECONCILIATION');
       expect(metadata.permissions).toContain('INSTITUTIONAL_SLA_MANAGEMENT');
       expect(metadata.permissions).toContain('INSTITUTIONAL_SUPPORT_PRIORITY');
-      expect(metadata.permissions).toContain('INSTITUTIONAL_ACCOUNT_MANAGEMENT');
+      expect(metadata.permissions).toContain(
+        'INSTITUTIONAL_ACCOUNT_MANAGEMENT',
+      );
       expect(metadata.permissions).toContain('INSTITUTIONAL_QUOTA_MANAGEMENT');
       expect(metadata.permissions).toContain('INSTITUTIONAL_PORTAL_ACCESS');
     });
@@ -75,11 +82,12 @@ describe('Institutional Client Role Integration', () => {
     });
 
     it('should have higher maxDailyActions than regular TRADER', () => {
-      const institutionalMetadata = ROLE_METADATA[UserRole.INSTITUTIONAL_CLIENT];
+      const institutionalMetadata =
+        ROLE_METADATA[UserRole.INSTITUTIONAL_CLIENT];
       const traderMetadata = ROLE_METADATA[UserRole.TRADER];
-      expect(institutionalMetadata.constraints?.maxDailyActions).toBeGreaterThan(
-        traderMetadata.constraints?.maxDailyActions ?? 0,
-      );
+      expect(
+        institutionalMetadata.constraints?.maxDailyActions,
+      ).toBeGreaterThan(traderMetadata.constraints?.maxDailyActions ?? 0);
     });
 
     it('should have priority 45', () => {

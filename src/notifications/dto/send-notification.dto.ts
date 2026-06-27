@@ -1,4 +1,10 @@
-import { IsNotEmpty, IsString, IsObject, IsOptional, IsUUID } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsObject,
+  IsOptional,
+  IsUUID,
+} from 'class-validator';
 import { NotificationEventType } from '../../common/enums/notification-event-type.enum';
 import { NotificationChannel } from '../../common/enums/notification-channel.enum';
 

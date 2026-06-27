@@ -1,5 +1,17 @@
-import { ObjectType, Field, InputType, Float, Int, ID, registerEnumType } from '@nestjs/graphql';
-import { OrderSide, OrderType, OrderStatus } from '../../common/enums/order-type.enum';
+import {
+  ObjectType,
+  Field,
+  InputType,
+  Float,
+  Int,
+  ID,
+  registerEnumType,
+} from '@nestjs/graphql';
+import {
+  OrderSide,
+  OrderType,
+  OrderStatus,
+} from '../../common/enums/order-type.enum';
 
 registerEnumType(OrderSide, { name: 'OrderSide' });
 registerEnumType(OrderType, { name: 'OrderType' });

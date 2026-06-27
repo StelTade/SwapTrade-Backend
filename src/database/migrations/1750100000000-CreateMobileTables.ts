@@ -22,8 +22,12 @@ export class CreateMobileTables1750100000000 implements MigrationInterface {
       )
     `);
 
-    await queryRunner.query(`CREATE INDEX "IDX_mobile_devices_userId" ON "mobile_devices" ("userId")`);
-    await queryRunner.query(`CREATE INDEX "IDX_mobile_devices_fcmToken" ON "mobile_devices" ("fcmToken")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_mobile_devices_userId" ON "mobile_devices" ("userId")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_mobile_devices_fcmToken" ON "mobile_devices" ("fcmToken")`,
+    );
 
     await queryRunner.query(`
       CREATE TABLE "app_versions" (
@@ -58,7 +62,9 @@ export class CreateMobileTables1750100000000 implements MigrationInterface {
       )
     `);
 
-    await queryRunner.query(`CREATE INDEX "IDX_offline_sync_userId_status" ON "offline_sync_queue" ("userId", "status")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_offline_sync_userId_status" ON "offline_sync_queue" ("userId", "status")`,
+    );
 
     await queryRunner.query(`
       CREATE TABLE "mobile_analytics_events" (
@@ -75,8 +81,12 @@ export class CreateMobileTables1750100000000 implements MigrationInterface {
       )
     `);
 
-    await queryRunner.query(`CREATE INDEX "IDX_mobile_analytics_userId_event" ON "mobile_analytics_events" ("userId", "eventName")`);
-    await queryRunner.query(`CREATE INDEX "IDX_mobile_analytics_createdAt" ON "mobile_analytics_events" ("createdAt")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_mobile_analytics_userId_event" ON "mobile_analytics_events" ("userId", "eventName")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_mobile_analytics_createdAt" ON "mobile_analytics_events" ("createdAt")`,
+    );
   }
 
   async down(queryRunner: QueryRunner): Promise<void> {

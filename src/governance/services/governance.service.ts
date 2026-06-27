@@ -65,7 +65,10 @@ export class GovernanceService {
     return holding?.balance ?? 0;
   }
 
-  async getEffectiveVotingPower(userId: string, proposalId: string): Promise<number> {
+  async getEffectiveVotingPower(
+    userId: string,
+    proposalId: string,
+  ): Promise<number> {
     const delegations = await this.delegationRepo.find({
       where: { delegateeId: userId, isActive: true },
     });
@@ -87,14 +90,20 @@ export class GovernanceService {
 
   async isVotingActive(proposal: GovernanceProposal): Promise<boolean> {
     const now = new Date();
-    return proposal.status === ProposalStatus.ACTIVE && now >= proposal.startTime && now <= proposal.endTime;
+    return (
+      proposal.status === ProposalStatus.ACTIVE &&
+      now >= proposal.startTime &&
+      now <= proposal.endTime
+    );
   }
 
   async canUserVote(
     userId: string,
     proposalId: string,
   ): Promise<{ allowed: boolean; reason?: string }> {
-    const proposal = await this.proposalRepo.findOne({ where: { id: proposalId } });
+    const proposal = await this.proposalRepo.findOne({
+      where: { id: proposalId },
+    });
     if (!proposal) {
       return { allowed: false, reason: 'Proposal not found' };
     }
@@ -119,25 +128,33 @@ export class GovernanceService {
       where: { proposalId, voterId: userId },
     });
     if (existingVote) {
-      return { allowed: false, reason: 'User has already voted on this proposal' };
+      return {
+        allowed: false,
+        reason: 'User has already voted on this proposal',
+      };
     }
 
     return { allowed: true };
   }
 
   async checkQuorumMet(proposalId: string): Promise<boolean> {
-    const proposal = await this.proposalRepo.findOne({ where: { id: proposalId } });
+    const proposal = await this.proposalRepo.findOne({
+      where: { id: proposalId },
+    });
     if (!proposal) {
       return false;
     }
 
-    const totalVotes = proposal.forVotes + proposal.againstVotes + proposal.abstainVotes;
+    const totalVotes =
+      proposal.forVotes + proposal.againstVotes + proposal.abstainVotes;
     const quorumRequired = (proposal.totalSupply * proposal.quorumVotes) / 100;
     return totalVotes >= quorumRequired;
   }
 
   async proposalHasPassed(proposalId: string): Promise<boolean> {
-    const proposal = await this.proposalRepo.findOne({ where: { id: proposalId } });
+    const proposal = await this.proposalRepo.findOne({
+      where: { id: proposalId },
+    });
     if (!proposal) {
       return false;
     }
@@ -147,7 +164,8 @@ export class GovernanceService {
       return false;
     }
 
-    const totalVotes = proposal.forVotes + proposal.againstVotes + proposal.abstainVotes;
+    const totalVotes =
+      proposal.forVotes + proposal.againstVotes + proposal.abstainVotes;
     if (totalVotes === 0) {
       return false;
     }
@@ -156,7 +174,10 @@ export class GovernanceService {
     return forPercentage >= proposal.passThresholdVotes;
   }
 
-  async getProposalHistory(userId?: string, limit: number = 50): Promise<GovernanceProposal[]> {
+  async getProposalHistory(
+    userId?: string,
+    limit: number = 50,
+  ): Promise<GovernanceProposal[]> {
     const queryBuilder = this.proposalRepo
       .createQueryBuilder('proposal')
       .orderBy('proposal.createdAt', 'DESC')
@@ -169,7 +190,10 @@ export class GovernanceService {
     return queryBuilder.getMany();
   }
 
-  async getVotingHistory(userId: string, limit: number = 50): Promise<GovernanceVote[]> {
+  async getVotingHistory(
+    userId: string,
+    limit: number = 50,
+  ): Promise<GovernanceVote[]> {
     return this.voteRepo.find({
       where: { voterId: userId },
       order: { createdAt: 'DESC' },

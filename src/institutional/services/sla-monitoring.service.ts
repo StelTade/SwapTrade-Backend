@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  OnModuleInit,
-} from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThanOrEqual } from 'typeorm';
 import { SlaPolicy } from '../entities/sla-policy.entity';
@@ -93,7 +89,7 @@ export class SlaMonitoringService implements OnModuleInit {
 
         this.logger.warn(
           `CRITICAL SLA violation for client ${institutionalClientId}: ` +
-          `${metricType} = ${measuredValue} (target: ${targetValue})`,
+            `${metricType} = ${measuredValue} (target: ${targetValue})`,
         );
       }
       // Check for warning
@@ -110,7 +106,7 @@ export class SlaMonitoringService implements OnModuleInit {
 
         this.logger.log(
           `SLA warning for client ${institutionalClientId}: ` +
-          `${metricType} = ${measuredValue} (warning: ${warningThreshold})`,
+            `${metricType} = ${measuredValue} (warning: ${warningThreshold})`,
         );
       }
       // Within acceptable range
@@ -148,7 +144,11 @@ export class SlaMonitoringService implements OnModuleInit {
    * For uptime/percentage metrics (unit=PERCENT): violated if measured < threshold
    * For latency/time metrics (unit=MILLISECONDS/SECONDS/MINUTES): violated if measured > threshold
    */
-  private isViolated(measured: number, threshold: number, unit: string): boolean {
+  private isViolated(
+    measured: number,
+    threshold: number,
+    unit: string,
+  ): boolean {
     if (!threshold) return false;
 
     if (unit === 'PERCENT') {
@@ -225,9 +225,7 @@ export class SlaMonitoringService implements OnModuleInit {
   /**
    * Get SLA policies for an institutional client.
    */
-  async getSlaPolicies(
-    institutionalClientId: string,
-  ): Promise<SlaPolicy[]> {
+  async getSlaPolicies(institutionalClientId: string): Promise<SlaPolicy[]> {
     return this.slaRepo.find({
       where: { institutionalClientId, isActive: true },
       order: { metricType: 'ASC' },
@@ -238,9 +236,7 @@ export class SlaMonitoringService implements OnModuleInit {
    * Get SLA compliance summary for an institutional client.
    * Returns current SLA status and violation history.
    */
-  async getSlaComplianceSummary(
-    institutionalClientId: string,
-  ): Promise<{
+  async getSlaComplianceSummary(institutionalClientId: string): Promise<{
     totalPolicies: number;
     healthyPolicies: number;
     warningPolicies: number;
@@ -257,7 +253,9 @@ export class SlaMonitoringService implements OnModuleInit {
     }>;
   }> {
     const policies = await this.getSlaPolicies(institutionalClientId);
-    const activeViolations = await this.getActiveViolations(institutionalClientId);
+    const activeViolations = await this.getActiveViolations(
+      institutionalClientId,
+    );
 
     let healthyCount = 0;
     let warningCount = 0;
@@ -272,7 +270,11 @@ export class SlaMonitoringService implements OnModuleInit {
       } else if (
         p.currentValue !== null &&
         p.warningThreshold !== null &&
-        this.isViolated(Number(p.currentValue), Number(p.warningThreshold), p.unit)
+        this.isViolated(
+          Number(p.currentValue),
+          Number(p.warningThreshold),
+          p.unit,
+        )
       ) {
         status = 'WARNING';
         warningCount++;
@@ -322,7 +324,9 @@ export class SlaMonitoringService implements OnModuleInit {
     let resolvedCount = 0;
     for (const v of staleViolations) {
       // Re-check: is the SLA policy still violated?
-      const policy = await this.slaRepo.findOne({ where: { id: v.slaPolicyId } });
+      const policy = await this.slaRepo.findOne({
+        where: { id: v.slaPolicyId },
+      });
       if (policy && !policy.isViolated) {
         v.isResolved = true;
         v.resolvedAt = new Date();

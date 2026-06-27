@@ -1,4 +1,10 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { NotificationEventType } from '../../common/enums/notification-event-type.enum';
 import { NotificationStatus } from '../../common/enums/notification-status.enum';
 import { NotificationChannel } from '../../common/enums/notification-channel.enum';

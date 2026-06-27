@@ -27,7 +27,9 @@ export class PortfolioRiskScoringService {
 
     // Compose a 0..100 score.
     const riskScore = Math.round(
-      100 * (0.45 * this.clamp(annualizedVolatility / 0.6) + 0.55 * this.clamp(maxDrawdownEstimate / 0.25)),
+      100 *
+        (0.45 * this.clamp(annualizedVolatility / 0.6) +
+          0.55 * this.clamp(maxDrawdownEstimate / 0.25)),
     );
 
     const riskLevel = this.toRiskLevel(riskScore);
@@ -61,7 +63,8 @@ export class PortfolioRiskScoringService {
           `Risk level is ${risk.riskLevel} (${risk.riskScore}/100).`,
           'Reduce high-volatility exposure and ensure liquidity buffers.',
         ],
-        recommendedAction: 'Rebalance: reduce volatility-weighted positions; refresh hedge/insurance coverage.',
+        recommendedAction:
+          'Rebalance: reduce volatility-weighted positions; refresh hedge/insurance coverage.',
       };
     }
 
@@ -72,7 +75,8 @@ export class PortfolioRiskScoringService {
           `Risk level is ${risk.riskLevel} (${risk.riskScore}/100).`,
           'Gradually adjust position sizing and diversify across assets.',
         ],
-        recommendedAction: 'Rebalance: shift a portion to lower-volatility assets; monitor within 5 minutes of trades.',
+        recommendedAction:
+          'Rebalance: shift a portion to lower-volatility assets; monitor within 5 minutes of trades.',
       };
     }
 
@@ -82,7 +86,8 @@ export class PortfolioRiskScoringService {
         `Risk level is ${risk.riskLevel} (${risk.riskScore}/100).`,
         'Portfolio risk is within acceptable bounds; focus on execution quality.',
       ],
-      recommendedAction: 'Maintain current allocation; optimize trade execution parameters.',
+      recommendedAction:
+        'Maintain current allocation; optimize trade execution parameters.',
     };
   }
 
@@ -107,4 +112,3 @@ export class PortfolioRiskScoringService {
     return Math.abs(h);
   }
 }
-

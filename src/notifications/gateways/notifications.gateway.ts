@@ -16,7 +16,9 @@ import { ConfigService } from '@nestjs/config';
     origin: '*',
   },
 })
-export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class NotificationsGateway
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
   server: Server;
 
@@ -45,11 +47,14 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
       const userId = payload.sub;
       this.userSocketMap.set(client.id, userId);
       this.pushService.registerDevice(userId, client.id);
-      
+
       this.logger.log(`Client ${client.id} connected for user ${userId}`);
       client.emit('connected', { success: true, userId });
     } catch (error) {
-      this.logger.error(`Failed to authenticate client ${client.id}`, error.stack);
+      this.logger.error(
+        `Failed to authenticate client ${client.id}`,
+        error.stack,
+      );
       client.disconnect();
     }
   }

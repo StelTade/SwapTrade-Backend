@@ -47,7 +47,8 @@ export class AppVersionService {
       };
     }
 
-    const isBelowMinimum = semverCompare(clientVersion, latest.minimumVersion) < 0;
+    const isBelowMinimum =
+      semverCompare(clientVersion, latest.minimumVersion) < 0;
     const isLatest = semverCompare(clientVersion, latest.version) >= 0;
 
     return {

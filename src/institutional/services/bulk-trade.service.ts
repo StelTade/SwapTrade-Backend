@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  BadRequestException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { DataSource, In } from 'typeorm';
 import { Order } from '../../orders/entities/order.entity';
 import { UserBalance } from '../../database/entities/user-balance.entity';
@@ -76,7 +72,9 @@ export class BulkTradeService {
     // Validate institutional access
     const client = await this.institutionalClientService.findByUserId(userId);
     if (!client.isActive) {
-      throw new BadRequestException('Institutional client account is not active');
+      throw new BadRequestException(
+        'Institutional client account is not active',
+      );
     }
 
     // Validate per-trade limits
@@ -108,7 +106,11 @@ export class BulkTradeService {
         for (let i = 0; i < trades.length; i++) {
           const trade = trades[i];
           try {
-            const order = await this.createOrderFromBulk(manager, userId, trade);
+            const order = await this.createOrderFromBulk(
+              manager,
+              userId,
+              trade,
+            );
             results.push({
               index: i,
               success: true,
@@ -125,7 +127,10 @@ export class BulkTradeService {
         }
       });
     } catch (err) {
-      this.logger.error(`Atomic bulk trade batch ${batchId} rolled back:`, (err as Error).message);
+      this.logger.error(
+        `Atomic bulk trade batch ${batchId} rolled back:`,
+        (err as Error).message,
+      );
       return {
         batchId,
         totalRequested: trades.length,
@@ -232,10 +237,10 @@ export class BulkTradeService {
       amount: dto.amount,
       filledAmount: 0,
       averageFillPrice: null,
-      price: dto.type === 'LIMIT' ? dto.price ?? null : null,
+      price: dto.type === 'LIMIT' ? (dto.price ?? null) : null,
       stopPrice:
         dto.type === 'STOP_LOSS' || dto.type === 'TAKE_PROFIT'
-          ? dto.stopPrice ?? null
+          ? (dto.stopPrice ?? null)
           : null,
       status: OrderStatus.PENDING,
     });
@@ -255,7 +260,9 @@ export class BulkTradeService {
       (dto.type === 'STOP_LOSS' || dto.type === 'TAKE_PROFIT') &&
       dto.stopPrice == null
     ) {
-      throw new Error('stopPrice is required for STOP_LOSS / TAKE_PROFIT orders');
+      throw new Error(
+        'stopPrice is required for STOP_LOSS / TAKE_PROFIT orders',
+      );
     }
     if (dto.amount <= 0) {
       throw new Error('amount must be positive');

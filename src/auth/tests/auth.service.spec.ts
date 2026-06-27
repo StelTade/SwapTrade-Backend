@@ -146,7 +146,10 @@ describe('AuthService', () => {
       };
 
       authRepo.findOne.mockResolvedValue(auth);
-      authRepo.save.mockResolvedValue({ ...auth, status: AccountStatus.ACTIVE });
+      authRepo.save.mockResolvedValue({
+        ...auth,
+        status: AccountStatus.ACTIVE,
+      });
       userRepo.update.mockResolvedValue({});
 
       const result = await service.activateAccount('valid-token');
@@ -231,9 +234,11 @@ describe('AuthService', () => {
       const badPasswordQb = {
         addSelect: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
-        getOne: jest.fn().mockResolvedValue(
-          makeAuth({ passwordHash: bcrypt.hashSync('WrongPassword1!', 10) }),
-        ),
+        getOne: jest
+          .fn()
+          .mockResolvedValue(
+            makeAuth({ passwordHash: bcrypt.hashSync('WrongPassword1!', 10) }),
+          ),
       };
       authRepo.createQueryBuilder.mockReturnValueOnce(badPasswordQb);
 
@@ -255,7 +260,9 @@ describe('AuthService', () => {
       const inactiveQb = {
         addSelect: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
-        getOne: jest.fn().mockResolvedValue(makeAuth({ status: AccountStatus.INACTIVE })),
+        getOne: jest
+          .fn()
+          .mockResolvedValue(makeAuth({ status: AccountStatus.INACTIVE })),
       };
       authRepo.createQueryBuilder.mockReturnValueOnce(inactiveQb);
 
@@ -266,7 +273,9 @@ describe('AuthService', () => {
       const suspendedQb = {
         addSelect: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
-        getOne: jest.fn().mockResolvedValue(makeAuth({ status: AccountStatus.SUSPENDED })),
+        getOne: jest
+          .fn()
+          .mockResolvedValue(makeAuth({ status: AccountStatus.SUSPENDED })),
       };
       authRepo.createQueryBuilder.mockReturnValueOnce(suspendedQb);
 
@@ -290,7 +299,9 @@ describe('AuthService', () => {
   describe('forgotPassword', () => {
     it('should always return 200-style message (no enumeration)', async () => {
       authRepo.findOne.mockResolvedValue(null);
-      const result = await service.forgotPassword({ email: 'notexist@example.com' });
+      const result = await service.forgotPassword({
+        email: 'notexist@example.com',
+      });
       expect(result.message).toContain('If an account');
     });
 
@@ -364,7 +375,9 @@ describe('AuthService', () => {
 
     it('should throw NotFoundException for missing session', async () => {
       sessionRepo.findOne.mockResolvedValue(null);
-      await expect(service.revokeSession('auth-id', 'bad-id')).rejects.toThrow(NotFoundException);
+      await expect(service.revokeSession('auth-id', 'bad-id')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -373,7 +386,10 @@ describe('AuthService', () => {
   describe('logout', () => {
     it('should revoke sessions and emit event', async () => {
       sessionRepo.update.mockResolvedValue({});
-      authRepo.findOne.mockResolvedValue({ id: 'auth-id', email: 'test@test.com' });
+      authRepo.findOne.mockResolvedValue({
+        id: 'auth-id',
+        email: 'test@test.com',
+      });
       userRepo.findOne.mockResolvedValue({ id: 'user-id' });
 
       const result = await service.logout('auth-id');

@@ -58,19 +58,33 @@ export class UserController {
   // ─── Portfolio ─────────────────────────────────────────────────────────────
 
   @Get('me/portfolio')
-  @ApiOperation({ summary: 'Get portfolio statistics for the authenticated user' })
-  @ApiResponse({ status: 200, description: 'Portfolio statistics', type: PortfolioStatsDto })
+  @ApiOperation({
+    summary: 'Get portfolio statistics for the authenticated user',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Portfolio statistics',
+    type: PortfolioStatsDto,
+  })
   @ApiErrorResponses()
-  async getMyPortfolioStats(@CurrentUser() user: JwtPayload): Promise<PortfolioStatsDto> {
+  async getMyPortfolioStats(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<PortfolioStatsDto> {
     return this.userService.getPortfolioStats(user.userId);
   }
 
   @Get(':userId/portfolio')
   @ApiOperation({ summary: 'Get portfolio statistics by user ID' })
-  @ApiResponse({ status: 200, description: 'Portfolio statistics retrieved successfully', type: PortfolioStatsDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Portfolio statistics retrieved successfully',
+    type: PortfolioStatsDto,
+  })
   @ApiParam({ name: 'userId', description: 'User identifier' })
   @ApiErrorResponses()
-  async getPortfolioStats(@Param('userId') userId: string): Promise<PortfolioStatsDto> {
+  async getPortfolioStats(
+    @Param('userId') userId: string,
+  ): Promise<PortfolioStatsDto> {
     return this.userService.getPortfolioStats(userId);
   }
 
@@ -128,10 +142,7 @@ export class UserController {
   @ApiOperation({ summary: '[Admin] Suspend a user account' })
   @ApiParam({ name: 'id', description: 'User UUID' })
   @ApiResponse({ status: 200, description: 'Account suspended' })
-  suspend(
-    @Param('id') id: string,
-    @Body() body: { reason?: string },
-  ) {
+  suspend(@Param('id') id: string, @Body() body: { reason?: string }) {
     return this.userService.suspend(id, body.reason);
   }
 
@@ -140,10 +151,7 @@ export class UserController {
   @ApiOperation({ summary: '[Admin] Deactivate a user account' })
   @ApiParam({ name: 'id', description: 'User UUID' })
   @ApiResponse({ status: 200, description: 'Account deactivated' })
-  deactivate(
-    @Param('id') id: string,
-    @Body() body: { reason?: string },
-  ) {
+  deactivate(@Param('id') id: string, @Body() body: { reason?: string }) {
     return this.userService.deactivate(id, body.reason);
   }
 }

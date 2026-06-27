@@ -83,10 +83,16 @@ import { LiquidationEvent } from './protection/entities/liquidation-event.entity
 import { ProtectionModule } from './protection/protection.module';
 
 // Blockchain — Cross-Chain Bridge (issue #386)
+import { BlockchainModule } from './blockchain/blockchain.module';
 import { CrossChainBridgeModule } from './blockchain/cross-chain-bridge.module';
 import { CrossChainBridge } from './blockchain/entities/cross-chain-bridge.entity';
 import { BlockchainTransaction } from './blockchain/entities/blockchain-transaction.entity';
 import { WalletAddress } from './blockchain/entities/wallet-address.entity';
+
+// Social Trading — Social Trading Features (issue #396)
+import { SocialTradingModule } from './social-trading/social-trading.module';
+import { TraderProfile } from './social-trading/entities/trader-profile.entity';
+import { CopySubscription } from './social-trading/entities/copy-subscription.entity';
 
 @Module({
   imports: [
@@ -117,7 +123,9 @@ import { WalletAddress } from './blockchain/entities/wallet-address.entity';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        type: configService.get<string>('DB_TYPE', 'postgres') as 'postgres' | 'sqlite',
+        type: configService.get<string>('DB_TYPE', 'postgres') as
+          | 'postgres'
+          | 'sqlite',
         host: configService.get<string>('DB_HOST', 'localhost'),
         port: configService.get<number>('DB_PORT', 5432),
         username: configService.get<string>('DB_USERNAME', 'postgres'),
@@ -171,6 +179,9 @@ import { WalletAddress } from './blockchain/entities/wallet-address.entity';
           CrossChainBridge,
           BlockchainTransaction,
           WalletAddress,
+          // Social Trading (issue #396)
+          TraderProfile,
+          CopySubscription,
         ],
         synchronize: configService.get<boolean>('DB_SYNCHRONIZE', true),
         logging: configService.get<boolean>('DB_LOGGING', false),
@@ -209,6 +220,9 @@ import { WalletAddress } from './blockchain/entities/wallet-address.entity';
 
     // ── Notifications Module ──
     NotificationsModule,
+
+    // ── Social Trading Module (issue #396) ──
+    SocialTradingModule,
 
     // ── Error Handling ──
     ErrorModule,

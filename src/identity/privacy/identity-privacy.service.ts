@@ -114,7 +114,7 @@ export class IdentityPrivacyService {
 
   getPendingRequests(userId: string): DataRequest[] {
     return this.dataRequests.filter(
-      r => r.userId === userId && r.status === 'pending',
+      (r) => r.userId === userId && r.status === 'pending',
     );
   }
 }

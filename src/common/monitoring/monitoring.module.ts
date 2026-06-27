@@ -36,21 +36,16 @@ const defaultMonitoringConfig: MonitoringConfig = {
     samplingRate: parseFloat(process.env.OTEL_SAMPLING_RATE ?? '1.0'),
     exportInterval: parseInt(process.env.OTEL_EXPORT_INTERVAL ?? '5000', 10),
     headers: {},
-    serviceName:
-      process.env.OTEL_SERVICE_NAME ?? 'swaptrade-backend',
+    serviceName: process.env.OTEL_SERVICE_NAME ?? 'swaptrade-backend',
     serviceVersion:
-      process.env.OTEL_SERVICE_VERSION ??
-      process.env.APP_VERSION ??
-      '1.0.0',
+      process.env.OTEL_SERVICE_VERSION ?? process.env.APP_VERSION ?? '1.0.0',
     environment: process.env.NODE_ENV ?? 'development',
   },
   metrics: {
-    enabled:
-      process.env.METRICS_ENABLED !== 'false', // default true
+    enabled: process.env.METRICS_ENABLED !== 'false', // default true
     port: parseInt(process.env.METRICS_PORT ?? '9090', 10),
     path: process.env.METRICS_PATH ?? '/metrics',
-    collectDefaultMetrics:
-      process.env.METRICS_COLLECT_DEFAULT !== 'false',
+    collectDefaultMetrics: process.env.METRICS_COLLECT_DEFAULT !== 'false',
   },
   health: {
     enabled: process.env.HEALTH_ENABLED !== 'false',

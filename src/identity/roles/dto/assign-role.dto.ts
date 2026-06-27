@@ -1,4 +1,10 @@
-import { IsEnum, IsArray, ArrayNotEmpty, ArrayUnique, IsNumber } from 'class-validator';
+import {
+  IsEnum,
+  IsArray,
+  ArrayNotEmpty,
+  ArrayUnique,
+  IsNumber,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { UserRole } from '../enums/user-role.enum';
 
@@ -7,7 +13,11 @@ export class AssignRoleDto {
   @IsNumber()
   userId: number;
 
-  @ApiProperty({ enum: UserRole, isArray: true, description: 'Roles to assign' })
+  @ApiProperty({
+    enum: UserRole,
+    isArray: true,
+    description: 'Roles to assign',
+  })
   @IsArray()
   @ArrayNotEmpty()
   @ArrayUnique()
@@ -20,7 +30,11 @@ export class RevokeRoleDto {
   @IsNumber()
   userId: number;
 
-  @ApiProperty({ enum: UserRole, isArray: true, description: 'Roles to revoke' })
+  @ApiProperty({
+    enum: UserRole,
+    isArray: true,
+    description: 'Roles to revoke',
+  })
   @IsArray()
   @ArrayNotEmpty()
   @ArrayUnique()

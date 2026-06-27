@@ -32,6 +32,11 @@ import { InfrastructureWebSocketModule } from '../infrastructure/websocket/webso
     OrdersResolver,
     GqlJwtAuthGuard,
   ],
-  exports: [OrdersService],
+  // OrderBookService is exported here so that the SocialTradingModule
+  // can call its matchTakerOrder() to drive follow-side MATCHET/LIMIT
+  // orders triggered by copied master trades — see CopyTradingListener
+  // and SOCIAL_TRADING_REUSE_OB comment in that file. OrdersService
+  // remains exported because user/identity code already depends on it.
+  exports: [OrdersService, OrderBookService],
 })
 export class OrdersModule {}

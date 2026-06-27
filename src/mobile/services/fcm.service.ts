@@ -24,7 +24,10 @@ export class FcmService {
     private readonly configService: ConfigService,
   ) {}
 
-  async sendToUser(userId: string, payload: PushPayload): Promise<{ sent: number; failed: number }> {
+  async sendToUser(
+    userId: string,
+    payload: PushPayload,
+  ): Promise<{ sent: number; failed: number }> {
     const devices = await this.deviceRepo.find({
       where: { userId, notificationsEnabled: true },
     });
@@ -74,10 +77,15 @@ export class FcmService {
       });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      this.logger.error(`FCM send failed for token ${token.slice(0, 8)}…: ${msg}`);
+      this.logger.error(
+        `FCM send failed for token ${token.slice(0, 8)}…: ${msg}`,
+      );
 
       // Remove stale tokens (NotRegistered / InvalidRegistration)
-      if (msg.includes('NotRegistered') || msg.includes('InvalidRegistration')) {
+      if (
+        msg.includes('NotRegistered') ||
+        msg.includes('InvalidRegistration')
+      ) {
         await this.deviceRepo.delete({ fcmToken: token });
       }
       throw err;

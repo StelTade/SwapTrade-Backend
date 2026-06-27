@@ -47,7 +47,12 @@ export class IdentityAdminController {
   // ─── User Management ───────────────────────────────────────────────────────
 
   @Get('users')
-  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.SUPPORT_AGENT, UserRole.COMPLIANCE_OFFICER)
+  @Roles(
+    UserRole.ADMIN,
+    UserRole.SUPER_ADMIN,
+    UserRole.SUPPORT_AGENT,
+    UserRole.COMPLIANCE_OFFICER,
+  )
   @RequirePermissions('users.read')
   @ApiOperation({ summary: 'List users with filters and pagination' })
   listUsers(@Query() query: UserQueryDto) {
@@ -55,7 +60,12 @@ export class IdentityAdminController {
   }
 
   @Get('users/:userId')
-  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.SUPPORT_AGENT, UserRole.COMPLIANCE_OFFICER)
+  @Roles(
+    UserRole.ADMIN,
+    UserRole.SUPER_ADMIN,
+    UserRole.SUPPORT_AGENT,
+    UserRole.COMPLIANCE_OFFICER,
+  )
   @RequirePermissions('users.read')
   @ApiOperation({ summary: 'Get a specific user by ID' })
   @ApiParam({ name: 'userId', type: Number })

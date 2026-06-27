@@ -57,8 +57,9 @@ export class MonitoringInterceptor implements NestInterceptor {
     // Extract W3C trace context from inbound headers
     // -------------------------------------------------------------------------
     const parentCtx = this.telemetryService.extractContext(request.headers);
-    const traceCorrelation =
-      this.telemetryService.extractTraceContext(request.headers);
+    const traceCorrelation = this.telemetryService.extractTraceContext(
+      request.headers,
+    );
 
     const correlationContext: CorrelationContext = {
       correlationId,
@@ -128,8 +129,9 @@ export class MonitoringInterceptor implements NestInterceptor {
 
       // Bind the handler execution to the active span context
       const handlerResult$ = (
-        require('@opentelemetry/api').context as typeof import('@opentelemetry/api').context
-      ).with(activeCtx, () => next.handle()) as Observable<any>;
+        require('@opentelemetry/api')
+          .context as typeof import('@opentelemetry/api').context
+      ).with(activeCtx, () => next.handle());
 
       handlerResult$
         .pipe(
@@ -164,7 +166,12 @@ export class MonitoringInterceptor implements NestInterceptor {
               LogLevel.INFO,
               `Request completed: ${request.method} ${request.url} ${statusCode}`,
               correlationId,
-              { method: request.method, url: request.url, statusCode, duration },
+              {
+                method: request.method,
+                url: request.url,
+                statusCode,
+                duration,
+              },
               undefined,
               duration,
             );

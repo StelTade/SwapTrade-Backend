@@ -41,14 +41,16 @@ export class AdvancedAnalyticsService {
       userId,
       risk,
       predictions,
-      recommendation: this.portfolioRisk.getPortfolioOptimizationRecommendation(
-        risk,
-      ),
+      recommendation:
+        this.portfolioRisk.getPortfolioOptimizationRecommendation(risk),
       generatedAt: new Date().toISOString(),
     };
   }
 
-  async exportUserAnalytics(userId: string, format: 'csv' | 'xlsx'): Promise<{
+  async exportUserAnalytics(
+    userId: string,
+    format: 'csv' | 'xlsx',
+  ): Promise<{
     mimeType: string;
     fileName: string;
     buffer: Buffer;
@@ -58,4 +60,3 @@ export class AdvancedAnalyticsService {
     return this.exportService.exportAnalytics(analytics, format);
   }
 }
-

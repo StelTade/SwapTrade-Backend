@@ -11,7 +11,10 @@ import { UserRole } from '../../roles/enums/user-role.enum';
 import { SuspendUserDto, ActivateUserDto } from '../dto/suspend-user.dto';
 import { UserQueryDto } from '../dto/user-query.dto';
 import { AuditLogService } from '../../../audit-log/audit-log.service';
-import { AuditEventType, AuditSeverity } from '../../../common/security/audit-log.entity';
+import {
+  AuditEventType,
+  AuditSeverity,
+} from '../../../common/security/audit-log.entity';
 
 /** Events emitted by this service */
 export class UserSuspendedEvent {
@@ -61,10 +64,9 @@ export class IdentityAdminService {
     }
 
     if (search) {
-      qb.andWhere(
-        '(user.email ILIKE :search OR user.username ILIKE :search)',
-        { search: `%${search}%` },
-      );
+      qb.andWhere('(user.email ILIKE :search OR user.username ILIKE :search)', {
+        search: `%${search}%`,
+      });
     }
 
     const [data, total] = await qb
@@ -74,7 +76,9 @@ export class IdentityAdminService {
       .getManyAndCount();
 
     // Strip sensitive fields
-    const safeData = data.map(({ mfaSecret, mfaRecoveryCodes, ...rest }) => rest);
+    const safeData = data.map(
+      ({ mfaSecret, mfaRecoveryCodes, ...rest }) => rest,
+    );
 
     return {
       data: safeData,
@@ -94,7 +98,10 @@ export class IdentityAdminService {
 
   // ─── Account Suspension ───────────────────────────────────────────────────────
 
-  async suspendUser(dto: SuspendUserDto, actorId: string): Promise<Partial<User>> {
+  async suspendUser(
+    dto: SuspendUserDto,
+    actorId: string,
+  ): Promise<Partial<User>> {
     const user = await this.userRepo.findOne({ where: { id: dto.userId } });
     if (!user) throw new NotFoundException(`User ${dto.userId} not found`);
 
@@ -133,7 +140,11 @@ export class IdentityAdminService {
         suspensionReason: dto.reason,
         suspensionExpiresAt: user.suspensionExpiresAt,
       },
-      metadata: { reason: dto.reason, durationHours: dto.durationHours, actorId },
+      metadata: {
+        reason: dto.reason,
+        durationHours: dto.durationHours,
+        actorId,
+      },
     });
 
     this.eventEmitter.emit(
@@ -145,7 +156,10 @@ export class IdentityAdminService {
     return safe;
   }
 
-  async activateUser(dto: ActivateUserDto, actorId: string): Promise<Partial<User>> {
+  async activateUser(
+    dto: ActivateUserDto,
+    actorId: string,
+  ): Promise<Partial<User>> {
     const user = await this.userRepo.findOne({ where: { id: dto.userId } });
     if (!user) throw new NotFoundException(`User ${dto.userId} not found`);
 

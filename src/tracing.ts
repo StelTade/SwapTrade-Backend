@@ -45,7 +45,7 @@ const OTEL_ENABLED = process.env.OTEL_ENABLED === 'true';
 
 if (!OTEL_ENABLED) {
   // SDK is disabled — exit early, no-op implementations are used by default
-  // eslint-disable-next-line no-console
+
   console.log('[tracing] OpenTelemetry disabled (OTEL_ENABLED != true)');
 } else {
   // Enable internal OTel diagnostics in development
@@ -53,12 +53,9 @@ if (!OTEL_ENABLED) {
     diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.WARN);
   }
 
-  const serviceName =
-    process.env.OTEL_SERVICE_NAME || 'swaptrade-backend';
+  const serviceName = process.env.OTEL_SERVICE_NAME || 'swaptrade-backend';
   const serviceVersion =
-    process.env.OTEL_SERVICE_VERSION ||
-    process.env.APP_VERSION ||
-    '1.0.0';
+    process.env.OTEL_SERVICE_VERSION || process.env.APP_VERSION || '1.0.0';
   const deploymentEnv = process.env.NODE_ENV || 'development';
   const exporterType = process.env.OTEL_EXPORTER_TYPE || 'otlp';
   const samplingRate = parseFloat(process.env.OTEL_SAMPLING_RATE || '1.0');
@@ -75,10 +72,9 @@ if (!OTEL_ENABLED) {
     // We use a dynamic require so that projects that haven't installed
     // @opentelemetry/exporter-trace-otlp-http can still boot in console mode.
     try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { OTLPTraceExporter } = require(
-        '@opentelemetry/exporter-trace-otlp-http',
-      );
+      const {
+        OTLPTraceExporter,
+      } = require('@opentelemetry/exporter-trace-otlp-http');
       return new OTLPTraceExporter({
         url:
           process.env.OTEL_EXPORTER_OTLP_ENDPOINT ||
@@ -87,7 +83,7 @@ if (!OTEL_ENABLED) {
       });
     } catch {
       // Package not installed — fall back to console exporter and warn
-      // eslint-disable-next-line no-console
+
       console.warn(
         '[tracing] @opentelemetry/exporter-trace-otlp-http not found, ' +
           'falling back to ConsoleSpanExporter. ' +
@@ -102,10 +98,9 @@ if (!OTEL_ENABLED) {
   // ---------------------------------------------------------------------------
   function buildInstrumentations() {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { getNodeAutoInstrumentations } = require(
-        '@opentelemetry/auto-instrumentations-node',
-      );
+      const {
+        getNodeAutoInstrumentations,
+      } = require('@opentelemetry/auto-instrumentations-node');
       return getNodeAutoInstrumentations({
         // Suppress noisy internal spans
         '@opentelemetry/instrumentation-fs': { enabled: false },
@@ -130,7 +125,6 @@ if (!OTEL_ENABLED) {
         '@opentelemetry/instrumentation-pg': { enabled: true },
       });
     } catch {
-      // eslint-disable-next-line no-console
       console.warn(
         '[tracing] @opentelemetry/auto-instrumentations-node not found. ' +
           'Auto-instrumentation disabled. ' +
@@ -175,7 +169,7 @@ if (!OTEL_ENABLED) {
   });
 
   sdk.start();
-  // eslint-disable-next-line no-console
+
   console.log(
     `[tracing] OpenTelemetry SDK started — service="${serviceName}" ` +
       `exporter="${exporterType}" sampling=${samplingRate}`,

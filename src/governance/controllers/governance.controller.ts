@@ -20,7 +20,11 @@ import { VotingService } from '../services/index';
 import { DelegationService } from '../services/index';
 import { DiscussionService } from '../services/index';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { ProposalType, ProposalStatus, VoteType } from '../enums/governance.enum';
+import {
+  ProposalType,
+  ProposalStatus,
+  VoteType,
+} from '../enums/governance.enum';
 
 @ApiTags('Governance')
 @ApiBearerAuth()
@@ -37,10 +41,7 @@ export class GovernanceProposalController {
 
   @Post('proposals')
   @ApiOperation({ summary: 'Create a new governance proposal' })
-  async createProposal(
-    @Body() dto: any,
-    @Request() req: any,
-  ) {
+  async createProposal(@Body() dto: any, @Request() req: any) {
     const userId = String(req.user?.id);
     const proposerAddress = req.user?.address ?? `0x${userId}`;
     return this.proposalManagement.createProposal(
@@ -74,7 +75,10 @@ export class GovernanceProposalController {
 
   @Post('proposals/:id/cancel')
   @ApiOperation({ summary: 'Cancel a proposal' })
-  async cancelProposal(@Param('id') id: string, @Body() dto: { reason: string }) {
+  async cancelProposal(
+    @Param('id') id: string,
+    @Body() dto: { reason: string },
+  ) {
     return this.proposalManagement.cancelProposal(id, dto.reason);
   }
 
@@ -192,7 +196,8 @@ export class GovernanceConfigController {
       votingPeriodDays: await this.governanceService.getVotingPeriodDays(),
       minTokenThreshold: await this.governanceService.getMinTokenThreshold(),
       quorumPercentage: await this.governanceService.getQuorumPercentage(),
-      passThresholdPercentage: await this.governanceService.getPassThresholdPercentage(),
+      passThresholdPercentage:
+        await this.governanceService.getPassThresholdPercentage(),
       maxTitleLength: await this.governanceService.getMaxTitleLength(),
     };
   }

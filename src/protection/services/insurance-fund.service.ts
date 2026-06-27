@@ -127,13 +127,18 @@ export class InsuranceFundService {
       relations: ['tier'],
     });
     if (!fund) {
-      throw new NotFoundException(`Fund for tier ${tier} and asset ${asset} not found`);
+      throw new NotFoundException(
+        `Fund for tier ${tier} and asset ${asset} not found`,
+      );
     }
     return fund;
   }
 
   async listFunds(): Promise<InsuranceFund[]> {
-    return this.fundRepo.find({ relations: ['tier'], order: { tierId: 'ASC' } });
+    return this.fundRepo.find({
+      relations: ['tier'],
+      order: { tierId: 'ASC' },
+    });
   }
 
   async listTiers(): Promise<InsuranceFundTier[]> {
@@ -155,10 +160,7 @@ export class InsuranceFundService {
     const balanceBefore = Number(fund.balance);
 
     let balanceAfter: number;
-    if (
-      type === InsuranceTxType.PAYOUT &&
-      balanceBefore < amount
-    ) {
+    if (type === InsuranceTxType.PAYOUT && balanceBefore < amount) {
       throw new BadRequestException('Insufficient fund balance for payout');
     }
 
@@ -195,22 +197,28 @@ export class InsuranceFundService {
     referenceId?: string,
     description?: string,
   ) {
-    return this.recordTransaction(fundId, InsuranceTxType.REPLENISHMENT, amount, {
-      referenceId,
-      description: description ?? 'Manual fund replenishment',
-    });
+    return this.recordTransaction(
+      fundId,
+      InsuranceTxType.REPLENISHMENT,
+      amount,
+      {
+        referenceId,
+        description: description ?? 'Manual fund replenishment',
+      },
+    );
   }
 
-  async contributeFromFees(
-    fundId: number,
-    amount: number,
-    tradeId: string,
-  ) {
-    return this.recordTransaction(fundId, InsuranceTxType.FEE_CONTRIBUTION, amount, {
-      referenceId: tradeId,
-      description: `Trading fee contribution from trade ${tradeId}`,
-      metadata: { source: 'trading_fees' },
-    });
+  async contributeFromFees(fundId: number, amount: number, tradeId: string) {
+    return this.recordTransaction(
+      fundId,
+      InsuranceTxType.FEE_CONTRIBUTION,
+      amount,
+      {
+        referenceId: tradeId,
+        description: `Trading fee contribution from trade ${tradeId}`,
+        metadata: { source: 'trading_fees' },
+      },
+    );
   }
 
   async getTransactionHistory(

@@ -38,7 +38,10 @@ export class StellarService {
     this.usdcIssuer = this.configService.get<string>('STELLAR_USDC_ISSUER', '');
     this.server = new StellarSdk.Horizon.Server(horizonUrl);
 
-    const platformSecret = this.configService.get<string>('STELLAR_PLATFORM_SECRET', '');
+    const platformSecret = this.configService.get<string>(
+      'STELLAR_PLATFORM_SECRET',
+      '',
+    );
     this.platformKeypair = platformSecret
       ? StellarSdk.Keypair.fromSecret(platformSecret)
       : StellarSdk.Keypair.random();
@@ -71,7 +74,9 @@ export class StellarService {
       where: { userId, network: BlockchainNetwork.STELLAR, isActive: true },
     });
     if (!wallet)
-      throw BlockchainException.transactionFailed({ reason: 'No Stellar wallet for user' });
+      throw BlockchainException.transactionFailed({
+        reason: 'No Stellar wallet for user',
+      });
 
     const txRecord = this.txRepo.create({
       userId,
@@ -87,7 +92,9 @@ export class StellarService {
     await this.txRepo.save(txRecord);
 
     try {
-      const account = await this.server.loadAccount(this.platformKeypair.publicKey());
+      const account = await this.server.loadAccount(
+        this.platformKeypair.publicKey(),
+      );
       const usdcAsset = new StellarSdk.Asset('USDC', this.usdcIssuer);
 
       const tx = new StellarSdk.TransactionBuilder(account, {

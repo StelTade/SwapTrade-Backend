@@ -1,4 +1,10 @@
-import { Injectable, Logger, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -34,8 +40,13 @@ export class ProposalExecutionService {
     private readonly governanceService: GovernanceService,
   ) {}
 
-  async executeProposal(proposalId: string, actorId: string): Promise<GovernanceExecution> {
-    const proposal = await this.proposalRepo.findOne({ where: { id: proposalId } });
+  async executeProposal(
+    proposalId: string,
+    actorId: string,
+  ): Promise<GovernanceExecution> {
+    const proposal = await this.proposalRepo.findOne({
+      where: { id: proposalId },
+    });
     if (!proposal) {
       throw new NotFoundException(`Proposal ${proposalId} not found`);
     }
@@ -106,9 +117,10 @@ export class ProposalManagementService {
       );
     }
 
-    const votingPeriodDays = type === ProposalType.EMERGENCY
-      ? await this.governanceService.getEmergencyVotingPeriodDays()
-      : await this.governanceService.getVotingPeriodDays();
+    const votingPeriodDays =
+      type === ProposalType.EMERGENCY
+        ? await this.governanceService.getEmergencyVotingPeriodDays()
+        : await this.governanceService.getVotingPeriodDays();
 
     const startTime = new Date();
     const endTime = new Date();
@@ -138,15 +150,21 @@ export class ProposalManagementService {
     return saved;
   }
 
-  async approveProposal(proposalId: string, actorId: string): Promise<GovernanceProposal> {
-    const proposal = await this.proposalRepo.findOne({ where: { id: proposalId } });
+  async approveProposal(
+    proposalId: string,
+    actorId: string,
+  ): Promise<GovernanceProposal> {
+    const proposal = await this.proposalRepo.findOne({
+      where: { id: proposalId },
+    });
     if (!proposal) {
       throw new NotFoundException(`Proposal ${proposalId} not found`);
     }
 
-    const votingPeriodDays = proposal.type === ProposalType.EMERGENCY
-      ? await this.governanceService.getEmergencyVotingPeriodDays()
-      : await this.governanceService.getVotingPeriodDays();
+    const votingPeriodDays =
+      proposal.type === ProposalType.EMERGENCY
+        ? await this.governanceService.getEmergencyVotingPeriodDays()
+        : await this.governanceService.getVotingPeriodDays();
 
     const startTime = new Date();
     const endTime = new Date();
@@ -160,14 +178,24 @@ export class ProposalManagementService {
     return this.proposalRepo.save(proposal);
   }
 
-  async cancelProposal(proposalId: string, reason: string): Promise<GovernanceProposal> {
-    const proposal = await this.proposalRepo.findOne({ where: { id: proposalId } });
+  async cancelProposal(
+    proposalId: string,
+    reason: string,
+  ): Promise<GovernanceProposal> {
+    const proposal = await this.proposalRepo.findOne({
+      where: { id: proposalId },
+    });
     if (!proposal) {
       throw new NotFoundException(`Proposal ${proposalId} not found`);
     }
 
-    if (proposal.status === ProposalStatus.ACTIVE || proposal.status === ProposalStatus.EXECUTED) {
-      throw new BadRequestException(`Cannot cancel proposal in status ${proposal.status}`);
+    if (
+      proposal.status === ProposalStatus.ACTIVE ||
+      proposal.status === ProposalStatus.EXECUTED
+    ) {
+      throw new BadRequestException(
+        `Cannot cancel proposal in status ${proposal.status}`,
+      );
     }
 
     proposal.status = ProposalStatus.CANCELLED;
@@ -176,7 +204,9 @@ export class ProposalManagementService {
   }
 
   async finalizeProposal(proposalId: string): Promise<GovernanceProposal> {
-    const proposal = await this.proposalRepo.findOne({ where: { id: proposalId } });
+    const proposal = await this.proposalRepo.findOne({
+      where: { id: proposalId },
+    });
     if (!proposal) {
       throw new NotFoundException(`Proposal ${proposalId} not found`);
     }
@@ -190,10 +220,15 @@ export class ProposalManagementService {
       throw new BadRequestException(`Voting period has not ended yet`);
     }
 
-    proposal.totalSupply = proposal.totalSupply || (proposal.forVotes + proposal.againstVotes + proposal.abstainVotes);
+    proposal.totalSupply =
+      proposal.totalSupply ||
+      proposal.forVotes + proposal.againstVotes + proposal.abstainVotes;
 
-    const hasPassed = await this.governanceService.proposalHasPassed(proposalId);
-    proposal.status = hasPassed ? ProposalStatus.PASSED : ProposalStatus.DEFEATED;
+    const hasPassed =
+      await this.governanceService.proposalHasPassed(proposalId);
+    proposal.status = hasPassed
+      ? ProposalStatus.PASSED
+      : ProposalStatus.DEFEATED;
 
     return this.proposalRepo.save(proposal);
   }
@@ -219,7 +254,10 @@ export class VotingService {
     voteType: VoteType,
     reason?: string,
   ): Promise<GovernanceVote> {
-    const canVote = await this.governanceService.canUserVote(voterId, proposalId);
+    const canVote = await this.governanceService.canUserVote(
+      voterId,
+      proposalId,
+    );
     if (!canVote.allowed) {
       throw new ForbiddenException(canVote.reason);
     }
@@ -228,12 +266,17 @@ export class VotingService {
       throw new BadRequestException(`Invalid vote type: ${voteType}`);
     }
 
-    const proposal = await this.proposalRepo.findOne({ where: { id: proposalId } });
+    const proposal = await this.proposalRepo.findOne({
+      where: { id: proposalId },
+    });
     if (!proposal) {
       throw new NotFoundException(`Proposal ${proposalId} not found`);
     }
 
-    const votingPower = await this.governanceService.getEffectiveVotingPower(voterId, proposalId);
+    const votingPower = await this.governanceService.getEffectiveVotingPower(
+      voterId,
+      proposalId,
+    );
     if (votingPower <= 0) {
       throw new BadRequestException('No voting power available');
     }
@@ -288,7 +331,9 @@ export class DelegationService {
     });
 
     if (existing) {
-      throw new BadRequestException('Active delegation already exists for this delegatee');
+      throw new BadRequestException(
+        'Active delegation already exists for this delegatee',
+      );
     }
 
     const balance = await this.governanceService.getTokenBalance(delegatorId);
@@ -314,7 +359,9 @@ export class DelegationService {
   }
 
   async revokeDelegation(delegationId: string): Promise<VoteDelegation> {
-    const delegation = await this.delegationRepo.findOne({ where: { id: delegationId } });
+    const delegation = await this.delegationRepo.findOne({
+      where: { id: delegationId },
+    });
     if (!delegation) {
       throw new BadRequestException('Delegation not found');
     }
@@ -367,7 +414,9 @@ export class DiscussionService {
     return this.discussionRepo.save(discussion);
   }
 
-  async getDiscussionThread(proposalId: string): Promise<GovernanceDiscussion[]> {
+  async getDiscussionThread(
+    proposalId: string,
+  ): Promise<GovernanceDiscussion[]> {
     return this.discussionRepo.find({
       where: { proposalId },
       order: { createdAt: 'ASC' },

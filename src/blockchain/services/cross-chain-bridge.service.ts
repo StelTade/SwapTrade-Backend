@@ -2,7 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CrossChainBridge, BridgeStatus } from '../entities/cross-chain-bridge.entity';
+import {
+  CrossChainBridge,
+  BridgeStatus,
+} from '../entities/cross-chain-bridge.entity';
 import { BlockchainNetwork } from '../entities/blockchain-transaction.entity';
 import { BlockchainException } from '../../error/exceptions/blockchain.exception';
 import { StellarService } from './stellar.service';
@@ -20,7 +23,10 @@ export class CrossChainBridgeService {
     private readonly bridgeRepo: Repository<CrossChainBridge>,
     private readonly stellarService: StellarService,
   ) {
-    this.multisigThreshold = this.configService.get<number>('BRIDGE_MULTISIG_THRESHOLD', 2);
+    this.multisigThreshold = this.configService.get<number>(
+      'BRIDGE_MULTISIG_THRESHOLD',
+      2,
+    );
   }
 
   async initiateBridge(
@@ -49,7 +55,10 @@ export class CrossChainBridgeService {
   async addApproval(bridgeId: string): Promise<CrossChainBridge> {
     const bridge = await this.bridgeRepo.findOne({ where: { id: bridgeId } });
     if (!bridge)
-      throw BlockchainException.transactionFailed({ reason: 'Bridge record not found', bridgeId });
+      throw BlockchainException.transactionFailed({
+        reason: 'Bridge record not found',
+        bridgeId,
+      });
 
     if (
       bridge.status !== BridgeStatus.INITIATED &&
@@ -72,7 +81,9 @@ export class CrossChainBridgeService {
     return this.bridgeRepo.save(bridge);
   }
 
-  private async executeBridge(bridge: CrossChainBridge): Promise<CrossChainBridge> {
+  private async executeBridge(
+    bridge: CrossChainBridge,
+  ): Promise<CrossChainBridge> {
     try {
       bridge.status = BridgeStatus.DESTINATION_PENDING;
       await this.bridgeRepo.save(bridge);
@@ -99,7 +110,10 @@ export class CrossChainBridgeService {
       bridge.errorMessage = err.message;
       await this.bridgeRepo.save(bridge);
       await this.refundBridge(bridge);
-      throw BlockchainException.transactionFailed({ bridgeId: bridge.id, error: err.message });
+      throw BlockchainException.transactionFailed({
+        bridgeId: bridge.id,
+        error: err.message,
+      });
     }
 
     return this.bridgeRepo.save(bridge);
@@ -117,13 +131,18 @@ export class CrossChainBridgeService {
       }
       bridge.status = BridgeStatus.REFUNDED;
       await this.bridgeRepo.save(bridge);
-      this.logger.log(`Bridge ${bridge.id} refunded to ${bridge.sourceAddress}`);
+      this.logger.log(
+        `Bridge ${bridge.id} refunded to ${bridge.sourceAddress}`,
+      );
     } catch (err) {
       this.logger.error(`Refund failed for bridge ${bridge.id}`, err);
     }
   }
 
-  async getBridgeHealth(): Promise<{ healthy: boolean; alertMessage?: string }> {
+  async getBridgeHealth(): Promise<{
+    healthy: boolean;
+    alertMessage?: string;
+  }> {
     const totalLockedResult = await this.bridgeRepo
       .createQueryBuilder('b')
       .select('COALESCE(SUM(CAST(b.amount AS DECIMAL)), 0)', 'total')
@@ -152,6 +171,9 @@ export class CrossChainBridgeService {
   }
 
   async getBridgeHistory(userId: string): Promise<CrossChainBridge[]> {
-    return this.bridgeRepo.find({ where: { userId }, order: { createdAt: 'DESC' } });
+    return this.bridgeRepo.find({
+      where: { userId },
+      order: { createdAt: 'DESC' },
+    });
   }
 }

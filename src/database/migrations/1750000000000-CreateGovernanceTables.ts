@@ -8,14 +8,40 @@ export class CreateGovernanceTables1750000000000 implements MigrationInterface {
       new Table({
         name: 'token_holdings',
         columns: [
-          { name: 'id', type: 'integer', isPrimary: true, isGenerated: true, generationStrategy: 'increment' },
+          {
+            name: 'id',
+            type: 'integer',
+            isPrimary: true,
+            isGenerated: true,
+            generationStrategy: 'increment',
+          },
           { name: 'userId', type: 'varchar' },
           { name: 'assetId', type: 'integer' },
-          { name: 'balance', type: 'decimal', precision: 18, scale: 8, default: 0 },
-          { name: 'lockedBalance', type: 'decimal', precision: 18, scale: 8, default: 0 },
+          {
+            name: 'balance',
+            type: 'decimal',
+            precision: 18,
+            scale: 8,
+            default: 0,
+          },
+          {
+            name: 'lockedBalance',
+            type: 'decimal',
+            precision: 18,
+            scale: 8,
+            default: 0,
+          },
           { name: 'lastUpdated', type: 'timestamp' },
-          { name: 'createdAt', type: 'timestamp', default: 'CURRENT_TIMESTAMP' },
-          { name: 'updatedAt', type: 'timestamp', default: 'CURRENT_TIMESTAMP' },
+          {
+            name: 'createdAt',
+            type: 'timestamp',
+            default: 'CURRENT_TIMESTAMP',
+          },
+          {
+            name: 'updatedAt',
+            type: 'timestamp',
+            default: 'CURRENT_TIMESTAMP',
+          },
         ],
       }),
       true,
@@ -23,7 +49,10 @@ export class CreateGovernanceTables1750000000000 implements MigrationInterface {
 
     await queryRunner.createIndex(
       'token_holdings',
-      new TableIndex({ name: 'IDX_token_holdings_userId', columnNames: ['userId'] }),
+      new TableIndex({
+        name: 'IDX_token_holdings_userId',
+        columnNames: ['userId'],
+      }),
     );
     await queryRunner.createIndex(
       'token_holdings',
@@ -38,13 +67,27 @@ export class CreateGovernanceTables1750000000000 implements MigrationInterface {
       new Table({
         name: 'governance_configs',
         columns: [
-          { name: 'id', type: 'integer', isPrimary: true, isGenerated: true, generationStrategy: 'increment' },
+          {
+            name: 'id',
+            type: 'integer',
+            isPrimary: true,
+            isGenerated: true,
+            generationStrategy: 'increment',
+          },
           { name: 'key', type: 'varchar', isUnique: true },
           { name: 'value', type: 'decimal', precision: 18, scale: 8 },
           { name: 'description', type: 'varchar' },
           { name: 'updatedBy', type: 'varchar' },
-          { name: 'createdAt', type: 'timestamp', default: 'CURRENT_TIMESTAMP' },
-          { name: 'updatedAt', type: 'timestamp', default: 'CURRENT_TIMESTAMP' },
+          {
+            name: 'createdAt',
+            type: 'timestamp',
+            default: 'CURRENT_TIMESTAMP',
+          },
+          {
+            name: 'updatedAt',
+            type: 'timestamp',
+            default: 'CURRENT_TIMESTAMP',
+          },
         ],
       }),
       true,
@@ -63,18 +106,56 @@ export class CreateGovernanceTables1750000000000 implements MigrationInterface {
           { name: 'parameters', type: 'json' },
           { name: 'executionPayload', type: 'json', isNullable: true },
           { name: 'status', type: 'varchar', length: '20' },
-          { name: 'forVotes', type: 'decimal', precision: 18, scale: 8, default: 0 },
-          { name: 'againstVotes', type: 'decimal', precision: 18, scale: 8, default: 0 },
-          { name: 'abstainVotes', type: 'decimal', precision: 18, scale: 8, default: 0 },
-          { name: 'quorumVotes', type: 'decimal', precision: 18, scale: 8, default: 40 },
-          { name: 'totalSupply', type: 'decimal', precision: 18, scale: 8, default: 0 },
+          {
+            name: 'forVotes',
+            type: 'decimal',
+            precision: 18,
+            scale: 8,
+            default: 0,
+          },
+          {
+            name: 'againstVotes',
+            type: 'decimal',
+            precision: 18,
+            scale: 8,
+            default: 0,
+          },
+          {
+            name: 'abstainVotes',
+            type: 'decimal',
+            precision: 18,
+            scale: 8,
+            default: 0,
+          },
+          {
+            name: 'quorumVotes',
+            type: 'decimal',
+            precision: 18,
+            scale: 8,
+            default: 40,
+          },
+          {
+            name: 'totalSupply',
+            type: 'decimal',
+            precision: 18,
+            scale: 8,
+            default: 0,
+          },
           { name: 'votingPeriodDays', type: 'integer' },
           { name: 'startTime', type: 'timestamp' },
           { name: 'endTime', type: 'timestamp' },
           { name: 'executedAt', type: 'timestamp', isNullable: true },
           { name: 'cancellationReason', type: 'varchar', isNullable: true },
-          { name: 'createdAt', type: 'timestamp', default: 'CURRENT_TIMESTAMP' },
-          { name: 'updatedAt', type: 'timestamp', default: 'CURRENT_TIMESTAMP' },
+          {
+            name: 'createdAt',
+            type: 'timestamp',
+            default: 'CURRENT_TIMESTAMP',
+          },
+          {
+            name: 'updatedAt',
+            type: 'timestamp',
+            default: 'CURRENT_TIMESTAMP',
+          },
         ],
       }),
       true,
@@ -82,11 +163,17 @@ export class CreateGovernanceTables1750000000000 implements MigrationInterface {
 
     await queryRunner.createIndex(
       'governance_proposals',
-      new TableIndex({ name: 'IDX_proposals_status_startTime', columnNames: ['status', 'startTime'] }),
+      new TableIndex({
+        name: 'IDX_proposals_status_startTime',
+        columnNames: ['status', 'startTime'],
+      }),
     );
     await queryRunner.createIndex(
       'governance_proposals',
-      new TableIndex({ name: 'IDX_proposals_proposerId', columnNames: ['proposerId'] }),
+      new TableIndex({
+        name: 'IDX_proposals_proposerId',
+        columnNames: ['proposerId'],
+      }),
     );
     await queryRunner.createIndex(
       'governance_proposals',
@@ -102,8 +189,20 @@ export class CreateGovernanceTables1750000000000 implements MigrationInterface {
           { name: 'voterId', type: 'varchar' },
           { name: 'voterAddress', type: 'varchar' },
           { name: 'voteType', type: 'varchar', length: '10' },
-          { name: 'weight', type: 'decimal', precision: 18, scale: 8, default: 0 },
-          { name: 'balanceAtVote', type: 'decimal', precision: 18, scale: 8, default: 0 },
+          {
+            name: 'weight',
+            type: 'decimal',
+            precision: 18,
+            scale: 8,
+            default: 0,
+          },
+          {
+            name: 'balanceAtVote',
+            type: 'decimal',
+            precision: 18,
+            scale: 8,
+            default: 0,
+          },
           { name: 'delegateTo', type: 'varchar', isNullable: true },
           { name: 'timestamp', type: 'timestamp' },
           { name: 'reason', type: 'text', isNullable: true },
@@ -122,7 +221,10 @@ export class CreateGovernanceTables1750000000000 implements MigrationInterface {
     );
     await queryRunner.createIndex(
       'governance_votes',
-      new TableIndex({ name: 'IDX_votes_proposalId', columnNames: ['proposalId'] }),
+      new TableIndex({
+        name: 'IDX_votes_proposalId',
+        columnNames: ['proposalId'],
+      }),
     );
     await queryRunner.createIndex(
       'governance_votes',
@@ -143,8 +245,16 @@ export class CreateGovernanceTables1750000000000 implements MigrationInterface {
           { name: 'authorAddress', type: 'varchar' },
           { name: 'messageType', type: 'varchar', length: '20' },
           { name: 'content', type: 'text' },
-          { name: 'createdAt', type: 'timestamp', default: 'CURRENT_TIMESTAMP' },
-          { name: 'updatedAt', type: 'timestamp', default: 'CURRENT_TIMESTAMP' },
+          {
+            name: 'createdAt',
+            type: 'timestamp',
+            default: 'CURRENT_TIMESTAMP',
+          },
+          {
+            name: 'updatedAt',
+            type: 'timestamp',
+            default: 'CURRENT_TIMESTAMP',
+          },
         ],
       }),
       true,
@@ -152,7 +262,10 @@ export class CreateGovernanceTables1750000000000 implements MigrationInterface {
 
     await queryRunner.createIndex(
       'governance_discussions',
-      new TableIndex({ name: 'IDX_discussions_proposalId', columnNames: ['proposalId'] }),
+      new TableIndex({
+        name: 'IDX_discussions_proposalId',
+        columnNames: ['proposalId'],
+      }),
     );
 
     await queryRunner.createTable(
@@ -166,7 +279,11 @@ export class CreateGovernanceTables1750000000000 implements MigrationInterface {
           { name: 'transactionHash', type: 'varchar', isNullable: true },
           { name: 'errorMessage', type: 'text', isNullable: true },
           { name: 'executedAt', type: 'timestamp' },
-          { name: 'createdAt', type: 'timestamp', default: 'CURRENT_TIMESTAMP' },
+          {
+            name: 'createdAt',
+            type: 'timestamp',
+            default: 'CURRENT_TIMESTAMP',
+          },
         ],
       }),
       true,
@@ -174,7 +291,10 @@ export class CreateGovernanceTables1750000000000 implements MigrationInterface {
 
     await queryRunner.createIndex(
       'governance_executions',
-      new TableIndex({ name: 'IDX_executions_proposalId', columnNames: ['proposalId'] }),
+      new TableIndex({
+        name: 'IDX_executions_proposalId',
+        columnNames: ['proposalId'],
+      }),
     );
 
     await queryRunner.createTable(
@@ -187,11 +307,21 @@ export class CreateGovernanceTables1750000000000 implements MigrationInterface {
           { name: 'delegateeId', type: 'varchar' },
           { name: 'delegateeAddress', type: 'varchar' },
           { name: 'proposalId', type: 'varchar', isNullable: true },
-          { name: 'delegatedBalance', type: 'decimal', precision: 18, scale: 8, default: 0 },
+          {
+            name: 'delegatedBalance',
+            type: 'decimal',
+            precision: 18,
+            scale: 8,
+            default: 0,
+          },
           { name: 'isActive', type: 'boolean', default: true },
           { name: 'startTime', type: 'timestamp' },
           { name: 'endTime', type: 'timestamp', isNullable: true },
-          { name: 'createdAt', type: 'timestamp', default: 'CURRENT_TIMESTAMP' },
+          {
+            name: 'createdAt',
+            type: 'timestamp',
+            default: 'CURRENT_TIMESTAMP',
+          },
         ],
       }),
       true,
@@ -206,11 +336,17 @@ export class CreateGovernanceTables1750000000000 implements MigrationInterface {
     );
     await queryRunner.createIndex(
       'vote_delegations',
-      new TableIndex({ name: 'IDX_delegations_delegatorId', columnNames: ['delegatorId'] }),
+      new TableIndex({
+        name: 'IDX_delegations_delegatorId',
+        columnNames: ['delegatorId'],
+      }),
     );
     await queryRunner.createIndex(
       'vote_delegations',
-      new TableIndex({ name: 'IDX_delegations_delegateeId', columnNames: ['delegateeId'] }),
+      new TableIndex({
+        name: 'IDX_delegations_delegateeId',
+        columnNames: ['delegateeId'],
+      }),
     );
   }
 
