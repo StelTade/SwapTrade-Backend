@@ -14,7 +14,12 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../identity/roles/guards/rbac.guard';
 import { Roles } from '../../identity/roles/decorators/roles.decorator';
@@ -29,7 +34,10 @@ import { SupportTicketService } from '../services/support-ticket.service';
 
 import { CreateInstitutionalClientDto } from '../dto/create-institutional-client.dto';
 import { BulkTradeDto } from '../dto/bulk-trade.dto';
-import { GenerateReconciliationReportDto, ReconciliationReportFilterDto } from '../dto/reconciliation-report.dto';
+import {
+  GenerateReconciliationReportDto,
+  ReconciliationReportFilterDto,
+} from '../dto/reconciliation-report.dto';
 import { CreateSupportTicketDto } from '../dto/create-support-ticket.dto';
 import { SupportTicketFilterDto } from '../dto/support-ticket-filter.dto';
 
@@ -66,7 +74,10 @@ export class InstitutionalController {
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @ApiOperation({ summary: 'Register a new institutional client' })
   @ApiResponse({ status: 201, description: 'Institutional client created' })
-  @ApiResponse({ status: 409, description: 'Client already exists for this user' })
+  @ApiResponse({
+    status: 409,
+    description: 'Client already exists for this user',
+  })
   async createClient(@Body() dto: CreateInstitutionalClientDto) {
     return this.clientService.create(dto);
   }
@@ -83,12 +94,19 @@ export class InstitutionalController {
     return this.clientService.findAll({
       slaTier,
       isActive: isActive !== undefined ? isActive === 'true' : undefined,
-      accountManagerId: accountManagerId ? parseInt(accountManagerId) : undefined,
+      accountManagerId: accountManagerId
+        ? parseInt(accountManagerId)
+        : undefined,
     });
   }
 
   @Get('clients/:id')
-  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.COMPLIANCE_OFFICER, UserRole.INSTITUTIONAL_CLIENT)
+  @Roles(
+    UserRole.ADMIN,
+    UserRole.SUPER_ADMIN,
+    UserRole.COMPLIANCE_OFFICER,
+    UserRole.INSTITUTIONAL_CLIENT,
+  )
   @ApiOperation({ summary: 'Get institutional client details' })
   @ApiResponse({ status: 200, description: 'Institutional client details' })
   @ApiResponse({ status: 404, description: 'Client not found' })
@@ -146,7 +164,10 @@ export class InstitutionalController {
       'Institutional clients can achieve 1000+ trades/second throughput.',
   })
   @ApiResponse({ status: 201, description: 'Bulk trade execution results' })
-  @ApiResponse({ status: 400, description: 'Invalid trade data or exceeded limits' })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid trade data or exceeded limits',
+  })
   async executeBulkTrades(
     @Body() dto: BulkTradeDto,
     @Req() req: { user: JwtPayload },
@@ -167,15 +188,25 @@ export class InstitutionalController {
   // ═══════════════════════════════════════════════════════════════════════════
 
   @Post('reports/reconciliation')
-  @Roles(UserRole.INSTITUTIONAL_CLIENT, UserRole.ADMIN, UserRole.COMPLIANCE_OFFICER)
+  @Roles(
+    UserRole.INSTITUTIONAL_CLIENT,
+    UserRole.ADMIN,
+    UserRole.COMPLIANCE_OFFICER,
+  )
   @ApiOperation({ summary: 'Generate a reconciliation report' })
   @ApiResponse({ status: 201, description: 'Reconciliation report generated' })
-  async generateReconciliationReport(@Body() dto: GenerateReconciliationReportDto) {
+  async generateReconciliationReport(
+    @Body() dto: GenerateReconciliationReportDto,
+  ) {
     return this.reconciliationService.generateReport(dto);
   }
 
   @Get('reports/reconciliation')
-  @Roles(UserRole.INSTITUTIONAL_CLIENT, UserRole.ADMIN, UserRole.COMPLIANCE_OFFICER)
+  @Roles(
+    UserRole.INSTITUTIONAL_CLIENT,
+    UserRole.ADMIN,
+    UserRole.COMPLIANCE_OFFICER,
+  )
   @ApiOperation({ summary: 'Get reconciliation reports' })
   @ApiResponse({ status: 200, description: 'List of reconciliation reports' })
   async getReconciliationReports(
@@ -194,7 +225,11 @@ export class InstitutionalController {
   }
 
   @Get('reports/reconciliation/:id')
-  @Roles(UserRole.INSTITUTIONAL_CLIENT, UserRole.ADMIN, UserRole.COMPLIANCE_OFFICER)
+  @Roles(
+    UserRole.INSTITUTIONAL_CLIENT,
+    UserRole.ADMIN,
+    UserRole.COMPLIANCE_OFFICER,
+  )
   @ApiOperation({ summary: 'Get a specific reconciliation report' })
   @ApiResponse({ status: 200, description: 'Reconciliation report details' })
   @ApiResponse({ status: 404, description: 'Report not found' })
@@ -210,16 +245,27 @@ export class InstitutionalController {
   @Roles(UserRole.INSTITUTIONAL_CLIENT, UserRole.ADMIN, UserRole.SUPPORT_AGENT)
   @ApiOperation({ summary: 'Get SLA policies for an institutional client' })
   @ApiResponse({ status: 200, description: 'SLA policies' })
-  async getSlaPolicies(@Query('institutionalClientId') institutionalClientId: string) {
+  async getSlaPolicies(
+    @Query('institutionalClientId') institutionalClientId: string,
+  ) {
     return this.slaMonitoringService.getSlaPolicies(institutionalClientId);
   }
 
   @Get('sla/compliance')
-  @Roles(UserRole.INSTITUTIONAL_CLIENT, UserRole.ADMIN, UserRole.SUPPORT_AGENT, UserRole.COMPLIANCE_OFFICER)
+  @Roles(
+    UserRole.INSTITUTIONAL_CLIENT,
+    UserRole.ADMIN,
+    UserRole.SUPPORT_AGENT,
+    UserRole.COMPLIANCE_OFFICER,
+  )
   @ApiOperation({ summary: 'Get SLA compliance summary' })
   @ApiResponse({ status: 200, description: 'SLA compliance summary' })
-  async getSlaCompliance(@Query('institutionalClientId') institutionalClientId: string) {
-    return this.slaMonitoringService.getSlaComplianceSummary(institutionalClientId);
+  async getSlaCompliance(
+    @Query('institutionalClientId') institutionalClientId: string,
+  ) {
+    return this.slaMonitoringService.getSlaComplianceSummary(
+      institutionalClientId,
+    );
   }
 
   @Get('sla/violations')
@@ -247,7 +293,11 @@ export class InstitutionalController {
     @Param('id') id: string,
     @Body() body: { resolvedBy: string; notes?: string },
   ) {
-    return this.slaMonitoringService.resolveViolation(id, body.resolvedBy, body.notes);
+    return this.slaMonitoringService.resolveViolation(
+      id,
+      body.resolvedBy,
+      body.notes,
+    );
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -257,7 +307,10 @@ export class InstitutionalController {
   @Post('support/tickets')
   @Roles(UserRole.INSTITUTIONAL_CLIENT)
   @ApiOperation({ summary: 'Create a support ticket (institutional priority)' })
-  @ApiResponse({ status: 201, description: 'Support ticket created with SLA deadlines' })
+  @ApiResponse({
+    status: 201,
+    description: 'Support ticket created with SLA deadlines',
+  })
   async createSupportTicket(
     @Body() dto: CreateSupportTicketDto,
     @Req() req: { user: JwtPayload },
@@ -349,7 +402,9 @@ export class InstitutionalController {
   async getSupportSlaStats(
     @Query('institutionalClientId') institutionalClientId?: string,
   ) {
-    return this.supportTicketService.getSlaComplianceStats(institutionalClientId);
+    return this.supportTicketService.getSlaComplianceStats(
+      institutionalClientId,
+    );
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -390,7 +445,8 @@ export class InstitutionalController {
     } catch {
       return {
         client: null,
-        message: 'No institutional client profile found. Contact support to onboard.',
+        message:
+          'No institutional client profile found. Contact support to onboard.',
       };
     }
   }

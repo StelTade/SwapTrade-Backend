@@ -60,7 +60,9 @@ export class SmsService implements OnModuleInit {
       this.twilioClient = new Twilio(accountSid, authToken);
       this.logger.log('Twilio client initialized');
     } else {
-      this.logger.warn('Twilio credentials not configured, SMS service will be unavailable');
+      this.logger.warn(
+        'Twilio credentials not configured, SMS service will be unavailable',
+      );
     }
   }
 

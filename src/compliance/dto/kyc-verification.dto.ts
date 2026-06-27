@@ -1,4 +1,11 @@
-import { IsString, IsEmail, IsOptional, IsDateString, IsEnum, IsObject } from 'class-validator';
+import {
+  IsString,
+  IsEmail,
+  IsOptional,
+  IsDateString,
+  IsEnum,
+  IsObject,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export enum KycProvider {

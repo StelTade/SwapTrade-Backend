@@ -130,7 +130,9 @@ export class MobileController {
 
   @Post('push/send')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Send a push notification to a user (internal/admin)' })
+  @ApiOperation({
+    summary: 'Send a push notification to a user (internal/admin)',
+  })
   sendPush(@Body() dto: SendPushDto) {
     return this.fcmService.sendToUser(dto.userId, {
       title: dto.title,
@@ -149,10 +151,7 @@ export class MobileController {
     status: 200,
     schema: { example: { queued: 3, conflicts: ['order-uuid-1'] } },
   })
-  syncBatch(
-    @CurrentUser() user: JwtPayload,
-    @Body() dto: BatchSyncDto,
-  ) {
+  syncBatch(@CurrentUser() user: JwtPayload, @Body() dto: BatchSyncDto) {
     return this.syncService.enqueueBatch(user.userId, dto);
   }
 
@@ -178,20 +177,14 @@ export class MobileController {
   @Post('analytics/track')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Track a single mobile analytics event' })
-  track(
-    @CurrentUser() user: JwtPayload,
-    @Body() dto: TrackEventDto,
-  ) {
+  track(@CurrentUser() user: JwtPayload, @Body() dto: TrackEventDto) {
     return this.analyticsService.track(user.userId, dto);
   }
 
   @Post('analytics/batch')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Track multiple analytics events in one request' })
-  trackBatch(
-    @CurrentUser() user: JwtPayload,
-    @Body() dto: BatchTrackDto,
-  ) {
+  trackBatch(@CurrentUser() user: JwtPayload, @Body() dto: BatchTrackDto) {
     return this.analyticsService.trackBatch(user.userId, dto);
   }
 
@@ -199,10 +192,7 @@ export class MobileController {
   @ApiOperation({ summary: 'Aggregated mobile analytics (admin)' })
   @ApiQuery({ name: 'from', type: String, example: '2026-01-01' })
   @ApiQuery({ name: 'to', type: String, example: '2026-12-31' })
-  getStats(
-    @Query('from') from: string,
-    @Query('to') to: string,
-  ) {
+  getStats(@Query('from') from: string, @Query('to') to: string) {
     return this.analyticsService.getStats(new Date(from), new Date(to));
   }
 
@@ -231,7 +221,9 @@ export class MobileController {
 
   @Public()
   @Get('deeplink/resolve')
-  @ApiOperation({ summary: 'Resolve a deep link path to an app screen + params' })
+  @ApiOperation({
+    summary: 'Resolve a deep link path to an app screen + params',
+  })
   @ApiQuery({ name: 'path', example: '/trade/BTC-USD' })
   resolveDeepLink(@Query('path') linkPath: string) {
     return resolveDeepLinkPath(linkPath);
@@ -248,12 +240,36 @@ function resolveDeepLinkPath(linkPath: string): {
     screen: string;
     paramKeys: string[];
   }> = [
-    { pattern: /^\/trade\/([A-Z]+-[A-Z]+)$/, screen: 'TradeScreen', paramKeys: ['pair'] },
-    { pattern: /^\/order\/([a-z0-9-]+)$/, screen: 'OrderDetailScreen', paramKeys: ['orderId'] },
-    { pattern: /^\/profile\/([a-z0-9-]+)$/, screen: 'ProfileScreen', paramKeys: ['userId'] },
-    { pattern: /^\/referral\/([A-Z0-9]+)$/, screen: 'ReferralScreen', paramKeys: ['code'] },
-    { pattern: /^\/verify\/email$/, screen: 'EmailVerifyScreen', paramKeys: [] },
-    { pattern: /^\/reset-password$/, screen: 'ResetPasswordScreen', paramKeys: [] },
+    {
+      pattern: /^\/trade\/([A-Z]+-[A-Z]+)$/,
+      screen: 'TradeScreen',
+      paramKeys: ['pair'],
+    },
+    {
+      pattern: /^\/order\/([a-z0-9-]+)$/,
+      screen: 'OrderDetailScreen',
+      paramKeys: ['orderId'],
+    },
+    {
+      pattern: /^\/profile\/([a-z0-9-]+)$/,
+      screen: 'ProfileScreen',
+      paramKeys: ['userId'],
+    },
+    {
+      pattern: /^\/referral\/([A-Z0-9]+)$/,
+      screen: 'ReferralScreen',
+      paramKeys: ['code'],
+    },
+    {
+      pattern: /^\/verify\/email$/,
+      screen: 'EmailVerifyScreen',
+      paramKeys: [],
+    },
+    {
+      pattern: /^\/reset-password$/,
+      screen: 'ResetPasswordScreen',
+      paramKeys: [],
+    },
   ];
 
   for (const route of routes) {

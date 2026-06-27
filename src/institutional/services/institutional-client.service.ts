@@ -33,7 +33,9 @@ export class InstitutionalClientService {
   /**
    * Register a new institutional client and set up default SLA policies.
    */
-  async create(dto: CreateInstitutionalClientDto): Promise<InstitutionalClient> {
+  async create(
+    dto: CreateInstitutionalClientDto,
+  ): Promise<InstitutionalClient> {
     // Check for duplicate
     const existing = await this.clientRepo.findOne({
       where: { userId: dto.userId },
@@ -107,7 +109,8 @@ export class InstitutionalClientService {
     const where: any = {};
     if (filters?.slaTier) where.slaTier = filters.slaTier;
     if (filters?.isActive !== undefined) where.isActive = filters.isActive;
-    if (filters?.accountManagerId) where.accountManagerId = filters.accountManagerId;
+    if (filters?.accountManagerId)
+      where.accountManagerId = filters.accountManagerId;
 
     return this.clientRepo.find({
       where,
@@ -124,16 +127,24 @@ export class InstitutionalClientService {
   ): Promise<InstitutionalClient> {
     const client = await this.findById(id);
 
-    if (updates.companyName !== undefined) client.companyName = updates.companyName;
+    if (updates.companyName !== undefined)
+      client.companyName = updates.companyName;
     if (updates.lei !== undefined) client.lei = updates.lei;
     if (updates.taxId !== undefined) client.taxId = updates.taxId;
-    if (updates.jurisdiction !== undefined) client.jurisdiction = updates.jurisdiction;
-    if (updates.accountManagerId !== undefined) client.accountManagerId = updates.accountManagerId;
-    if (updates.maxTradesPerSecond !== undefined) client.maxTradesPerSecond = updates.maxTradesPerSecond;
-    if (updates.maxApiRequestsPerSecond !== undefined) client.maxApiRequestsPerSecond = updates.maxApiRequestsPerSecond;
-    if (updates.dailyVolumeLimit !== undefined) client.dailyVolumeLimit = updates.dailyVolumeLimit;
-    if (updates.ipWhitelist !== undefined) client.ipWhitelist = updates.ipWhitelist;
-    if (updates.webhookUrl !== undefined) client.webhookUrl = updates.webhookUrl;
+    if (updates.jurisdiction !== undefined)
+      client.jurisdiction = updates.jurisdiction;
+    if (updates.accountManagerId !== undefined)
+      client.accountManagerId = updates.accountManagerId;
+    if (updates.maxTradesPerSecond !== undefined)
+      client.maxTradesPerSecond = updates.maxTradesPerSecond;
+    if (updates.maxApiRequestsPerSecond !== undefined)
+      client.maxApiRequestsPerSecond = updates.maxApiRequestsPerSecond;
+    if (updates.dailyVolumeLimit !== undefined)
+      client.dailyVolumeLimit = updates.dailyVolumeLimit;
+    if (updates.ipWhitelist !== undefined)
+      client.ipWhitelist = updates.ipWhitelist;
+    if (updates.webhookUrl !== undefined)
+      client.webhookUrl = updates.webhookUrl;
     if (updates.metadata !== undefined) client.metadata = updates.metadata;
 
     // If SLA tier changed, recreate default policies
@@ -167,7 +178,9 @@ export class InstitutionalClientService {
   /**
    * Create default SLA policies based on the client's SLA tier.
    */
-  private async createDefaultSlaPolicies(client: InstitutionalClient): Promise<void> {
+  private async createDefaultSlaPolicies(
+    client: InstitutionalClient,
+  ): Promise<void> {
     const tier = client.slaTier as SlaTier;
     const targets = DEFAULT_SLA_TARGETS[tier];
     if (!targets) return;

@@ -1,4 +1,10 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { NotificationEventType } from '../../common/enums/notification-event-type.enum';
 import { NotificationChannel } from '../../common/enums/notification-channel.enum';
 
@@ -12,7 +18,7 @@ type EventPreferences = {
     [NotificationChannel.SMS]?: ChannelPreference;
     [NotificationChannel.PUSH]?: ChannelPreference;
   };
-}
+};
 
 @Entity('user_notification_preferences')
 export class UserNotificationPreferences {

@@ -30,8 +30,9 @@ export class CreateOrderDto {
   price?: number;
 
   /** Required for STOP_LOSS / TAKE_PROFIT orders. */
-  @ValidateIf((dto: CreateOrderDto) =>
-    dto.type === OrderType.STOP_LOSS || dto.type === OrderType.TAKE_PROFIT,
+  @ValidateIf(
+    (dto: CreateOrderDto) =>
+      dto.type === OrderType.STOP_LOSS || dto.type === OrderType.TAKE_PROFIT,
   )
   @IsNumber()
   @IsPositive()

@@ -61,7 +61,10 @@ describe('UserService', () => {
       providers: [
         UserService,
         { provide: getRepositoryToken(User), useFactory: mockUserRepo },
-        { provide: getRepositoryToken(UserBalance), useFactory: mockUserBalanceRepo },
+        {
+          provide: getRepositoryToken(UserBalance),
+          useFactory: mockUserBalanceRepo,
+        },
         { provide: getRepositoryToken(Auth), useFactory: mockAuthRepo },
         { provide: EventEmitter2, useFactory: mockEventEmitter },
       ],
@@ -95,7 +98,9 @@ describe('UserService', () => {
 
     it('should throw NotFoundException for unknown id', async () => {
       userRepo.findOne.mockResolvedValue(null);
-      await expect(service.findOne('bad-id')).rejects.toThrow(NotFoundException);
+      await expect(service.findOne('bad-id')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -139,7 +144,9 @@ describe('UserService', () => {
 
     it('should throw NotFoundException for missing user', async () => {
       userRepo.findOne.mockResolvedValue(null);
-      await expect(service.update('bad-id', { username: 'x' })).rejects.toThrow(NotFoundException);
+      await expect(service.update('bad-id', { username: 'x' })).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -150,7 +157,10 @@ describe('UserService', () => {
       const user = makeUser({ status: AccountStatus.INACTIVE }) as User;
       user.authId = 'auth-id';
       userRepo.findOne.mockResolvedValue(user);
-      userRepo.save.mockResolvedValue({ ...user, status: AccountStatus.ACTIVE });
+      userRepo.save.mockResolvedValue({
+        ...user,
+        status: AccountStatus.ACTIVE,
+      });
       authRepo.update.mockResolvedValue({});
 
       const result = await service.activate('user-uuid');
@@ -161,7 +171,10 @@ describe('UserService', () => {
     it('should suspend a user', async () => {
       const user = makeUser({ status: AccountStatus.ACTIVE }) as User;
       userRepo.findOne.mockResolvedValue(user);
-      userRepo.save.mockResolvedValue({ ...user, status: AccountStatus.SUSPENDED });
+      userRepo.save.mockResolvedValue({
+        ...user,
+        status: AccountStatus.SUSPENDED,
+      });
       authRepo.update.mockResolvedValue({});
 
       const result = await service.suspend('user-uuid', 'Policy violation');
@@ -172,7 +185,9 @@ describe('UserService', () => {
       const user = makeUser({ status: AccountStatus.ACTIVE }) as User;
       userRepo.findOne.mockResolvedValue(user);
 
-      await expect(service.activate('user-uuid')).rejects.toThrow(BadRequestException);
+      await expect(service.activate('user-uuid')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -180,7 +195,9 @@ describe('UserService', () => {
 
   describe('validateRoleAssignment', () => {
     it('should accept valid role combinations', () => {
-      expect(() => service.validateRoleAssignment([UserRole.USER])).not.toThrow();
+      expect(() =>
+        service.validateRoleAssignment([UserRole.USER]),
+      ).not.toThrow();
       expect(() =>
         service.validateRoleAssignment([UserRole.STAFF, UserRole.USER]),
       ).not.toThrow();
@@ -196,7 +213,9 @@ describe('UserService', () => {
     });
 
     it('should throw BadRequestException for empty roles', () => {
-      expect(() => service.validateRoleAssignment([])).toThrow(BadRequestException);
+      expect(() => service.validateRoleAssignment([])).toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -225,7 +244,9 @@ describe('UserService', () => {
 
     it('should throw NotFoundException when no balances found', async () => {
       userBalanceRepo.find.mockResolvedValue([]);
-      await expect(service.getPortfolioStats(999)).rejects.toThrow(NotFoundException);
+      await expect(service.getPortfolioStats(999)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

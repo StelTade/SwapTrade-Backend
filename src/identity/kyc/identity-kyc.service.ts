@@ -35,7 +35,10 @@ export class IdentityKycService {
     private readonly events: EventEmitter2,
   ) {}
 
-  async submitKyc(userId: number, operator: AuthenticatedOperator): Promise<void> {
+  async submitKyc(
+    userId: number,
+    operator: AuthenticatedOperator,
+  ): Promise<void> {
     await this.kycService.updateStatus(userId, KycStatus.PENDING, operator);
     this.events.emit(KYC_EVENTS.SUBMITTED, {
       userId,

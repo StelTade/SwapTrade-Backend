@@ -123,9 +123,7 @@ export const configSchema = Joi.object({
   OTEL_ENABLED: Joi.boolean().default(false),
   OTEL_SERVICE_NAME: Joi.string().default('swaptrade-backend'),
   OTEL_SERVICE_VERSION: Joi.string().optional(),
-  OTEL_EXPORTER_TYPE: Joi.string()
-    .valid('otlp', 'console')
-    .default('otlp'),
+  OTEL_EXPORTER_TYPE: Joi.string().valid('otlp', 'console').default('otlp'),
   OTEL_EXPORTER_OTLP_ENDPOINT: Joi.string()
     .uri()
     .default('http://localhost:4318/v1/traces'),

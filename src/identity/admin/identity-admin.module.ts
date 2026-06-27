@@ -7,11 +7,7 @@ import { RolesModule } from '../roles/roles.module';
 import { AuditLogModule } from '../../audit-log/audit-log.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([User]),
-    RolesModule,
-    AuditLogModule,
-  ],
+  imports: [TypeOrmModule.forFeature([User]), RolesModule, AuditLogModule],
   controllers: [IdentityAdminController],
   providers: [IdentityAdminService],
   exports: [IdentityAdminService],

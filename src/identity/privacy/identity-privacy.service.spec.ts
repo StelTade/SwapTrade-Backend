@@ -1,5 +1,8 @@
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { IdentityPrivacyService, PRIVACY_EVENTS } from './identity-privacy.service';
+import {
+  IdentityPrivacyService,
+  PRIVACY_EVENTS,
+} from './identity-privacy.service';
 
 describe('IdentityPrivacyService', () => {
   const make = () => {
@@ -62,7 +65,7 @@ describe('IdentityPrivacyService', () => {
     service.requestDataExport('u2');
     const pending = service.getPendingRequests('u1');
     expect(pending).toHaveLength(2);
-    expect(pending.every(r => r.userId === 'u1')).toBe(true);
+    expect(pending.every((r) => r.userId === 'u1')).toBe(true);
   });
 
   it('multiple consents accumulate', () => {

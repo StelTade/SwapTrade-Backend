@@ -16,9 +16,7 @@ import {
 export class AuthAuditListener {
   private readonly logger = new Logger(AuthAuditListener.name);
 
-  constructor(
-    @Optional() private readonly auditLogService?: AuditLogService,
-  ) {}
+  constructor(@Optional() private readonly auditLogService?: AuditLogService) {}
 
   @OnEvent(AUTH_EVENTS.USER_REGISTERED)
   async onUserRegistered(payload: {
@@ -123,9 +121,12 @@ export class AuthAuditListener {
 
     await this.log({
       userId: payload.userId,
-      eventType: eventTypeMap[payload.newStatus] ?? AuditEventType.ACCOUNT_ACTIVATED,
+      eventType:
+        eventTypeMap[payload.newStatus] ?? AuditEventType.ACCOUNT_ACTIVATED,
       severity:
-        payload.newStatus === 'SUSPENDED' ? AuditSeverity.WARNING : AuditSeverity.INFO,
+        payload.newStatus === 'SUSPENDED'
+          ? AuditSeverity.WARNING
+          : AuditSeverity.INFO,
       entityType: 'User',
       entityId: payload.userId,
       beforeState: { status: payload.previousStatus },
@@ -138,7 +139,9 @@ export class AuthAuditListener {
 
   private async log(args: Parameters<AuditLogService['log']>[0]) {
     if (!this.auditLogService) {
-      this.logger.debug('AuditLogService not available — skipping audit log entry');
+      this.logger.debug(
+        'AuditLogService not available — skipping audit log entry',
+      );
       return;
     }
     try {

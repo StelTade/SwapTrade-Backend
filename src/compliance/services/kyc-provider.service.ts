@@ -37,9 +37,7 @@ export class KycProviderService {
   }
 
   async handleWebhook(dto: KycWebhookDto): Promise<void> {
-    this.logger.log(
-      `KYC webhook: check=${dto.checkId} status=${dto.status}`,
-    );
+    this.logger.log(`KYC webhook: check=${dto.checkId} status=${dto.status}`);
     // Persist status, emit event for downstream unlock + audit log
   }
 

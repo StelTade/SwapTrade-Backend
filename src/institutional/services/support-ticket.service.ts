@@ -68,8 +68,12 @@ export class SupportTicketService {
     const resolutionMinutes =
       TICKET_SLA_RESOLUTION_MINUTES[priority as TicketPriority]?.[tier] ?? 480;
 
-    const slaResponseDeadline = new Date(now.getTime() + responseMinutes * 60 * 1000);
-    const slaResolutionDeadline = new Date(now.getTime() + resolutionMinutes * 60 * 1000);
+    const slaResponseDeadline = new Date(
+      now.getTime() + responseMinutes * 60 * 1000,
+    );
+    const slaResolutionDeadline = new Date(
+      now.getTime() + resolutionMinutes * 60 * 1000,
+    );
 
     // Generate ticket number
     this.ticketCounter++;
@@ -109,7 +113,7 @@ export class SupportTicketService {
 
     this.logger.log(
       `Support ticket created: ${ticketNumber} for client ${institutionalClientId} ` +
-      `(priority: ${priority}, SLA response by: ${slaResponseDeadline.toISOString()})`,
+        `(priority: ${priority}, SLA response by: ${slaResponseDeadline.toISOString()})`,
     );
 
     return saved;
@@ -241,10 +245,14 @@ export class SupportTicketService {
       qb.andWhere('ticket.status = :status', { status: filters.status });
     }
     if (filters?.priority) {
-      qb.andWhere('ticket.priority = :priority', { priority: filters.priority });
+      qb.andWhere('ticket.priority = :priority', {
+        priority: filters.priority,
+      });
     }
     if (filters?.category) {
-      qb.andWhere('ticket.category = :category', { category: filters.category });
+      qb.andWhere('ticket.category = :category', {
+        category: filters.category,
+      });
     }
     if (filters?.assignedToId) {
       qb.andWhere('ticket.assignedToId = :assignedToId', {
@@ -338,9 +346,7 @@ export class SupportTicketService {
   /**
    * Get SLA compliance statistics for institutional support tickets.
    */
-  async getSlaComplianceStats(
-    institutionalClientId?: string,
-  ): Promise<{
+  async getSlaComplianceStats(institutionalClientId?: string): Promise<{
     totalTickets: number;
     slaResponseMetCount: number;
     slaResolutionMetCount: number;
@@ -354,7 +360,9 @@ export class SupportTicketService {
     const qb = this.ticketRepo.createQueryBuilder('ticket');
 
     if (institutionalClientId) {
-      qb.where('ticket.institutionalClientId = :id', { id: institutionalClientId });
+      qb.where('ticket.institutionalClientId = :id', {
+        id: institutionalClientId,
+      });
     }
 
     const tickets = await qb.getMany();
@@ -363,8 +371,12 @@ export class SupportTicketService {
       (t) => t.slaResponseMet !== undefined && t.slaResponseMet !== null,
     );
 
-    const responseMetCount = closedTickets.filter((t) => t.slaResponseMet === true).length;
-    const resolutionMetCount = tickets.filter((t) => t.slaResolutionMet === true).length;
+    const responseMetCount = closedTickets.filter(
+      (t) => t.slaResponseMet === true,
+    ).length;
+    const resolutionMetCount = tickets.filter(
+      (t) => t.slaResolutionMet === true,
+    ).length;
 
     const resolvedTickets = tickets.filter((t) => t.resolvedAt);
 
@@ -374,15 +386,20 @@ export class SupportTicketService {
       slaResolutionMetCount: resolutionMetCount,
       slaResponseCompliancePercent:
         closedTickets.length > 0
-          ? Math.round((responseMetCount / closedTickets.length) * 100 * 100) / 100
+          ? Math.round((responseMetCount / closedTickets.length) * 100 * 100) /
+            100
           : 100,
       slaResolutionCompliancePercent:
         resolvedTickets.length > 0
-          ? Math.round((resolutionMetCount / resolvedTickets.length) * 100 * 100) / 100
+          ? Math.round(
+              (resolutionMetCount / resolvedTickets.length) * 100 * 100,
+            ) / 100
           : 100,
       averageResponseTimeMinutes: 0, // Would need timestamps for calculation
       averageResolutionTimeMinutes: 0,
-      openTickets: tickets.filter((t) => ['OPEN', 'IN_PROGRESS', 'ESCALATED'].includes(t.status)).length,
+      openTickets: tickets.filter((t) =>
+        ['OPEN', 'IN_PROGRESS', 'ESCALATED'].includes(t.status),
+      ).length,
       escalatedTickets: tickets.filter((t) => t.status === 'ESCALATED').length,
     };
   }

@@ -59,7 +59,10 @@ export class LiquidationProtectionService {
       if (remaining <= 0) break;
 
       try {
-        const fund = await this.insuranceFundService.getFundsByTier(tier, asset);
+        const fund = await this.insuranceFundService.getFundsByTier(
+          tier,
+          asset,
+        );
         const available = Number(fund.balance);
         if (available <= 0) continue;
 

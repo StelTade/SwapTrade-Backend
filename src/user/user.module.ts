@@ -9,10 +9,7 @@ import { Auth } from '../auth/entities/auth.entity';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([User, UserBalance, Auth]),
-    AuthModule,
-  ],
+  imports: [TypeOrmModule.forFeature([User, UserBalance, Auth]), AuthModule],
   controllers: [UserController],
   providers: [UserService],
   exports: [UserService],

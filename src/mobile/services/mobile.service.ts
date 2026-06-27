@@ -22,8 +22,13 @@ export class MobileService {
 
   // ─── Device Registration ────────────────────────────────────────────────────
 
-  async registerDevice(userId: string, dto: RegisterDeviceDto): Promise<MobileDevice> {
-    let device = await this.deviceRepo.findOne({ where: { fcmToken: dto.fcmToken } });
+  async registerDevice(
+    userId: string,
+    dto: RegisterDeviceDto,
+  ): Promise<MobileDevice> {
+    let device = await this.deviceRepo.findOne({
+      where: { fcmToken: dto.fcmToken },
+    });
     if (device) {
       // Update the existing token (e.g. re-install or new user taking over token)
       device.userId = userId;
@@ -33,13 +38,19 @@ export class MobileService {
       device.appVersion = dto.appVersion;
       device.lastSeenAt = new Date();
     } else {
-      device = this.deviceRepo.create({ userId, ...dto, lastSeenAt: new Date() });
+      device = this.deviceRepo.create({
+        userId,
+        ...dto,
+        lastSeenAt: new Date(),
+      });
     }
     return this.deviceRepo.save(device);
   }
 
   async removeDevice(userId: string, fcmToken: string): Promise<void> {
-    const device = await this.deviceRepo.findOne({ where: { userId, fcmToken } });
+    const device = await this.deviceRepo.findOne({
+      where: { userId, fcmToken },
+    });
     if (!device) throw new NotFoundException('Device not found');
     await this.deviceRepo.remove(device);
   }
@@ -60,7 +71,10 @@ export class MobileService {
    */
   issueChallenge(deviceId: string): { challenge: string } {
     const challenge = randomBytes(32).toString('base64url');
-    challenges.set(deviceId, { challenge, expiresAt: Date.now() + CHALLENGE_TTL_MS });
+    challenges.set(deviceId, {
+      challenge,
+      expiresAt: Date.now() + CHALLENGE_TTL_MS,
+    });
     return { challenge };
   }
 

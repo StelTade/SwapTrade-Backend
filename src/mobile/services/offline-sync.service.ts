@@ -45,7 +45,9 @@ export class OfflineSyncService {
     return { queued: items.length, conflicts };
   }
 
-  async processPending(userId: string): Promise<{ processed: number; failed: number }> {
+  async processPending(
+    userId: string,
+  ): Promise<{ processed: number; failed: number }> {
     const pending = await this.syncRepo.find({
       where: { userId, status: SyncStatus.PENDING },
       order: { createdAt: 'ASC' },
@@ -67,9 +69,13 @@ export class OfflineSyncService {
         item.retryCount += 1;
         item.errorMessage = msg;
         item.status =
-          item.retryCount >= MAX_RETRIES ? SyncStatus.FAILED : SyncStatus.PENDING;
+          item.retryCount >= MAX_RETRIES
+            ? SyncStatus.FAILED
+            : SyncStatus.PENDING;
         failed++;
-        this.logger.warn(`Sync item ${item.id} failed (attempt ${item.retryCount}): ${msg}`);
+        this.logger.warn(
+          `Sync item ${item.id} failed (attempt ${item.retryCount}): ${msg}`,
+        );
       }
       await this.syncRepo.save(item);
     }
@@ -78,7 +84,9 @@ export class OfflineSyncService {
   }
 
   async getPendingCount(userId: string): Promise<number> {
-    return this.syncRepo.count({ where: { userId, status: SyncStatus.PENDING } });
+    return this.syncRepo.count({
+      where: { userId, status: SyncStatus.PENDING },
+    });
   }
 
   async getHistory(userId: string, limit = 20): Promise<OfflineSyncItem[]> {
@@ -96,7 +104,10 @@ export class OfflineSyncService {
       .slice(0, 16);
   }
 
-  private async detectConflict(userId: string, item: SyncItemDto): Promise<boolean> {
+  private async detectConflict(
+    userId: string,
+    item: SyncItemDto,
+  ): Promise<boolean> {
     if (!item.entityId || !item.checksum) return false;
     const existing = await this.syncRepo.findOne({
       where: {
@@ -107,6 +118,8 @@ export class OfflineSyncService {
       },
       order: { syncedAt: 'DESC' },
     });
-    return existing?.checksum !== undefined && existing.checksum !== item.checksum;
+    return (
+      existing?.checksum !== undefined && existing.checksum !== item.checksum
+    );
   }
 }

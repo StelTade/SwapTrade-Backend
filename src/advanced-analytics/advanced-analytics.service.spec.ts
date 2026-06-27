@@ -35,4 +35,3 @@ describe('AdvancedAnalyticsService', () => {
     expect(out.fileName).toMatch(/\.csv$/);
   });
 });
-

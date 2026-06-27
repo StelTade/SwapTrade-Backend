@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as speakeasy from 'speakeasy';
@@ -22,7 +26,7 @@ export class MFAService {
       length: 20,
     });
 
-    const qrCodeDataUrl = await qrcode.toDataURL(secret.otpauth_url!);
+    const qrCodeDataUrl = await qrcode.toDataURL(secret.otpauth_url);
 
     // Temporarily save secret; it becomes permanent only after verify + enable
     auth.totpSecret = secret.base32;

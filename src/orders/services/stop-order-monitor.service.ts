@@ -3,7 +3,11 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { DataSource, In } from 'typeorm';
 import { Order } from '../entities/order.entity';
 import { VirtualAsset } from '../../database/entities/virtual-asset.entity';
-import { OrderSide, OrderStatus, OrderType } from '../../common/enums/order-type.enum';
+import {
+  OrderSide,
+  OrderStatus,
+  OrderType,
+} from '../../common/enums/order-type.enum';
 import { OrderBookService } from './order-book.service';
 import { WebSocketService } from '../../websocket/services/websocket.service';
 import type { OrderUpdate } from '../../websocket/interfaces/websocket.interfaces';
@@ -68,14 +72,15 @@ export class StopOrderMonitorService {
           await this.processFixedStop(order, currentPrice);
         }
       } catch (err) {
-        this.logger.error(
-          `Failed to process stop order ${order.id}: ${err}`,
-        );
+        this.logger.error(`Failed to process stop order ${order.id}: ${err}`);
       }
     }
   }
 
-  private async processFixedStop(order: Order, currentPrice: number): Promise<void> {
+  private async processFixedStop(
+    order: Order,
+    currentPrice: number,
+  ): Promise<void> {
     const stopPrice = Number(order.stopPrice);
     const triggered = this.isFixedStopTriggered(order, currentPrice, stopPrice);
     if (triggered) {
@@ -99,13 +104,17 @@ export class StopOrderMonitorService {
       : currentPrice <= stopPrice;
   }
 
-  private async processTrailingStop(order: Order, currentPrice: number): Promise<void> {
+  private async processTrailingStop(
+    order: Order,
+    currentPrice: number,
+  ): Promise<void> {
     const delta = Number(order.trailingDelta);
     const orderRepo = this.dataSource.getRepository(Order);
 
-    let reference = order.trailingReferencePrice != null
-      ? Number(order.trailingReferencePrice)
-      : currentPrice;
+    let reference =
+      order.trailingReferencePrice != null
+        ? Number(order.trailingReferencePrice)
+        : currentPrice;
 
     let referenceMoved = false;
 

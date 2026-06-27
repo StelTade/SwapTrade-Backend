@@ -21,20 +21,30 @@ export class CreateRoleDto {
   @IsString()
   description?: string;
 
-  @ApiPropertyOptional({ description: 'Priority level (higher = more privileged)', default: 0 })
+  @ApiPropertyOptional({
+    description: 'Priority level (higher = more privileged)',
+    default: 0,
+  })
   @IsOptional()
   @IsInt()
   @Min(0)
   priority?: number;
 
-  @ApiPropertyOptional({ description: 'Roles this role inherits from', enum: UserRole, isArray: true })
+  @ApiPropertyOptional({
+    description: 'Roles this role inherits from',
+    enum: UserRole,
+    isArray: true,
+  })
   @IsOptional()
   @IsArray()
   @ArrayUnique()
   @IsEnum(UserRole, { each: true })
   inheritsFrom?: UserRole[];
 
-  @ApiPropertyOptional({ description: 'Permission slugs to assign', isArray: true })
+  @ApiPropertyOptional({
+    description: 'Permission slugs to assign',
+    isArray: true,
+  })
   @IsOptional()
   @IsArray()
   @ArrayUnique()

@@ -131,10 +131,15 @@ export class FcmService implements OnModuleInit {
       });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      this.logger.error(`FCM send failed for token ${token.slice(0, 8)}…: ${msg}`);
+      this.logger.error(
+        `FCM send failed for token ${token.slice(0, 8)}…: ${msg}`,
+      );
 
       // Remove stale tokens (NotRegistered / InvalidRegistration)
-      if (msg.includes('NotRegistered') || msg.includes('InvalidRegistration')) {
+      if (
+        msg.includes('NotRegistered') ||
+        msg.includes('InvalidRegistration')
+      ) {
         await this.deviceRepo.delete({ fcmToken: token });
       }
       throw err;

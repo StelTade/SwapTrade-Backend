@@ -21,10 +21,7 @@ import { CorrelationIdService } from '../common/services/correlation-id.service'
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      Notification,
-      UserNotificationPreferences,
-    ]),
+    TypeOrmModule.forFeature([Notification, UserNotificationPreferences]),
     BullModule.registerQueue({
       name: QueueName.NOTIFICATIONS,
     }),

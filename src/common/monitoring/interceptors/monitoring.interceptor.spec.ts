@@ -62,7 +62,9 @@ describe('MonitoringInterceptor', () => {
     spanMock = makeSpanMock();
     tracerMock = { startSpan: jest.fn().mockReturnValue(spanMock) };
     jest.spyOn(trace, 'getTracer').mockReturnValue(tracerMock);
-    jest.spyOn(trace, 'setSpan').mockReturnValue(require('@opentelemetry/api').ROOT_CONTEXT);
+    jest
+      .spyOn(trace, 'setSpan')
+      .mockReturnValue(require('@opentelemetry/api').ROOT_CONTEXT);
 
     prometheusService = {
       recordHttpRequest: jest.fn(),
@@ -70,9 +72,11 @@ describe('MonitoringInterceptor', () => {
 
     telemetryService = {
       extractContext: jest.fn().mockReturnValue({}),
-      extractTraceContext: jest
-        .fn()
-        .mockReturnValue({ traceId: 'trace-id-abc', spanId: 'span-id-xyz', correlationId: 'corr-1' }),
+      extractTraceContext: jest.fn().mockReturnValue({
+        traceId: 'trace-id-abc',
+        spanId: 'span-id-xyz',
+        correlationId: 'corr-1',
+      }),
       injectTraceContext: jest.fn(),
     } as any;
 
@@ -163,7 +167,9 @@ describe('MonitoringInterceptor', () => {
 
     it('sets x-correlation-id response header', (done) => {
       const setHeaderMock = jest.fn();
-      const ctx = buildMockContext({ response: { statusCode: 200, setHeader: setHeaderMock } });
+      const ctx = buildMockContext({
+        response: { statusCode: 200, setHeader: setHeaderMock },
+      });
       const handler = buildCallHandler(of({}));
 
       interceptor.intercept(ctx, handler).subscribe({

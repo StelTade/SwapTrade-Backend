@@ -76,12 +76,18 @@ export class UserService {
   async create(dto: CreateUserDto): Promise<User> {
     this.ensureUserRepo();
 
-    const existing = await this.userRepository!.findOne({ where: { email: dto.email } });
+    const existing = await this.userRepository!.findOne({
+      where: { email: dto.email },
+    });
     if (existing) {
-      throw new ConflictException(`User with email ${dto.email} already exists`);
+      throw new ConflictException(
+        `User with email ${dto.email} already exists`,
+      );
     }
 
-    const roles = this.validateRoleAssignment(dto.roles ?? [dto.role ?? UserRole.USER]);
+    const roles = this.validateRoleAssignment(
+      dto.roles ?? [dto.role ?? UserRole.USER],
+    );
     const user = this.userRepository!.create({
       ...dto,
       role: roles[0],
@@ -193,7 +199,10 @@ export class UserService {
     return normalizedRoles;
   }
 
-  async assignRoles(userId: string, roles: UserRole | UserRole[]): Promise<User> {
+  async assignRoles(
+    userId: string,
+    roles: UserRole | UserRole[],
+  ): Promise<User> {
     this.ensureUserRepo();
 
     const normalizedRoles = this.validateRoleAssignment(roles);
@@ -208,7 +217,8 @@ export class UserService {
   // ─── Portfolio Stats ─────────────────────────────────────────────────────────
 
   async getPortfolioStats(userId: string | number): Promise<PortfolioStatsDto> {
-    const numericId = typeof userId === 'string' ? parseInt(userId, 10) : userId;
+    const numericId =
+      typeof userId === 'string' ? parseInt(userId, 10) : userId;
 
     const userBalances = await this.userBalanceRepository.find({
       where: { userId: numericId },
@@ -232,12 +242,18 @@ export class UserService {
       0,
     );
 
-    const lastTradeDate = userBalances.reduce((latest: Date | null, balance) => {
-      if (!latest || (balance.lastTradeDate && balance.lastTradeDate > latest)) {
-        return balance.lastTradeDate;
-      }
-      return latest;
-    }, null as Date | null);
+    const lastTradeDate = userBalances.reduce(
+      (latest: Date | null, balance) => {
+        if (
+          !latest ||
+          (balance.lastTradeDate && balance.lastTradeDate > latest)
+        ) {
+          return balance.lastTradeDate;
+        }
+        return latest;
+      },
+      null as Date | null,
+    );
 
     return {
       userId: numericId,
@@ -285,14 +301,21 @@ export class UserService {
     await this.userBalanceRepository.save(userBalance);
   }
 
-  async getUserBalance(userId: number, assetId: number): Promise<UserBalance | null> {
+  async getUserBalance(
+    userId: number,
+    assetId: number,
+  ): Promise<UserBalance | null> {
     return this.userBalanceRepository.findOne({
       where: { userId, assetId },
       relations: ['asset'],
     });
   }
 
-  async updateBalance(userId: number, assetId: number, amount: number): Promise<void> {
+  async updateBalance(
+    userId: number,
+    assetId: number,
+    amount: number,
+  ): Promise<void> {
     let userBalance = await this.userBalanceRepository.findOne({
       where: { userId, assetId },
       relations: ['asset'],

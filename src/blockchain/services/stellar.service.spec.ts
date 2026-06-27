@@ -22,7 +22,9 @@ jest.mock('stellar-sdk', () => {
     Horizon: {
       Server: jest.fn().mockImplementation(() => ({
         transactions: () => ({
-          transaction: () => ({ call: jest.fn().mockResolvedValue({ ledger_attr: 1, memo: '' }) }),
+          transaction: () => ({
+            call: jest.fn().mockResolvedValue({ ledger_attr: 1, memo: '' }),
+          }),
         }),
         operations: () => ({
           forTransaction: () => ({
@@ -40,8 +42,12 @@ jest.mock('stellar-sdk', () => {
             }),
           }),
         }),
-        ledgers: () => ({ ledger: () => ({ call: jest.fn().mockResolvedValue({}) }) }),
-        loadAccount: jest.fn().mockResolvedValue({ id: 'GTEST_PUBLIC_KEY', sequence: '1' }),
+        ledgers: () => ({
+          ledger: () => ({ call: jest.fn().mockResolvedValue({}) }),
+        }),
+        loadAccount: jest
+          .fn()
+          .mockResolvedValue({ id: 'GTEST_PUBLIC_KEY', sequence: '1' }),
         submitTransaction: jest.fn().mockResolvedValue({ hash: 'tx_hash_123' }),
       })),
     },
@@ -101,8 +107,14 @@ describe('StellarService', () => {
             }),
           },
         },
-        { provide: getRepositoryToken(BlockchainTransaction), useFactory: mockTxRepo },
-        { provide: getRepositoryToken(WalletAddress), useFactory: mockWalletRepo },
+        {
+          provide: getRepositoryToken(BlockchainTransaction),
+          useFactory: mockTxRepo,
+        },
+        {
+          provide: getRepositoryToken(WalletAddress),
+          useFactory: mockWalletRepo,
+        },
       ],
     }).compile();
 
@@ -123,7 +135,10 @@ describe('StellarService', () => {
 
     it('creates a new wallet when none exists', async () => {
       walletRepo.findOne.mockResolvedValue(null);
-      const newWallet = { id: '2', address: 'GTEST_PUBLIC_KEY' } as WalletAddress;
+      const newWallet = {
+        id: '2',
+        address: 'GTEST_PUBLIC_KEY',
+      } as WalletAddress;
       walletRepo.create.mockReturnValue(newWallet);
       walletRepo.save.mockResolvedValue(newWallet);
 
@@ -136,7 +151,11 @@ describe('StellarService', () => {
   });
 
   describe('verifyDeposit', () => {
-    const wallet = { id: 'w1', address: 'GTEST_PUBLIC_KEY', network: BlockchainNetwork.STELLAR } as WalletAddress;
+    const wallet = {
+      id: 'w1',
+      address: 'GTEST_PUBLIC_KEY',
+      network: BlockchainNetwork.STELLAR,
+    } as WalletAddress;
 
     it('returns existing record for duplicate txHash (idempotent)', async () => {
       const existing = { id: 'tx1', txHash: 'hash1' } as BlockchainTransaction;
@@ -150,13 +169,18 @@ describe('StellarService', () => {
       txRepo.findOne.mockResolvedValue(null);
       walletRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.verifyDeposit('user-1', 'hash1')).rejects.toThrow(BlockchainException);
+      await expect(service.verifyDeposit('user-1', 'hash1')).rejects.toThrow(
+        BlockchainException,
+      );
     });
 
     it('creates a confirmed transaction for a valid USDC deposit', async () => {
       txRepo.findOne.mockResolvedValue(null);
       walletRepo.findOne.mockResolvedValue(wallet);
-      const saved = { id: 'tx2', status: TransactionStatus.CONFIRMED } as BlockchainTransaction;
+      const saved = {
+        id: 'tx2',
+        status: TransactionStatus.CONFIRMED,
+      } as BlockchainTransaction;
       txRepo.create.mockReturnValue(saved);
       txRepo.save.mockResolvedValue(saved);
 
@@ -177,7 +201,9 @@ describe('StellarService', () => {
 
     it('throws if no wallet found', async () => {
       walletRepo.findOne.mockResolvedValue(null);
-      await expect(service.withdraw('user-1', 'GDEST', '10', undefined)).rejects.toThrow(BlockchainException);
+      await expect(
+        service.withdraw('user-1', 'GDEST', '10', undefined),
+      ).rejects.toThrow(BlockchainException);
     });
 
     it('saves a confirmed withdrawal on success', async () => {
@@ -188,7 +214,11 @@ describe('StellarService', () => {
         txHash: undefined,
       } as unknown as BlockchainTransaction;
       txRepo.create.mockReturnValue(pending);
-      txRepo.save.mockResolvedValue({ ...pending, status: TransactionStatus.CONFIRMED, txHash: 'tx_hash_123' });
+      txRepo.save.mockResolvedValue({
+        ...pending,
+        status: TransactionStatus.CONFIRMED,
+        txHash: 'tx_hash_123',
+      });
 
       const result = await service.withdraw('user-1', 'GDEST', '50');
       expect(result.status).toBe(TransactionStatus.CONFIRMED);

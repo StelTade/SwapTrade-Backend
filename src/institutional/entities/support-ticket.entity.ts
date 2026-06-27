@@ -29,11 +29,9 @@ export class SupportTicket {
   @Column({ type: 'uuid' })
   institutionalClientId: string;
 
-  @ManyToOne(
-    () => InstitutionalClient,
-    (client) => client.supportTickets,
-    { onDelete: 'CASCADE' },
-  )
+  @ManyToOne(() => InstitutionalClient, (client) => client.supportTickets, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'institutionalClientId' })
   institutionalClient: InstitutionalClient;
 

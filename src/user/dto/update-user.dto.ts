@@ -17,7 +17,10 @@ export class UpdateUserDto {
   @MaxLength(30)
   username?: string;
 
-  @ApiPropertyOptional({ example: 'john@example.com', description: 'Updated email address' })
+  @ApiPropertyOptional({
+    example: 'john@example.com',
+    description: 'Updated email address',
+  })
   @IsOptional()
   @IsEmail()
   email?: string;
@@ -39,17 +42,27 @@ export class UpdateUserDto {
   @IsString()
   phoneNumber?: string;
 
-  @ApiPropertyOptional({ example: 'https://cdn.example.com/avatar.png', description: 'Avatar URL' })
+  @ApiPropertyOptional({
+    example: 'https://cdn.example.com/avatar.png',
+    description: 'Avatar URL',
+  })
   @IsOptional()
   @IsString()
   avatarUrl?: string;
 
-  @ApiPropertyOptional({ enum: UserRole, description: 'Primary role (admin only)' })
+  @ApiPropertyOptional({
+    enum: UserRole,
+    description: 'Primary role (admin only)',
+  })
   @IsOptional()
   @IsEnum(UserRole)
   role?: UserRole;
 
-  @ApiPropertyOptional({ isArray: true, enum: UserRole, description: 'Role array (admin only)' })
+  @ApiPropertyOptional({
+    isArray: true,
+    enum: UserRole,
+    description: 'Role array (admin only)',
+  })
   @IsOptional()
   @IsArray()
   @ArrayUnique()

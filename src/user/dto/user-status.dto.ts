@@ -11,7 +11,10 @@ export class UpdateUserStatusDto {
   @IsEnum(AccountStatus)
   status: AccountStatus;
 
-  @ApiPropertyOptional({ example: 'Violated terms of service', description: 'Reason for status change' })
+  @ApiPropertyOptional({
+    example: 'Violated terms of service',
+    description: 'Reason for status change',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(500)

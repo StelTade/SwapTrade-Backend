@@ -25,9 +25,15 @@ export class CreateBlockchainTables1750700000000 implements MigrationInterface {
         CONSTRAINT "PK_blockchain_transactions" PRIMARY KEY ("id")
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_bt_userId" ON "blockchain_transactions" ("userId")`);
-    await queryRunner.query(`CREATE INDEX "IDX_bt_txHash" ON "blockchain_transactions" ("txHash")`);
-    await queryRunner.query(`CREATE INDEX "IDX_bt_status" ON "blockchain_transactions" ("status")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_bt_userId" ON "blockchain_transactions" ("userId")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_bt_txHash" ON "blockchain_transactions" ("txHash")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_bt_status" ON "blockchain_transactions" ("status")`,
+    );
 
     await queryRunner.query(`
       CREATE TABLE "wallet_addresses" (
@@ -44,7 +50,9 @@ export class CreateBlockchainTables1750700000000 implements MigrationInterface {
         CONSTRAINT "PK_wallet_addresses" PRIMARY KEY ("id")
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_wa_userId" ON "wallet_addresses" ("userId")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_wa_userId" ON "wallet_addresses" ("userId")`,
+    );
 
     await queryRunner.query(`
       CREATE TABLE "cross_chain_bridges" (
@@ -68,8 +76,12 @@ export class CreateBlockchainTables1750700000000 implements MigrationInterface {
         CONSTRAINT "PK_cross_chain_bridges" PRIMARY KEY ("id")
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_ccb_userId" ON "cross_chain_bridges" ("userId")`);
-    await queryRunner.query(`CREATE INDEX "IDX_ccb_status" ON "cross_chain_bridges" ("status")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_ccb_userId" ON "cross_chain_bridges" ("userId")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_ccb_status" ON "cross_chain_bridges" ("status")`,
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

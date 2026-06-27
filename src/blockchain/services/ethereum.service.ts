@@ -129,12 +129,19 @@ export class EthereumService implements OnModuleInit {
     const wallet = await this.walletRepo.findOne({
       where: { userId, network: BlockchainNetwork.ETHEREUM, isActive: true },
     });
-    if (!wallet) throw BlockchainException.transactionFailed({ reason: 'No Ethereum wallet found for user' });
+    if (!wallet)
+      throw BlockchainException.transactionFailed({
+        reason: 'No Ethereum wallet found for user',
+      });
 
     let txRecord: BlockchainTransaction;
     try {
       const receipt = await this.provider.getTransactionReceipt(txHash);
-      if (!receipt) throw BlockchainException.transactionFailed({ reason: 'Transaction not found', txHash });
+      if (!receipt)
+        throw BlockchainException.transactionFailed({
+          reason: 'Transaction not found',
+          txHash,
+        });
 
       const currentBlock = await this.provider.getBlockNumber();
       const confirmations = currentBlock - receipt.blockNumber + 1;
@@ -145,9 +152,13 @@ export class EthereumService implements OnModuleInit {
       let fromAddress = '';
 
       for (const log of receipt.logs) {
-        if (log.address.toLowerCase() !== this.usdcAddress.toLowerCase()) continue;
+        if (log.address.toLowerCase() !== this.usdcAddress.toLowerCase())
+          continue;
         try {
-          const parsed = iface.parseLog({ topics: [...log.topics], data: log.data });
+          const parsed = iface.parseLog({
+            topics: [...log.topics],
+            data: log.data,
+          });
           if (
             parsed?.name === 'Transfer' &&
             parsed.args.to.toLowerCase() === wallet.address.toLowerCase()
@@ -173,7 +184,10 @@ export class EthereumService implements OnModuleInit {
         userId,
         network: BlockchainNetwork.ETHEREUM,
         type: TransactionType.DEPOSIT,
-        status: confirmations >= 2 ? TransactionStatus.CONFIRMED : TransactionStatus.PENDING,
+        status:
+          confirmations >= 2
+            ? TransactionStatus.CONFIRMED
+            : TransactionStatus.PENDING,
         txHash,
         fromAddress,
         toAddress: wallet.address,
@@ -190,7 +204,9 @@ export class EthereumService implements OnModuleInit {
     return this.txRepo.save(txRecord);
   }
 
-  async getTransactionHistory(userId: string): Promise<BlockchainTransaction[]> {
+  async getTransactionHistory(
+    userId: string,
+  ): Promise<BlockchainTransaction[]> {
     return this.txRepo.find({
       where: { userId, network: BlockchainNetwork.ETHEREUM },
       order: { createdAt: 'DESC' },

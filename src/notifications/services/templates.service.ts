@@ -21,7 +21,7 @@ export class TemplatesService {
     language: string = 'en',
   ): Promise<RenderedTemplate> {
     const translationKey = `notifications.${eventType.toLowerCase()}.${channel.toLowerCase()}`;
-    
+
     try {
       const subject = await this.i18n.translate(`${translationKey}.subject`, {
         lang: language,
@@ -35,12 +35,18 @@ export class TemplatesService {
 
       return { subject, body };
     } catch (error) {
-      this.logger.error(`Failed to render template for ${eventType} in ${language}`, error.stack);
+      this.logger.error(
+        `Failed to render template for ${eventType} in ${language}`,
+        error.stack,
+      );
       // Fallback to English
-      const fallbackSubject = await this.i18n.translate(`${translationKey}.subject`, {
-        lang: 'en',
-        args: data,
-      });
+      const fallbackSubject = await this.i18n.translate(
+        `${translationKey}.subject`,
+        {
+          lang: 'en',
+          args: data,
+        },
+      );
       const fallbackBody = await this.i18n.translate(`${translationKey}.body`, {
         lang: 'en',
         args: data,

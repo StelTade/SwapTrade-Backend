@@ -10,7 +10,7 @@ import { Request } from 'express';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 export interface JwtPayload {
-  sub: string;   // authId
+  sub: string; // authId
   userId: string;
   email: string;
   role: string;

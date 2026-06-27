@@ -1,4 +1,11 @@
-import { IsEnum, IsNumber, IsOptional, IsString, Min, Max } from 'class-validator';
+import {
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+  Max,
+} from 'class-validator';
 import { ProposalType } from '../enums/governance.enum';
 
 export class CreateProposalDto {

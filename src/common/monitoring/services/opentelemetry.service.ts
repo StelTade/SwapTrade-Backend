@@ -52,17 +52,11 @@ export class OpenTelemetryService implements OnModuleDestroy {
     return {
       enabled: process.env.OTEL_ENABLED === 'true',
       samplingRate: parseFloat(process.env.OTEL_SAMPLING_RATE ?? '1.0'),
-      exportInterval: parseInt(
-        process.env.OTEL_EXPORT_INTERVAL ?? '5000',
-        10,
-      ),
+      exportInterval: parseInt(process.env.OTEL_EXPORT_INTERVAL ?? '5000', 10),
       headers: {},
-      serviceName:
-        process.env.OTEL_SERVICE_NAME ?? 'swaptrade-backend',
+      serviceName: process.env.OTEL_SERVICE_NAME ?? 'swaptrade-backend',
       serviceVersion:
-        process.env.OTEL_SERVICE_VERSION ??
-        process.env.APP_VERSION ??
-        '1.0.0',
+        process.env.OTEL_SERVICE_VERSION ?? process.env.APP_VERSION ?? '1.0.0',
       environment: process.env.NODE_ENV ?? 'development',
     };
   }
@@ -76,10 +70,7 @@ export class OpenTelemetryService implements OnModuleDestroy {
   // ---------------------------------------------------------------------------
 
   private get tracer() {
-    return trace.getTracer(
-      this.config.serviceName,
-      this.config.serviceVersion,
-    );
+    return trace.getTracer(this.config.serviceName, this.config.serviceVersion);
   }
 
   // ---------------------------------------------------------------------------
@@ -417,18 +408,15 @@ export class OpenTelemetryService implements OnModuleDestroy {
     success: boolean,
     error?: Error,
   ): void {
-    const span = this.tracer.startSpan(
-      `external.${serviceName}.${operation}`,
-      {
-        kind: SpanKind.CLIENT,
-        attributes: this.enrichAttributes({
-          'peer.service': serviceName,
-          'external.operation': operation,
-          'external.duration_ms': duration.toString(),
-          'external.success': success.toString(),
-        }),
-      },
-    );
+    const span = this.tracer.startSpan(`external.${serviceName}.${operation}`, {
+      kind: SpanKind.CLIENT,
+      attributes: this.enrichAttributes({
+        'peer.service': serviceName,
+        'external.operation': operation,
+        'external.duration_ms': duration.toString(),
+        'external.success': success.toString(),
+      }),
+    });
 
     if (!success && error) {
       this.recordError(span, error);

@@ -11,7 +11,9 @@ export class SuspendUserDto {
   @IsNotEmpty()
   reason: string;
 
-  @ApiPropertyOptional({ description: 'Duration in hours (omit for indefinite)' })
+  @ApiPropertyOptional({
+    description: 'Duration in hours (omit for indefinite)',
+  })
   @IsOptional()
   @IsNumber()
   durationHours?: number;
