@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -11,6 +11,8 @@ import {
 } from '../entities/blockchain-transaction.entity';
 import { WalletAddress } from '../entities/wallet-address.entity';
 import { BlockchainException } from '../../error/exceptions/blockchain.exception';
+import { CircuitBreakerService, CircuitBreakerOptions } from '../../common/services/circuit-breaker.service';
+import { BulkheadService, BulkheadConfig } from '../../common/services/bulkhead.service';
 
 // Minimal ERC-20 ABI for transfer event decoding
 const ERC20_ABI = [
@@ -19,10 +21,12 @@ const ERC20_ABI = [
 ];
 
 @Injectable()
-export class EthereumService {
+export class EthereumService implements OnModuleInit {
   private readonly logger = new Logger(EthereumService.name);
   private readonly provider: ethers.JsonRpcProvider;
   private readonly usdcAddress: string;
+  private readonly circuitBreakerName = 'ethereum-rpc';
+  private readonly bulkheadName = 'ethereum-bulkhead';
 
   constructor(
     private readonly configService: ConfigService,
@@ -30,6 +34,8 @@ export class EthereumService {
     private readonly txRepo: Repository<BlockchainTransaction>,
     @InjectRepository(WalletAddress)
     private readonly walletRepo: Repository<WalletAddress>,
+    private readonly circuitBreakerService: CircuitBreakerService,
+    private readonly bulkheadService: BulkheadService,
   ) {
     const rpcUrl = this.configService.get<string>(
       'ETHEREUM_RPC_URL',
@@ -40,6 +46,38 @@ export class EthereumService {
       '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
     );
     this.provider = new ethers.JsonRpcProvider(rpcUrl);
+  }
+
+  onModuleInit() {
+    // Register circuit breaker for Ethereum RPC calls
+    const circuitBreakerOptions: CircuitBreakerOptions = {
+      name: this.circuitBreakerName,
+      timeout: 30000,
+      errorThresholdPercentage: 50,
+      volumeThreshold: 10,
+      rollingCountTimeout: 60000,
+      rollingCountBuckets: 10,
+      fallback: async (error: Error, ...args: any[]) => {
+        this.logger.error(`Ethereum RPC circuit breaker fallback triggered: ${error.message}`);
+        throw BlockchainException.networkError({ error: 'Ethereum service unavailable', details: error.message });
+      },
+    };
+
+    this.circuitBreakerService.register(
+      async () => ({ success: true }),
+      circuitBreakerOptions,
+    );
+
+    // Create bulkhead for Ethereum operations
+    const bulkheadConfig: BulkheadConfig = {
+      name: this.bulkheadName,
+      maxConcurrent: 5,
+      maxQueueSize: 20,
+      timeout: 60000,
+    };
+
+    this.bulkheadService.createBulkhead(bulkheadConfig);
+    this.logger.log('Ethereum service initialized with circuit breaker and bulkhead');
   }
 
   /** Validate an Ethereum address format */
@@ -66,6 +104,22 @@ export class EthereumService {
 
   /** Verify an ERC-20 deposit transaction and record it */
   async verifyDeposit(
+    userId: string,
+    txHash: string,
+  ): Promise<BlockchainTransaction> {
+    return this.bulkheadService.execute(
+      this.bulkheadName,
+      async () => {
+        return this.circuitBreakerService.execute(
+          this.circuitBreakerName,
+          async () => this.verifyDepositInternal(userId, txHash),
+        );
+      },
+      'verifyDeposit',
+    );
+  }
+
+  private async verifyDepositInternal(
     userId: string,
     txHash: string,
   ): Promise<BlockchainTransaction> {

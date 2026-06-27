@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CorrelationIdService } from './services/correlation-id.service';
 import { CircuitBreakerService } from './services/circuit-breaker.service';
+import { CircuitBreakerRecoveryService } from './services/circuit-breaker-recovery.service';
 import { RetryService } from './services/retry.service';
 import { BulkheadService } from './services/bulkhead.service';
 import { DeadLetterQueueService } from './services/dead-letter-queue.service';
@@ -24,6 +25,7 @@ import { CorrelationIdMiddleware } from './middleware/correlation-id.middleware'
   providers: [
     CorrelationIdService,
     CircuitBreakerService,
+    CircuitBreakerRecoveryService,
     RetryService,
     BulkheadService,
     DeadLetterQueueService,
@@ -35,6 +37,7 @@ import { CorrelationIdMiddleware } from './middleware/correlation-id.middleware'
   exports: [
     CorrelationIdService,
     CircuitBreakerService,
+    CircuitBreakerRecoveryService,
     RetryService,
     BulkheadService,
     DeadLetterQueueService,

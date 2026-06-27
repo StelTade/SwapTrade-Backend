@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -11,14 +11,18 @@ import {
 } from '../entities/blockchain-transaction.entity';
 import { WalletAddress } from '../entities/wallet-address.entity';
 import { BlockchainException } from '../../error/exceptions/blockchain.exception';
+import { CircuitBreakerService, CircuitBreakerOptions } from '../../common/services/circuit-breaker.service';
+import { BulkheadService, BulkheadConfig } from '../../common/services/bulkhead.service';
 
 @Injectable()
-export class StellarService {
+export class StellarService implements OnModuleInit {
   private readonly logger = new Logger(StellarService.name);
   private readonly server: StellarSdk.Horizon.Server;
   private readonly networkPassphrase: string;
   private readonly usdcIssuer: string;
   private readonly platformKeypair: StellarSdk.Keypair;
+  private readonly circuitBreakerName = 'stellar-horizon';
+  private readonly bulkheadName = 'stellar-bulkhead';
 
   constructor(
     private readonly configService: ConfigService,
@@ -26,6 +30,8 @@ export class StellarService {
     private readonly txRepo: Repository<BlockchainTransaction>,
     @InjectRepository(WalletAddress)
     private readonly walletRepo: Repository<WalletAddress>,
+    private readonly circuitBreakerService: CircuitBreakerService,
+    private readonly bulkheadService: BulkheadService,
   ) {
     const horizonUrl = this.configService.get<string>(
       'STELLAR_HORIZON_URL',
@@ -47,6 +53,38 @@ export class StellarService {
       : StellarSdk.Keypair.random();
   }
 
+  onModuleInit() {
+    // Register circuit breaker for Stellar Horizon API calls
+    const circuitBreakerOptions: CircuitBreakerOptions = {
+      name: this.circuitBreakerName,
+      timeout: 30000,
+      errorThresholdPercentage: 50,
+      volumeThreshold: 10,
+      rollingCountTimeout: 60000,
+      rollingCountBuckets: 10,
+      fallback: async (error: Error, ...args: any[]) => {
+        this.logger.error(`Stellar Horizon circuit breaker fallback triggered: ${error.message}`);
+        throw BlockchainException.networkError({ error: 'Stellar service unavailable', details: error.message });
+      },
+    };
+
+    this.circuitBreakerService.register(
+      async () => ({ success: true }),
+      circuitBreakerOptions,
+    );
+
+    // Create bulkhead for Stellar operations
+    const bulkheadConfig: BulkheadConfig = {
+      name: this.bulkheadName,
+      maxConcurrent: 5,
+      maxQueueSize: 20,
+      timeout: 60000,
+    };
+
+    this.bulkheadService.createBulkhead(bulkheadConfig);
+    this.logger.log('Stellar service initialized with circuit breaker and bulkhead');
+  }
+
   async getOrCreateWallet(userId: string): Promise<WalletAddress> {
     const existing = await this.walletRepo.findOne({
       where: { userId, network: BlockchainNetwork.STELLAR, isActive: true },
@@ -65,6 +103,24 @@ export class StellarService {
 
   /** Send USDC from the platform wallet to a recipient Stellar address */
   async withdraw(
+    userId: string,
+    toAddress: string,
+    amount: string,
+    memo?: string,
+  ): Promise<BlockchainTransaction> {
+    return this.bulkheadService.execute(
+      this.bulkheadName,
+      async () => {
+        return this.circuitBreakerService.execute(
+          this.circuitBreakerName,
+          async () => this.withdrawInternal(userId, toAddress, amount, memo),
+        );
+      },
+      'withdraw',
+    );
+  }
+
+  private async withdrawInternal(
     userId: string,
     toAddress: string,
     amount: string,

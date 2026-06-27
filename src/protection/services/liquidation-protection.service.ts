@@ -53,7 +53,7 @@ export class LiquidationProtectionService {
     let remaining = shortfallAmount;
     const fundsUsed: Array<{ fundId: number; amount: number; tier: string }> =
       [];
-    let primaryFundId: number | null = null;
+    let primaryFundId: number | undefined = undefined;
 
     for (const tier of tiersToTry) {
       if (remaining <= 0) break;

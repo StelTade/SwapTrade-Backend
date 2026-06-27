@@ -1,15 +1,53 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import { Notification } from '../entities/notification.entity';
+import { CircuitBreakerService, CircuitBreakerOptions } from '../../common/services/circuit-breaker.service';
+import { BulkheadService, BulkheadConfig } from '../../common/services/bulkhead.service';
 
 @Injectable()
-export class EmailService {
+export class EmailService implements OnModuleInit {
   private readonly logger = new Logger(EmailService.name);
   private transporter: nodemailer.Transporter;
+  private readonly circuitBreakerName = 'email-smtp';
+  private readonly bulkheadName = 'email-bulkhead';
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private readonly circuitBreakerService: CircuitBreakerService,
+    private readonly bulkheadService: BulkheadService,
+  ) {
     this.initializeTransporter();
+  }
+
+  onModuleInit() {
+    const circuitBreakerOptions: CircuitBreakerOptions = {
+      name: this.circuitBreakerName,
+      timeout: 15000,
+      errorThresholdPercentage: 50,
+      volumeThreshold: 10,
+      rollingCountTimeout: 60000,
+      rollingCountBuckets: 10,
+      fallback: async (error: Error, ...args: any[]) => {
+        this.logger.error(`Email SMTP circuit breaker fallback triggered: ${error.message}`);
+        return false;
+      },
+    };
+
+    this.circuitBreakerService.register(
+      async () => ({ success: true }),
+      circuitBreakerOptions,
+    );
+
+    const bulkheadConfig: BulkheadConfig = {
+      name: this.bulkheadName,
+      maxConcurrent: 5,
+      maxQueueSize: 20,
+      timeout: 30000,
+    };
+
+    this.bulkheadService.createBulkhead(bulkheadConfig);
+    this.logger.log('Email service initialized with circuit breaker and bulkhead');
   }
 
   private initializeTransporter() {
@@ -28,28 +66,37 @@ export class EmailService {
 
   async sendEmail(notification: Notification): Promise<boolean> {
     try {
-      const mailOptions = {
-        from: this.configService.get<string>(
-          'EMAIL_FROM',
-          'notifications@swaptrade.com',
-        ),
-        to: notification.recipient,
-        subject: notification.subject,
-        html: notification.body,
-      };
-
-      const info = await this.transporter.sendMail(mailOptions);
-      this.logger.log(
-        `Email sent to ${notification.recipient}, messageId: ${info.messageId}`,
+      return await this.bulkheadService.execute(
+        this.bulkheadName,
+        async () => {
+          return this.circuitBreakerService.execute<boolean>(
+            this.circuitBreakerName,
+            async () => this.sendEmailInternal(notification),
+          );
+        },
+        'sendEmail',
       );
-      return true;
     } catch (error) {
-      this.logger.error(
-        `Failed to send email to ${notification.recipient}`,
-        error.stack,
+      this.logger.warn(
+        `Email send gracefully degraded for ${notification.recipient}: ${
+          error instanceof Error ? error.message : error
+        }`,
       );
-      throw error;
+      return false;
     }
+  }
+
+  private async sendEmailInternal(notification: Notification): Promise<boolean> {
+    const mailOptions = {
+      from: this.configService.get<string>('EMAIL_FROM', 'notifications@swaptrade.com'),
+      to: notification.recipient,
+      subject: notification.subject,
+      html: notification.body,
+    };
+
+    const info = await this.transporter.sendMail(mailOptions);
+    this.logger.log(`Email sent to ${notification.recipient}, messageId: ${info.messageId}`);
+    return true;
   }
 
   async verifyConnection(): Promise<boolean> {
