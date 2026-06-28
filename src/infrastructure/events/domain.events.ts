@@ -242,3 +242,37 @@ export class FundHealthAlertEvent {
     public targetReserve: number,
   ) {}
 }
+
+// ─── Margin Trading Domain Events (issue #383) ────────────────────────────────
+
+export class PositionOpenedEvent {
+  constructor(
+    public positionId: string,
+    public userId: number,
+    public pairConfigId: number,
+    public side: string,
+    public leverage: number,
+    public collateral: number,
+  ) {}
+}
+
+export class MarginCallEvent {
+  constructor(
+    public positionId: string,
+    public userId: number,
+    public pairConfigId: number,
+    public currentPrice: number,
+    public marginRatio: number,
+    public liquidationPrice: number,
+  ) {}
+}
+
+export class PositionLiquidatedEvent {
+  constructor(
+    public positionId: string,
+    public userId: number,
+    public liquidationPrice: number,
+    public equity: number,
+    public shortfall: number,
+  ) {}
+}

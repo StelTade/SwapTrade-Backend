@@ -82,6 +82,12 @@ import { InsuranceTransaction } from './protection/entities/insurance-transactio
 import { LiquidationEvent } from './protection/entities/liquidation-event.entity';
 import { ProtectionModule } from './protection/protection.module';
 
+// Margin Trading — Leveraged positions with risk management (issue #383)
+import { MarginPairConfig } from './margin/entities/margin-pair-config.entity';
+import { MarginPosition } from './margin/entities/margin-position.entity';
+import { MarginInterestAccrual } from './margin/entities/margin-interest-accrual.entity';
+import { MarginModule } from './margin/margin.module';
+
 // Blockchain — Cross-Chain Bridge (issue #386)
 import { BlockchainModule } from './blockchain/blockchain.module';
 import { CrossChainBridgeModule } from './blockchain/cross-chain-bridge.module';
@@ -182,6 +188,10 @@ import { CopySubscription } from './social-trading/entities/copy-subscription.en
           // Social Trading (issue #396)
           TraderProfile,
           CopySubscription,
+          // Margin Trading (issue #383)
+          MarginPairConfig,
+          MarginPosition,
+          MarginInterestAccrual,
         ],
         synchronize: configService.get<boolean>('DB_SYNCHRONIZE', true),
         logging: configService.get<boolean>('DB_LOGGING', false),
@@ -202,6 +212,9 @@ import { CopySubscription } from './social-trading/entities/copy-subscription.en
 
     // ── Protection Domain — Insurance Fund (issue #380) ──
     ProtectionModule,
+
+    // ── Margin Trading with Risk Management (issue #383) ──
+    MarginModule,
 
     // ── Blockchain — Cross-Chain Bridge (issue #386) ──
     CrossChainBridgeModule,
