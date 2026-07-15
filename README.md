@@ -1,4 +1,4 @@
-# 🚀 SwapTrade Backend
+# 🚀 TradeSwap Backend
 
 A comprehensive, production-ready backend for a decentralized peer-to-peer trading platform. Built with **NestJS**, **TypeScript**, and **PostgreSQL**, featuring real-time WebSocket support, GraphQL API, intelligent caching, and advanced trading analytics.
 
@@ -24,7 +24,7 @@ A comprehensive, production-ready backend for a decentralized peer-to-peer tradi
 
 ## 📖 Overview
 
-**SwapTrade Backend** is the core engine of a modern trading platform that enables peer-to-peer asset swaps with insurance protection, real-time order matching, and comprehensive risk management. The system is designed for high performance, scalability, and reliability.
+**TradeSwap Backend** is the core engine of a modern trading platform that enables peer-to-peer asset swaps with insurance protection, real-time order matching, and comprehensive risk management. The system is designed for high performance, scalability, and reliability.
 
 ### Mission
 To provide a secure, efficient, and user-centric trading experience with built-in safeguards against liquidation cascades and market manipulation.
@@ -240,8 +240,8 @@ Before you begin, ensure you have the following installed:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/StelTade/SwapTrade-Backend.git
-cd SwapTrade-Backend
+git clone https://github.com/StelTade/TradeSwap-Backend.git
+cd TradeSwap-Backend
 ```
 
 ### 2. Install Dependencies
@@ -285,10 +285,10 @@ SQLite database will be created automatically at first run.
 
 ```bash
 # Create database
-createdb swaptrade_db
+createdb TradeSwap_db
 
 # Set connection string in .env
-DATABASE_URL=postgresql://user:password@localhost:5432/swaptrade_db
+DATABASE_URL=postgresql://user:password@localhost:5432/TradeSwap_db
 ```
 
 ---
@@ -316,7 +316,7 @@ LOG_LEVEL=debug
 DB_TYPE=postgres
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=swaptrade_db
+DB_NAME=TradeSwap_db
 DB_USERNAME=postgres
 DB_PASSWORD=your_password
 
@@ -548,13 +548,13 @@ socket.on('price:updated', (data) => {
 
 ```bash
 # Build image
-docker build -t swaptrade-backend:latest .
+docker build -t TradeSwap-backend:latest .
 
 # Run container
 docker run -p 3000:3000 \
   -e NODE_ENV=production \
   -e DATABASE_URL=postgresql://... \
-  swaptrade-backend:latest
+  TradeSwap-backend:latest
 ```
 
 ### Docker Compose
@@ -567,7 +567,7 @@ docker compose -f docker-compose.prod.yml up -d
 
 ```bash
 heroku login
-heroku create swaptrade-backend
+heroku create TradeSwap-backend
 heroku config:set NODE_ENV=production
 git push heroku main
 ```
@@ -696,16 +696,16 @@ This project is licensed under the **UNLICENSED** license. See the [LICENSE](./L
 
 ## 📞 Support & Community
 
-- **Issues**: [GitHub Issues](https://github.com/StelTade/SwapTrade-Backend/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/StelTade/SwapTrade-Backend/discussions)
+- **Issues**: [GitHub Issues](https://github.com/StelTade/TradeSwap-Backend/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/StelTade/TradeSwap-Backend/discussions)
 - **Documentation**: [Full Docs](./docs)
-- **Email**: support@swaptrade.io
+- **Email**: support@TradeSwap.io
 
 ---
 
 ## 🔗 Related Projects
 
-- [SwapTrade Frontend](https://github.com/StelTade/SwapTrade-Frontend)
+- [TradeSwap Frontend](https://github.com/StelTade/TradeSwap-Frontend)
 - [Stellar SDK](https://github.com/stellar/js-stellar-sdk)
 - [NestJS Documentation](https://docs.nestjs.com)
 
@@ -733,6 +733,6 @@ This project is licensed under the **UNLICENSED** license. See the [LICENSE](./L
 
 ---
 
-**Made with ❤️ by the SwapTrade Team**
+**Made with ❤️ by the TradeSwap Team**
 
 Last Updated: June 2024 | Version: 1.0.0
