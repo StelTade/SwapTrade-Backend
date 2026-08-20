@@ -100,6 +100,12 @@ import { SocialTradingModule } from './social-trading/social-trading.module';
 import { TraderProfile } from './social-trading/entities/trader-profile.entity';
 import { CopySubscription } from './social-trading/entities/copy-subscription.entity';
 
+// Escrow & Settlement (atomic escrow, refunds, dispute hooks)
+import { EscrowSettlementModule } from './escrow-settlement/escrow-settlement.module';
+import { EscrowAccount } from './escrow-settlement/entities/escrow-account.entity';
+import { EscrowTransaction } from './escrow-settlement/entities/escrow-transaction.entity';
+import { Settlement } from './escrow-settlement/entities/settlement.entity';
+
 @Module({
   imports: [
     // ── Core NestJS ──
@@ -188,6 +194,10 @@ import { CopySubscription } from './social-trading/entities/copy-subscription.en
           // Social Trading (issue #396)
           TraderProfile,
           CopySubscription,
+          // Escrow & Settlement
+          EscrowAccount,
+          EscrowTransaction,
+          Settlement,
           // Margin Trading (issue #383)
           MarginPairConfig,
           MarginPosition,
@@ -236,6 +246,9 @@ import { CopySubscription } from './social-trading/entities/copy-subscription.en
 
     // ── Social Trading Module (issue #396) ──
     SocialTradingModule,
+
+    // ── Escrow & Settlement ──
+    EscrowSettlementModule,
 
     // ── Error Handling ──
     ErrorModule,
