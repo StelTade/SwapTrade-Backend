@@ -122,8 +122,6 @@ export class AuthService {
       message:
         'Registration successful. Please check your email to activate your account.',
       userId: user.id,
-      // NOTE: In production, remove activationToken from response and send via email only
-      activationToken,
     };
   }
 
@@ -418,8 +416,6 @@ export class AuthService {
     return {
       message:
         'If an account with that email exists, a reset link has been sent.',
-      // NOTE: In production remove this and send via email only
-      resetToken: token,
     };
   }
 
@@ -741,6 +737,76 @@ export class AuthService {
       roles: user.roles,
       status: user.status,
       createdAt: user.createdAt,
+    };
+  }
+
+  // ─── Admin Functions ─────────────────────────────────────────────────────────
+
+  async listAllUsers() {
+    const users = await this.userRepo.find({
+      select: [
+        'id',
+        'username',
+        'email',
+        'firstName',
+        'lastName',
+        'role',
+        'roles',
+        'status',
+        'createdAt',
+      ],
+      order: { createdAt: 'DESC' },
+    });
+
+    return users.map((user) => this.sanitizeUser(user));
+  }
+
+  async assignUserRoles(userId: string, roles: UserRole[]) {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Merge new roles with existing roles
+    const existingRoles = user.roles || [];
+    const updatedRoles = Array.from(new Set([...existingRoles, ...roles]));
+
+    user.roles = updatedRoles;
+    user.role = updatedRoles[0] || UserRole.USER;
+    await this.userRepo.save(user);
+
+    this.logger.log(`Roles assigned to user ${userId}: ${roles.join(', ')}`);
+
+    return {
+      message: 'Roles assigned successfully',
+      user: this.sanitizeUser(user),
+    };
+  }
+
+  async revokeUserRoles(userId: string, roles: UserRole[]) {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Remove specified roles from existing roles
+    const existingRoles = user.roles || [];
+    const updatedRoles = existingRoles.filter((role) => !roles.includes(role));
+
+    // Ensure user always has at least USER role
+    if (updatedRoles.length === 0) {
+      updatedRoles.push(UserRole.USER);
+    }
+
+    user.roles = updatedRoles;
+    user.role = updatedRoles[0] || UserRole.USER;
+    await this.userRepo.save(user);
+
+    this.logger.log(`Roles revoked from user ${userId}: ${roles.join(', ')}`);
+
+    return {
+      message: 'Roles revoked successfully',
+      user: this.sanitizeUser(user),
     };
   }
 }
