@@ -1,56 +1,113 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, Like } from 'typeorm';
 import { AuditLog } from '../common/security/audit-log.entity';
-import { AdjustPointsDto } from './dto/adjust-points.dto';
-import { ReferralQueryDto } from './dto/referral-query.dto';
+import { User } from '../user/entities/user.entity';
+import { Order } from '../orders/entities/order.entity';
+import { Trade } from '../database/entities/trade.entity';
+import { UserBalance } from '../database/entities/user-balance.entity';
+import { OrderStatus, OrderSide } from '../common/enums/order-type.enum';
 
 @Injectable()
 export class AdminService {
   constructor(
-    // @InjectRepository('waitlist_referral_points')
-    // private readonly pointsRepo: Repository<any>,
-    // @InjectRepository('waitlist_referrals')
-    // private readonly referralRepo: Repository<any>,
     @InjectRepository(AuditLog)
     private readonly auditRepo: Repository<AuditLog>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
+    @InjectRepository(Order)
+    private readonly orderRepo: Repository<Order>,
+    @InjectRepository(Trade)
+    private readonly tradeRepo: Repository<Trade>,
+    @InjectRepository(UserBalance)
+    private readonly userBalanceRepo: Repository<UserBalance>,
   ) {}
 
-  /* TODO: Implement when referral entities are available
-  // #201 — referrals list with filters
-  async getReferrals(query: ReferralQueryDto) {
-    const { status, suspect, page, limit } = query;
-    const qb = this.referralRepo.createQueryBuilder('r')
-      .orderBy('r.created_at', 'DESC')
+  async searchUsers(search: string, page: number = 1, limit: number = 10) {
+    const qb = this.userRepo.createQueryBuilder('u')
       .skip((page - 1) * limit)
-      .take(limit);
-
-    if (status)  qb.andWhere('r.status = :status', { status });
-    if (suspect) qb.andWhere('r.fraud_score >= :threshold', { threshold: 40 });
+      .take(limit)
+      .orderBy('u.createdAt', 'DESC');
+      
+    if (search) {
+      qb.where('u.username LIKE :search OR u.email LIKE :search', { search: `%${search}%` });
+    }
 
     const [data, total] = await qb.getManyAndCount();
     return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
-  // #201 — manual point adjustment
-  async adjustPoints(referralId: string, dto: AdjustPointsDto, adminId: string): Promise<any> {
-    const referral = await this.referralRepo.findOne({ where: { id: referralId } });
-    if (!referral) throw new NotFoundException('Referral not found');
+  async getOrders(userId?: number, status?: string, page: number = 1, limit: number = 10) {
+    const qb = this.orderRepo.createQueryBuilder('o')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .orderBy('o.createdAt', 'DESC');
+      
+    if (userId) qb.andWhere('o.userId = :userId', { userId });
+    if (status) qb.andWhere('o.status = :status', { status });
 
-    await this.pointsRepo.save(
-      this.pointsRepo.create({
-        user_id: referral.referrer_id,
-        points:  dto.delta,
-        reason:  dto.reason,
-      }),
-    );
-
-    await this.auditEntry(adminId, 'adjust_points', 'referral', referralId, dto);
-    return { success: true };
+    const [data, total] = await qb.getManyAndCount();
+    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
-  */
 
-  // #201 — shared audit logger
+  async getTrades(userId?: number, page: number = 1, limit: number = 10) {
+    const qb = this.tradeRepo.createQueryBuilder('t')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .orderBy('t.createdAt', 'DESC');
+      
+    if (userId) qb.andWhere('t.userId = :userId', { userId });
+
+    const [data, total] = await qb.getManyAndCount();
+    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
+  }
+
+  async cancelOrder(orderId: string, adminId: string): Promise<any> {
+    const order = await this.orderRepo.findOne({ where: { id: orderId } });
+    if (!order) throw new NotFoundException('Order not found');
+    
+    if (order.status !== OrderStatus.PENDING && order.status !== OrderStatus.PARTIAL) {
+      throw new BadRequestException(`Order cannot be cancelled in status ${order.status}`);
+    }
+
+    // Un-reserve balance if it was a SELL order
+    if (order.side === OrderSide.SELL) {
+      const remaining = Number(order.amount) - Number(order.filledAmount);
+      const userBalance = await this.userBalanceRepo.findOne({
+        where: { userId: order.userId, assetId: order.assetId }
+      });
+      if (userBalance) {
+        userBalance.lockedBalance = Number(userBalance.lockedBalance) - remaining;
+        await this.userBalanceRepo.save(userBalance);
+      }
+    }
+
+    order.status = OrderStatus.CANCELLED;
+    order.cancelledAt = new Date();
+    await this.orderRepo.save(order);
+
+    await this.auditEntry(adminId, 'cancel_order', 'order', orderId, { previousStatus: order.status });
+    
+    return { success: true, order };
+  }
+
+  async refundOrder(orderId: string, adminId: string): Promise<any> {
+    // In this context, refunding implies cancelling an order that was somehow stuck or needs manual rollback.
+    // It shares identical logic with cancelOrder for now, with a different audit trail.
+    const result = await this.cancelOrder(orderId, adminId);
+    await this.auditEntry(adminId, 'refund_order', 'order', orderId, { note: 'Manual refund triggered' });
+    return result;
+  }
+
+  async getAuditLogs(page: number = 1, limit: number = 10) {
+    const [data, total] = await this.auditRepo.findAndCount({
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { createdAt: 'DESC' },
+    });
+    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
+  }
+
   async auditEntry(
     adminId: string,
     action: string,
@@ -68,24 +125,4 @@ export class AdminService {
       }),
     );
   }
-
-  // #203 — referral stats
-  // async getReferralStats(): Promise<any> {
-  //   const totalReferrals = await this.referralRepo.count();
-  //   const verifiedReferrals = await this.referralRepo.count({ where: { status: 'verified' } });
-
-  //   const topReferrers = await this.referralRepo.createQueryBuilder('r')
-  //     .select('r.referrer_id', 'referrerId')
-  //     .addSelect('COUNT(r.id)', 'count')
-  //     .groupBy('r.referrer_id')
-  //     .orderBy('count', 'DESC')
-  //     .limit(10)
-  //     .getRawMany();
-
-  //   return {
-  //     totalReferrals,
-  //     verifiedReferrals,
-  //     topReferrers,
-  //   };
-  // }
 }

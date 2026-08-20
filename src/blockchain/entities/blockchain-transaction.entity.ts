@@ -10,6 +10,7 @@ import {
 export enum BlockchainNetwork {
   STELLAR = 'stellar',
   ETHEREUM = 'ethereum',
+  BSC = 'bsc',
 }
 
 export enum TransactionType {

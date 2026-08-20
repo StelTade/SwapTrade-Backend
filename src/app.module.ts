@@ -105,6 +105,12 @@ import { EscrowSettlementModule } from './escrow-settlement/escrow-settlement.mo
 import { EscrowAccount } from './escrow-settlement/entities/escrow-account.entity';
 import { EscrowTransaction } from './escrow-settlement/entities/escrow-transaction.entity';
 import { Settlement } from './escrow-settlement/entities/settlement.entity';
+// Wallet & Payments Integration
+import { WalletModule } from './wallet/wallet.module';
+import { WalletLedger } from './wallet/entities/wallet-ledger.entity';
+import { LedgerEntry } from './wallet/entities/ledger-entry.entity';
+import { WithdrawalRequest } from './wallet/entities/withdrawal-request.entity';
+import { FiatPaymentIntent } from './wallet/entities/fiat-payment-intent.entity';
 
 @Module({
   imports: [
@@ -202,6 +208,11 @@ import { Settlement } from './escrow-settlement/entities/settlement.entity';
           MarginPairConfig,
           MarginPosition,
           MarginInterestAccrual,
+          // Wallet & Payments Integration
+          WalletLedger,
+          LedgerEntry,
+          WithdrawalRequest,
+          FiatPaymentIntent,
         ],
         synchronize: configService.get<boolean>('DB_SYNCHRONIZE', true),
         logging: configService.get<boolean>('DB_LOGGING', false),
@@ -249,6 +260,8 @@ import { Settlement } from './escrow-settlement/entities/settlement.entity';
 
     // ── Escrow & Settlement ──
     EscrowSettlementModule,
+    // ── Wallet & Payments Integration ──
+    WalletModule,
 
     // ── Error Handling ──
     ErrorModule,

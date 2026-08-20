@@ -11,6 +11,8 @@ import {
 } from '../entities/blockchain-transaction.entity';
 import { WalletAddress } from '../entities/wallet-address.entity';
 import { BlockchainException } from '../../error/exceptions/blockchain.exception';
+import { CircuitBreakerService } from '../../common/services/circuit-breaker.service';
+import { BulkheadService } from '../../common/services/bulkhead.service';
 
 // Mock stellar-sdk at module level
 jest.mock('stellar-sdk', () => {
@@ -114,6 +116,20 @@ describe('StellarService', () => {
         {
           provide: getRepositoryToken(WalletAddress),
           useFactory: mockWalletRepo,
+        },
+        {
+          provide: CircuitBreakerService,
+          useValue: {
+            execute: jest.fn((_name: string, fn: () => any) => fn()),
+            register: jest.fn(),
+          },
+        },
+        {
+          provide: BulkheadService,
+          useValue: {
+            execute: jest.fn((_name: string, fn: () => any) => fn()),
+            createBulkhead: jest.fn(),
+          },
         },
       ],
     }).compile();
