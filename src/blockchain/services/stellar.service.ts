@@ -101,6 +101,87 @@ export class StellarService implements OnModuleInit {
     return this.walletRepo.save(wallet);
   }
 
+  /**
+   * Verify an on-chain USDC deposit by transaction hash and record it. Stellar
+   * transactions are final once included in a ledger, so a matching payment is
+   * recorded CONFIRMED with a single confirmation. Idempotent per txHash.
+   */
+  async verifyDeposit(
+    userId: string,
+    txHash: string,
+  ): Promise<BlockchainTransaction> {
+    return this.bulkheadService.execute(
+      this.bulkheadName,
+      async () => {
+        return this.circuitBreakerService.execute(
+          this.circuitBreakerName,
+          async () => this.verifyDepositInternal(userId, txHash),
+        );
+      },
+      'verifyDeposit',
+    );
+  }
+
+  private async verifyDepositInternal(
+    userId: string,
+    txHash: string,
+  ): Promise<BlockchainTransaction> {
+    const existing = await this.txRepo.findOne({ where: { txHash } });
+    if (existing) return existing;
+
+    const wallet = await this.walletRepo.findOne({
+      where: { userId, network: BlockchainNetwork.STELLAR, isActive: true },
+    });
+    if (!wallet)
+      throw BlockchainException.transactionFailed({
+        reason: 'No Stellar wallet for user',
+      });
+
+    try {
+      const txResp: any = await this.server
+        .transactions()
+        .transaction(txHash)
+        .call();
+      const opsResp: any = await this.server
+        .operations()
+        .forTransaction(txHash)
+        .call();
+
+      const records: any[] = opsResp?.records ?? [];
+      const payment = records.find(
+        (op) =>
+          op.type === 'payment' &&
+          op.to === wallet.address &&
+          op.asset_code === 'USDC' &&
+          (!this.usdcIssuer || op.asset_issuer === this.usdcIssuer),
+      );
+      if (!payment)
+        throw BlockchainException.transactionFailed({
+          reason: 'No USDC payment to user wallet found in transaction',
+          txHash,
+        });
+
+      const txRecord = this.txRepo.create({
+        userId,
+        network: BlockchainNetwork.STELLAR,
+        type: TransactionType.DEPOSIT,
+        status: TransactionStatus.CONFIRMED,
+        txHash,
+        fromAddress: payment.from,
+        toAddress: payment.to,
+        amount: payment.amount,
+        asset: 'USDC',
+        memo: txResp?.memo || undefined,
+        confirmations: 1,
+      });
+      return this.txRepo.save(txRecord);
+    } catch (err) {
+      if (err instanceof BlockchainException) throw err;
+      this.logger.error(`Failed to verify Stellar deposit ${txHash}`, err);
+      throw BlockchainException.networkError({ txHash, error: err.message });
+    }
+  }
+
   /** Send USDC from the platform wallet to a recipient Stellar address */
   async withdraw(
     userId: string,
@@ -183,5 +264,14 @@ export class StellarService implements OnModuleInit {
     }
 
     return this.txRepo.save(txRecord);
+  }
+
+  async getTransactionHistory(
+    userId: string,
+  ): Promise<BlockchainTransaction[]> {
+    return this.txRepo.find({
+      where: { userId, network: BlockchainNetwork.STELLAR },
+      order: { createdAt: 'DESC' },
+    });
   }
 }
