@@ -5,13 +5,14 @@ import { UserBalance } from '../database/entities/user-balance.entity';
 import { VirtualAsset } from '../database/entities/virtual-asset.entity';
 import { Trade } from '../database/entities/trade.entity';
 import { OrdersService } from './orders.service';
-import { OrdersController } from './orders.controller';
+import { OrdersController, OrderBookController } from './orders.controller';
 import { OrdersResolver } from './orders.resolver';
 import { OrderBookService } from './services/order-book.service';
 import { StopOrderMonitorService } from './services/stop-order-monitor.service';
 import { GqlJwtAuthGuard } from './guards/gql-jwt-auth.guard';
 import { AuthModule } from '../auth/auth.module';
 import { InfrastructureWebSocketModule } from '../infrastructure/websocket/websocket.module';
+import { OrderBookUpdateListener } from './listeners/order-book-update.listener';
 
 @Module({
   imports: [
@@ -19,7 +20,7 @@ import { InfrastructureWebSocketModule } from '../infrastructure/websocket/webso
     AuthModule, // re-exports configured JwtModule, used by both JwtAuthGuard and GqlJwtAuthGuard
     InfrastructureWebSocketModule, // provides WebSocketService for order-update broadcasts
   ],
-  controllers: [OrdersController],
+  controllers: [OrdersController, OrderBookController],
   // OrdersResolver is registered here deliberately — UserResolver and
   // TradeResolver exist on disk but were never added to any module's
   // providers array, so Nest never instantiates them and they contribute
@@ -31,6 +32,7 @@ import { InfrastructureWebSocketModule } from '../infrastructure/websocket/webso
     StopOrderMonitorService,
     OrdersResolver,
     GqlJwtAuthGuard,
+    OrderBookUpdateListener,
   ],
   // OrderBookService is exported here so that the SocialTradingModule
   // can call its matchTakerOrder() to drive follow-side MATCHET/LIMIT

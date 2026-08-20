@@ -103,6 +103,8 @@ export class OrdersService {
     });
 
     this.broadcastOrder(order);
+    // Broadcast order book update so subscribers see top-of-book changes.
+    this.orderBookService.broadcastOrderBookUpdate(order.assetId);
     return order;
   }
 
@@ -151,6 +153,8 @@ export class OrdersService {
     });
 
     this.broadcastOrder(order);
+    // Broadcast order book update so subscribers see top-of-book changes.
+    this.orderBookService.broadcastOrderBookUpdate(order.assetId);
     return order;
   }
 
@@ -246,6 +250,8 @@ export class OrdersService {
     });
 
     this.broadcastOrder(order);
+    // Broadcast order book update so subscribers see top-of-book changes.
+    this.orderBookService.broadcastOrderBookUpdate(order.assetId);
     return order;
   }
 
@@ -267,6 +273,35 @@ export class OrdersService {
       where,
       order: { createdAt: 'DESC' },
     });
+  }
+
+  /**
+   * Returns a paginated slice of a user's orders with total count.
+   * Acceptance criteria: pagination support for open orders queries.
+   */
+  async getUserOrdersPaginated(
+    userId: number,
+    page: number = 1,
+    limit: number = 20,
+    status?: OrderStatus,
+  ): Promise<{ data: Order[]; total: number; page: number; limit: number; totalPages: number }> {
+    const where: any = { userId };
+    if (status) where.status = status;
+
+    const [data, total] = await this.dataSource.getRepository(Order).findAndCount({
+      where,
+      order: { createdAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   /**
