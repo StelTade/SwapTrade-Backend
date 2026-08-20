@@ -3,6 +3,7 @@ import { DataSource, EntityManager } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Order } from '../entities/order.entity';
 import { Trade } from '../../database/entities/trade.entity';
+import { VirtualAsset } from '../../database/entities/virtual-asset.entity';
 import {
   OrderSide,
   OrderStatus,
@@ -53,6 +54,25 @@ export interface OrderBookSnapshot {
 }
 
 /**
+ * Full order book response including top-of-book summary and
+ * configurable depth levels for the depth-of-book view.
+ */
+export interface OrderBookResponse {
+  assetId: number;
+  pair: string;
+  topOfBook: {
+    bestBid: OrderBookLevelSnapshot | null;
+    bestAsk: OrderBookLevelSnapshot | null;
+    spread: number | null;
+    midPrice: number | null;
+  };
+  bids: OrderBookLevelSnapshot[];
+  asks: OrderBookLevelSnapshot[];
+  timestamp: string;
+  sequence: number;
+}
+
+/**
  * Pure limit-order matching engine. Operates on resting LIMIT orders for
  * a single asset using price-time priority:
  *   - BUY taker matches against SELL makers, lowest price first.
@@ -71,6 +91,9 @@ export interface OrderBookSnapshot {
 @Injectable()
 export class OrderBookService {
   private readonly logger = new Logger(OrderBookService.name);
+
+  /** Monotonically increasing sequence counter for book snapshots. */
+  private sequence = 0;
 
   constructor(
     private readonly dataSource: DataSource,
@@ -225,5 +248,69 @@ export class OrderBookService {
       bids: aggregate(OrderSide.BUY).sort((a, b) => b.price - a.price),
       asks: aggregate(OrderSide.SELL).sort((a, b) => a.price - b.price),
     };
+  }
+
+  /**
+   * Returns a full order-book response including top-of-book summary and
+   * depth-limited bid/ask levels. Used by GET /orderbook/:pair.
+   *
+   * @param assetId   The virtual asset ID (resolved from pair parameter)
+   * @param depth     Max number of price levels per side (default 10)
+   */
+  async getOrderBookResponse(
+    assetId: number,
+    depth: number = 10,
+  ): Promise<OrderBookResponse> {
+    const snapshot = await this.getOrderBookSnapshot(assetId);
+
+    const bestBid = snapshot.bids.length > 0 ? snapshot.bids[0] : null;
+    const bestAsk = snapshot.asks.length > 0 ? snapshot.asks[0] : null;
+    const spread =
+      bestBid != null && bestAsk != null ? bestAsk.price - bestBid.price : null;
+    const midPrice =
+      bestBid != null && bestAsk != null
+        ? (bestBid.price + bestAsk.price) / 2
+        : null;
+
+    // Resolve the asset symbol for the response pair field.
+    const assetRepo = this.dataSource.getRepository(VirtualAsset);
+    const asset = await assetRepo.findOne({ where: { id: assetId } });
+    const pairName = asset?.symbol ?? `ASSET_${assetId}`;
+
+    return {
+      assetId,
+      pair: pairName,
+      topOfBook: {
+        bestBid,
+        bestAsk,
+        spread: spread != null ? Math.round(spread * 1e8) / 1e8 : null,
+        midPrice: midPrice != null ? Math.round(midPrice * 1e8) / 1e8 : null,
+      },
+      bids: snapshot.bids.slice(0, depth),
+      asks: snapshot.asks.slice(0, depth),
+      timestamp: new Date().toISOString(),
+      sequence: ++this.sequence,
+    };
+  }
+
+  /**
+   * Broadcasts the current order book state for an asset to all WebSocket
+   * subscribers on the orderbook:<assetId> channel. Called after every
+   * mutation (place, cancel, fill) so subscribers see changes within 1s.
+   */
+  async broadcastOrderBookUpdate(assetId: number): Promise<void> {
+    try {
+      const response = await this.getOrderBookResponse(assetId, 10);
+      this.logger.debug(
+        `Broadcasting order book update for asset ${assetId} (seq=${response.sequence})`,
+      );
+      // Emit an event that WebSocket infrastructure can pick up.
+      // The OrdersModule wires this through WebSocketService below.
+      this.eventEmitter?.emit('orderbook.update', response);
+    } catch (err) {
+      this.logger.error(
+        `Failed to broadcast order book update for asset ${assetId}: ${err}`,
+      );
+    }
   }
 }
