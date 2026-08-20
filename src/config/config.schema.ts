@@ -142,4 +142,61 @@ export const configSchema = Joi.object({
   STELLAR_USDC_ISSUER: Joi.string()
     .required()
     .description('Issuer address for USDC on Stellar blockchain'),
+
+  // Wallet & Payments Integration
+  WALLET_WITHDRAWAL_APPROVAL_THRESHOLD: Joi.number()
+    .min(0)
+    .default(1000)
+    .description('Withdrawal amount at/above which admin approval is required'),
+  WALLET_2FA_THRESHOLD: Joi.number()
+    .min(0)
+    .default(500)
+    .description('Withdrawal amount at/above which 2FA is enforced'),
+  WALLET_WITHDRAWAL_MAX_PER_HOUR: Joi.number()
+    .integer()
+    .min(1)
+    .default(5)
+    .description('Max withdrawal requests per user per rolling hour'),
+  WALLET_WITHDRAWAL_MAX_DAILY_VALUE: Joi.number()
+    .min(0)
+    .default(10000)
+    .description('Max total withdrawal value per user per rolling 24h'),
+  WALLET_EVM_BROADCAST_ENABLED: Joi.boolean()
+    .default(false)
+    .description(
+      'When true, EVM withdrawals broadcast a real ERC-20 transfer; ' +
+        'otherwise a dev-safe simulated tx hash is recorded',
+    ),
+  EVM_PLATFORM_PRIVATE_KEY: Joi.string()
+    .optional()
+    .description('Platform hot-wallet key used for real EVM broadcasts'),
+  ETHEREUM_RPC_URL: Joi.string()
+    .uri()
+    .optional()
+    .description('Ethereum JSON-RPC endpoint'),
+  ETHEREUM_USDC_ADDRESS: Joi.string()
+    .optional()
+    .description('USDC contract address on Ethereum'),
+  ETHEREUM_CONFIRMATIONS: Joi.number()
+    .integer()
+    .min(1)
+    .default(12)
+    .description('Confirmations required to credit/finalize on Ethereum'),
+  BSC_RPC_URL: Joi.string()
+    .uri()
+    .optional()
+    .description('BSC JSON-RPC endpoint'),
+  BSC_USDC_ADDRESS: Joi.string()
+    .optional()
+    .description('USDC contract address on BSC'),
+  BSC_CONFIRMATIONS: Joi.number()
+    .integer()
+    .min(1)
+    .default(15)
+    .description('Confirmations required to credit/finalize on BSC'),
+  STELLAR_CONFIRMATIONS: Joi.number()
+    .integer()
+    .min(1)
+    .default(1)
+    .description('Confirmations required to finalize on Stellar'),
 });

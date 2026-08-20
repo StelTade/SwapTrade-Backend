@@ -20,13 +20,25 @@ const ERC20_ABI = [
   'function decimals() view returns (uint8)',
 ];
 
+/** Per-chain settings for an EVM network (Ethereum, BSC, …). */
+interface EvmChainSettings {
+  provider: ethers.JsonRpcProvider;
+  usdcAddress: string;
+  confirmations: number;
+}
+
+/**
+ * EVM connector for deposit detection and address management. Chain-parameterized
+ * so a single service serves multiple EVM networks (Ethereum + BSC) via
+ * per-chain config. Every public method accepts an optional `network` that
+ * defaults to Ethereum, preserving the original single-chain call sites.
+ */
 @Injectable()
 export class EthereumService implements OnModuleInit {
   private readonly logger = new Logger(EthereumService.name);
-  private readonly provider: ethers.JsonRpcProvider;
-  private readonly usdcAddress: string;
-  private readonly circuitBreakerName = 'ethereum-rpc';
-  private readonly bulkheadName = 'ethereum-bulkhead';
+  private readonly chains = new Map<BlockchainNetwork, EvmChainSettings>();
+  private readonly circuitBreakerName = 'evm-rpc';
+  private readonly bulkheadName = 'evm-bulkhead';
 
   constructor(
     private readonly configService: ConfigService,
@@ -37,19 +49,39 @@ export class EthereumService implements OnModuleInit {
     private readonly circuitBreakerService: CircuitBreakerService,
     private readonly bulkheadService: BulkheadService,
   ) {
-    const rpcUrl = this.configService.get<string>(
-      'ETHEREUM_RPC_URL',
-      'https://rpc.ankr.com/eth_sepolia',
-    );
-    this.usdcAddress = this.configService.get<string>(
-      'ETHEREUM_USDC_ADDRESS',
-      '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-    );
-    this.provider = new ethers.JsonRpcProvider(rpcUrl);
+    this.chains.set(BlockchainNetwork.ETHEREUM, {
+      provider: new ethers.JsonRpcProvider(
+        this.configService.get<string>(
+          'ETHEREUM_RPC_URL',
+          'https://rpc.ankr.com/eth_sepolia',
+        ),
+      ),
+      usdcAddress: this.configService.get<string>(
+        'ETHEREUM_USDC_ADDRESS',
+        '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+      ),
+      confirmations: this.configService.get<number>(
+        'ETHEREUM_CONFIRMATIONS',
+        12,
+      ),
+    });
+    this.chains.set(BlockchainNetwork.BSC, {
+      provider: new ethers.JsonRpcProvider(
+        this.configService.get<string>(
+          'BSC_RPC_URL',
+          'https://bsc-testnet-rpc.publicnode.com',
+        ),
+      ),
+      usdcAddress: this.configService.get<string>(
+        'BSC_USDC_ADDRESS',
+        '0x64544969ed7EBf5f083679233325356EbE738930',
+      ),
+      confirmations: this.configService.get<number>('BSC_CONFIRMATIONS', 15),
+    });
   }
 
   onModuleInit() {
-    // Register circuit breaker for Ethereum RPC calls
+    // Register circuit breaker for EVM RPC calls
     const circuitBreakerOptions: CircuitBreakerOptions = {
       name: this.circuitBreakerName,
       timeout: 30000,
@@ -58,8 +90,8 @@ export class EthereumService implements OnModuleInit {
       rollingCountTimeout: 60000,
       rollingCountBuckets: 10,
       fallback: async (error: Error, ...args: any[]) => {
-        this.logger.error(`Ethereum RPC circuit breaker fallback triggered: ${error.message}`);
-        throw BlockchainException.networkError({ error: 'Ethereum service unavailable', details: error.message });
+        this.logger.error(`EVM RPC circuit breaker fallback triggered: ${error.message}`);
+        throw BlockchainException.networkError({ error: 'EVM service unavailable', details: error.message });
       },
     };
 
@@ -68,7 +100,7 @@ export class EthereumService implements OnModuleInit {
       circuitBreakerOptions,
     );
 
-    // Create bulkhead for Ethereum operations
+    // Create bulkhead for EVM operations
     const bulkheadConfig: BulkheadConfig = {
       name: this.bulkheadName,
       maxConcurrent: 5,
@@ -77,42 +109,63 @@ export class EthereumService implements OnModuleInit {
     };
 
     this.bulkheadService.createBulkhead(bulkheadConfig);
-    this.logger.log('Ethereum service initialized with circuit breaker and bulkhead');
+    this.logger.log('EVM service initialized with circuit breaker and bulkhead');
   }
 
-  /** Validate an Ethereum address format */
+  /** Validate an EVM address format (shared across Ethereum/BSC). */
   isValidAddress(address: string): boolean {
     return ethers.isAddress(address);
   }
 
-  /** Create or retrieve an Ethereum wallet for the given user */
-  async getOrCreateWallet(userId: string): Promise<WalletAddress> {
+  /** Resolve per-chain settings, throwing for non-EVM networks. */
+  private chainFor(network: BlockchainNetwork): EvmChainSettings {
+    const chain = this.chains.get(network);
+    if (!chain) {
+      throw BlockchainException.transactionFailed({
+        reason: `Unsupported EVM network: ${network}`,
+      });
+    }
+    return chain;
+  }
+
+  /** Configured confirmation threshold for the given EVM network. */
+  getConfirmationThreshold(network: BlockchainNetwork = BlockchainNetwork.ETHEREUM): number {
+    return this.chainFor(network).confirmations;
+  }
+
+  /** Create or retrieve an EVM wallet for the given user + network. */
+  async getOrCreateWallet(
+    userId: string,
+    network: BlockchainNetwork = BlockchainNetwork.ETHEREUM,
+  ): Promise<WalletAddress> {
+    this.chainFor(network); // validate network
     const existing = await this.walletRepo.findOne({
-      where: { userId, network: BlockchainNetwork.ETHEREUM, isActive: true },
+      where: { userId, network, isActive: true },
     });
     if (existing) return existing;
 
     const wallet = ethers.Wallet.createRandom();
     const record = this.walletRepo.create({
       userId,
-      network: BlockchainNetwork.ETHEREUM,
+      network,
       address: wallet.address,
       encryptedPrivateKey: wallet.privateKey, // TODO: encrypt with KMS in production
     });
     return this.walletRepo.save(record);
   }
 
-  /** Verify an ERC-20 deposit transaction and record it */
+  /** Verify an ERC-20 deposit transaction and record it. */
   async verifyDeposit(
     userId: string,
     txHash: string,
+    network: BlockchainNetwork = BlockchainNetwork.ETHEREUM,
   ): Promise<BlockchainTransaction> {
     return this.bulkheadService.execute(
       this.bulkheadName,
       async () => {
         return this.circuitBreakerService.execute(
           this.circuitBreakerName,
-          async () => this.verifyDepositInternal(userId, txHash),
+          async () => this.verifyDepositInternal(userId, txHash, network),
         );
       },
       'verifyDeposit',
@@ -122,28 +175,36 @@ export class EthereumService implements OnModuleInit {
   private async verifyDepositInternal(
     userId: string,
     txHash: string,
+    network: BlockchainNetwork,
   ): Promise<BlockchainTransaction> {
+    const chain = this.chainFor(network);
+
     const existing = await this.txRepo.findOne({ where: { txHash } });
-    if (existing) return existing;
+    if (existing) {
+      // Already confirmed — nothing to do. Still pending — refresh its
+      // confirmation count so the deposit reconciler can advance it.
+      if (existing.status === TransactionStatus.CONFIRMED) return existing;
+      return this.refreshConfirmations(existing, chain);
+    }
 
     const wallet = await this.walletRepo.findOne({
-      where: { userId, network: BlockchainNetwork.ETHEREUM, isActive: true },
+      where: { userId, network, isActive: true },
     });
     if (!wallet)
       throw BlockchainException.transactionFailed({
-        reason: 'No Ethereum wallet found for user',
+        reason: `No ${network} wallet found for user`,
       });
 
     let txRecord: BlockchainTransaction;
     try {
-      const receipt = await this.provider.getTransactionReceipt(txHash);
+      const receipt = await chain.provider.getTransactionReceipt(txHash);
       if (!receipt)
         throw BlockchainException.transactionFailed({
           reason: 'Transaction not found',
           txHash,
         });
 
-      const currentBlock = await this.provider.getBlockNumber();
+      const currentBlock = await chain.provider.getBlockNumber();
       const confirmations = currentBlock - receipt.blockNumber + 1;
 
       // Decode Transfer event from USDC contract
@@ -152,7 +213,7 @@ export class EthereumService implements OnModuleInit {
       let fromAddress = '';
 
       for (const log of receipt.logs) {
-        if (log.address.toLowerCase() !== this.usdcAddress.toLowerCase())
+        if (log.address.toLowerCase() !== chain.usdcAddress.toLowerCase())
           continue;
         try {
           const parsed = iface.parseLog({
@@ -182,10 +243,10 @@ export class EthereumService implements OnModuleInit {
 
       txRecord = this.txRepo.create({
         userId,
-        network: BlockchainNetwork.ETHEREUM,
+        network,
         type: TransactionType.DEPOSIT,
         status:
-          confirmations >= 2
+          confirmations >= chain.confirmations
             ? TransactionStatus.CONFIRMED
             : TransactionStatus.PENDING,
         txHash,
@@ -197,18 +258,41 @@ export class EthereumService implements OnModuleInit {
       });
     } catch (err) {
       if (err instanceof BlockchainException) throw err;
-      this.logger.error(`Failed to verify ETH deposit ${txHash}`, err);
+      this.logger.error(`Failed to verify EVM deposit ${txHash}`, err);
       throw BlockchainException.networkError({ txHash, error: err.message });
     }
 
     return this.txRepo.save(txRecord);
   }
 
+  /** Re-read the chain to refresh a pending deposit's confirmation count. */
+  private async refreshConfirmations(
+    tx: BlockchainTransaction,
+    chain: EvmChainSettings,
+  ): Promise<BlockchainTransaction> {
+    try {
+      const receipt = await chain.provider.getTransactionReceipt(tx.txHash);
+      if (!receipt) return tx;
+      const currentBlock = await chain.provider.getBlockNumber();
+      tx.confirmations = currentBlock - receipt.blockNumber + 1;
+      if (tx.confirmations >= chain.confirmations) {
+        tx.status = TransactionStatus.CONFIRMED;
+      }
+      return this.txRepo.save(tx);
+    } catch (err) {
+      this.logger.error(
+        `Failed to refresh confirmations for ${tx.txHash}: ${err.message}`,
+      );
+      return tx;
+    }
+  }
+
   async getTransactionHistory(
     userId: string,
+    network: BlockchainNetwork = BlockchainNetwork.ETHEREUM,
   ): Promise<BlockchainTransaction[]> {
     return this.txRepo.find({
-      where: { userId, network: BlockchainNetwork.ETHEREUM },
+      where: { userId, network },
       order: { createdAt: 'DESC' },
     });
   }

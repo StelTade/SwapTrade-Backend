@@ -30,26 +30,29 @@ import {
 } from './dto/password-reset.dto';
 import { Enable2FADto, TwoFADto, Verify2FASetupDto } from './dto/2fa.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { RolesGuard } from './guards/roles.guard';
 import type { JwtPayload } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { Public } from './decorators/public.decorator';
 import { ApiAuthErrorResponses } from '../common/decorators/swagger-error-responses.decorator';
+import { Roles } from '../identity/roles/decorators/roles.decorator';
+import { UserRole } from '../identity/roles/enums/user-role.enum';
 
-@ApiTags('identity/auth')
-@UseGuards(JwtAuthGuard)
-@Controller('identity/auth')
+@ApiTags('auth')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   // ─── Registration & Activation ─────────────────────────────────────────────
 
   @Public()
-  @Post('register')
+  @Post('signup')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Register a new user account' })
   @ApiResponse({ status: 201, description: 'Registration successful' })
   @ApiAuthErrorResponses()
-  register(@Body() dto: RegisterDto, @Req() req: Request) {
+  signup(@Body() dto: RegisterDto, @Req() req: Request) {
     const correlationId =
       (req.headers['x-correlation-id'] as string) ||
       (req.headers['x-request-id'] as string);
@@ -104,13 +107,13 @@ export class AuthController {
   // ─── Token Refresh ─────────────────────────────────────────────────────────
 
   @Public()
-  @Post('token/refresh')
+  @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Rotate refresh token and obtain new access + refresh tokens',
   })
   @ApiResponse({ status: 200, description: 'Tokens refreshed' })
-  refreshToken(@Body() dto: RefreshTokenDto) {
+  refresh(@Body() dto: RefreshTokenDto) {
     return this.authService.refreshTokens(dto);
   }
 
@@ -209,5 +212,42 @@ export class AuthController {
   @ApiResponse({ status: 200, description: '2FA disabled' })
   disable2FA(@CurrentUser() user: JwtPayload, @Body() dto: TwoFADto) {
     return this.authService.disable2FA(user.sub, dto);
+  }
+
+  // ─── Admin Endpoints ───────────────────────────────────────────────────────
+
+  @Get('admin/users')
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'List all users (admin only)' })
+  @ApiResponse({ status: 200, description: 'List of all users' })
+  listAllUsers(@CurrentUser() user: JwtPayload) {
+    return this.authService.listAllUsers();
+  }
+
+  @Post('admin/users/:userId/roles')
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Assign roles to a user (admin only)' })
+  @ApiResponse({ status: 200, description: 'Roles assigned successfully' })
+  assignUserRole(
+    @CurrentUser() user: JwtPayload,
+    @Param('userId') userId: string,
+    @Body() body: { roles: UserRole[] },
+  ) {
+    return this.authService.assignUserRoles(userId, body.roles);
+  }
+
+  @Delete('admin/users/:userId/roles')
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Revoke roles from a user (admin only)' })
+  @ApiResponse({ status: 200, description: 'Roles revoked successfully' })
+  revokeUserRole(
+    @CurrentUser() user: JwtPayload,
+    @Param('userId') userId: string,
+    @Body() body: { roles: UserRole[] },
+  ) {
+    return this.authService.revokeUserRoles(userId, body.roles);
   }
 }

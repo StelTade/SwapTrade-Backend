@@ -11,6 +11,7 @@ import { Auth } from './entities/auth.entity';
 import { Session } from './entities/session.entity';
 import { User } from '../user/entities/user.entity';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { RolesGuard } from './guards/roles.guard';
 import { AuthAuditListener } from './listeners/auth-audit.listener';
 import { AuditLogModule } from '../audit-log/audit-log.module';
 
@@ -23,14 +24,20 @@ import { AuditLogModule } from '../audit-log/audit-log.module';
       useFactory: (config: ConfigService) => ({
         secret: config.get<string>('JWT_SECRET'),
         signOptions: {
-          expiresIn: config.get<number>('JWT_EXPIRES_IN', 3600),
+          expiresIn: config.get<number>('JWT_EXPIRES_IN', 900),
         },
       }),
     }),
     AuditLogModule,
   ],
   controllers: [AuthController, MFAController],
-  providers: [AuthService, MFAService, JwtAuthGuard, AuthAuditListener],
-  exports: [AuthService, MFAService, JwtAuthGuard, JwtModule],
+  providers: [
+    AuthService,
+    MFAService,
+    JwtAuthGuard,
+    RolesGuard,
+    AuthAuditListener,
+  ],
+  exports: [AuthService, MFAService, JwtAuthGuard, RolesGuard, JwtModule],
 })
 export class AuthModule {}

@@ -100,6 +100,18 @@ import { SocialTradingModule } from './social-trading/social-trading.module';
 import { TraderProfile } from './social-trading/entities/trader-profile.entity';
 import { CopySubscription } from './social-trading/entities/copy-subscription.entity';
 
+// Escrow & Settlement (atomic escrow, refunds, dispute hooks)
+import { EscrowSettlementModule } from './escrow-settlement/escrow-settlement.module';
+import { EscrowAccount } from './escrow-settlement/entities/escrow-account.entity';
+import { EscrowTransaction } from './escrow-settlement/entities/escrow-transaction.entity';
+import { Settlement } from './escrow-settlement/entities/settlement.entity';
+// Wallet & Payments Integration
+import { WalletModule } from './wallet/wallet.module';
+import { WalletLedger } from './wallet/entities/wallet-ledger.entity';
+import { LedgerEntry } from './wallet/entities/ledger-entry.entity';
+import { WithdrawalRequest } from './wallet/entities/withdrawal-request.entity';
+import { FiatPaymentIntent } from './wallet/entities/fiat-payment-intent.entity';
+
 @Module({
   imports: [
     // ── Core NestJS ──
@@ -188,10 +200,19 @@ import { CopySubscription } from './social-trading/entities/copy-subscription.en
           // Social Trading (issue #396)
           TraderProfile,
           CopySubscription,
+          // Escrow & Settlement
+          EscrowAccount,
+          EscrowTransaction,
+          Settlement,
           // Margin Trading (issue #383)
           MarginPairConfig,
           MarginPosition,
           MarginInterestAccrual,
+          // Wallet & Payments Integration
+          WalletLedger,
+          LedgerEntry,
+          WithdrawalRequest,
+          FiatPaymentIntent,
         ],
         synchronize: configService.get<boolean>('DB_SYNCHRONIZE', true),
         logging: configService.get<boolean>('DB_LOGGING', false),
@@ -236,6 +257,11 @@ import { CopySubscription } from './social-trading/entities/copy-subscription.en
 
     // ── Social Trading Module (issue #396) ──
     SocialTradingModule,
+
+    // ── Escrow & Settlement ──
+    EscrowSettlementModule,
+    // ── Wallet & Payments Integration ──
+    WalletModule,
 
     // ── Error Handling ──
     ErrorModule,
