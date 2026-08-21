@@ -111,6 +111,7 @@ import { WalletLedger } from './wallet/entities/wallet-ledger.entity';
 import { LedgerEntry } from './wallet/entities/ledger-entry.entity';
 import { WithdrawalRequest } from './wallet/entities/withdrawal-request.entity';
 import { FiatPaymentIntent } from './wallet/entities/fiat-payment-intent.entity';
+import { TradingModule } from './trading/trading.module';
 
 @Module({
   imports: [
@@ -262,6 +263,7 @@ import { FiatPaymentIntent } from './wallet/entities/fiat-payment-intent.entity'
     EscrowSettlementModule,
     // ── Wallet & Payments Integration ──
     WalletModule,
+    TradingModule,
 
     // ── Error Handling ──
     ErrorModule,
