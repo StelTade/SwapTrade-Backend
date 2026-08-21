@@ -17,6 +17,8 @@ type EventPreferences = {
     [NotificationChannel.EMAIL]?: ChannelPreference;
     [NotificationChannel.SMS]?: ChannelPreference;
     [NotificationChannel.PUSH]?: ChannelPreference;
+    [NotificationChannel.IN_APP]?: ChannelPreference;
+    [NotificationChannel.WEBHOOK]?: ChannelPreference;
   };
 };
 
