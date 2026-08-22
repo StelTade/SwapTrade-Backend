@@ -74,6 +74,8 @@ import { EmergencyWithdrawal } from './exchange/entities/emergency-withdrawal.en
 import { ExchangeModule } from './exchange/exchange.module';
 import { MobileModule } from './mobile/mobile.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { WebhookSubscription } from './notifications/entities/webhook-subscription.entity';
+import { WebhookDeliveryLog } from './notifications/entities/webhook-delivery-log.entity';
 
 // Protection Domain — Insurance Fund (issue #380)
 import { InsuranceFund } from './protection/entities/insurance-fund.entity';
@@ -214,6 +216,9 @@ import { TradingModule } from './trading/trading.module';
           LedgerEntry,
           WithdrawalRequest,
           FiatPaymentIntent,
+          // Notifications — Webhooks
+          WebhookSubscription,
+          WebhookDeliveryLog,
         ],
         synchronize: configService.get<boolean>('DB_SYNCHRONIZE', true),
         logging: configService.get<boolean>('DB_LOGGING', false),
