@@ -102,6 +102,13 @@ import { SocialTradingModule } from './social-trading/social-trading.module';
 import { TraderProfile } from './social-trading/entities/trader-profile.entity';
 import { CopySubscription } from './social-trading/entities/copy-subscription.entity';
 
+// Options & Derivatives (hedging, speculation, pricing)
+import { OptionsDerivativesModule } from './options-derivatives/options-derivatives.module';
+import { OptionContract } from './options-derivatives/entities/option-contract.entity';
+import { OptionPosition } from './options-derivatives/entities/option-position.entity';
+import { OptionCollateral } from './options-derivatives/entities/option-collateral.entity';
+import { VolatilitySurface } from './options-derivatives/entities/volatility-surface.entity';
+
 // Escrow & Settlement (atomic escrow, refunds, dispute hooks)
 import { EscrowSettlementModule } from './escrow-settlement/escrow-settlement.module';
 import { EscrowAccount } from './escrow-settlement/entities/escrow-account.entity';
@@ -211,6 +218,11 @@ import { TradingModule } from './trading/trading.module';
           MarginPairConfig,
           MarginPosition,
           MarginInterestAccrual,
+          // Options & Derivatives
+          OptionContract,
+          OptionPosition,
+          OptionCollateral,
+          VolatilitySurface,
           // Wallet & Payments Integration
           WalletLedger,
           LedgerEntry,
@@ -266,6 +278,9 @@ import { TradingModule } from './trading/trading.module';
 
     // ── Escrow & Settlement ──
     EscrowSettlementModule,
+    // ── Options & Derivatives ──
+    OptionsDerivativesModule,
+
     // ── Wallet & Payments Integration ──
     WalletModule,
     TradingModule,

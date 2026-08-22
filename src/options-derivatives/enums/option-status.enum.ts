@@ -1,0 +1,6 @@
+export enum OptionStatus {
+  ACTIVE = 'ACTIVE',
+  EXERCISED = 'EXERCISED',
+  EXPIRED = 'EXPIRED',
+  CANCELLED = 'CANCELLED',
+}
