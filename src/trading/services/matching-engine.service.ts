@@ -15,10 +15,12 @@ export class MatchingEngine {
   }
 
   private getOrderBook(assetPair: string): OrderBook {
-    if (!this.orderBooks.has(assetPair)) {
-      this.orderBooks.set(assetPair, new OrderBook());
+    let book = this.orderBooks.get(assetPair);
+    if (!book) {
+      book = new OrderBook();
+      this.orderBooks.set(assetPair, book);
     }
-    return this.orderBooks.get(assetPair);
+    return book;
   }
 
   private matchOrders(assetPair: string): Trade[] {

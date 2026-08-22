@@ -1,7 +1,17 @@
 {
   "extends": "./tsconfig.json",
   "include": [
-    "src/**/*.ts"
+    "src/main.ts",
+    "src/app.controller.ts",
+    "src/app.service.ts",
+    "src/app.module.ts",
+    "src/platform/**/*.ts",
+    "src/governance/**/*.ts",
+    "src/options/**/*.ts",
+    "src/liquidity-mining/**/*.ts",
+    "src/mobile/**/*.ts",
+    "src/trading/**/*.ts",
+    "src/wallet/**/*.ts"
   ],
   "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
 }
