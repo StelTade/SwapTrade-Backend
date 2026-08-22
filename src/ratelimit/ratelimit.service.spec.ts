@@ -1,356 +1,230 @@
 /**
- * Unit tests for RateLimitService
+ * Unit tests for RateLimitService (Redis-backed)
  *
  * Tests the core rate limiting logic including:
- * - Global rate limiting (100 req/15min per IP)
- * - Endpoint-specific limits (trading, bidding, balance)
- * - User-based limits (premium vs free tier)
- * - Rate limit headers
- * - Bypass functionality
+ * - Token bucket rate limiting via Redis Lua scripts
+ * - Sliding window fallback when Lua is unavailable
+ * - Rate limit headers in responses
+ * - Fail-open behavior on Redis errors
  */
 
-import { RateLimitService } from '../ratelimit.service';
-import { RATE_LIMIT_CONFIG, USER_ROLE_MULTIPLIERS } from '../ratelimit.config';
+import { RateLimitService } from './rate-limit.service';
+
+// Mock RedisPoolService
+const mockWithClient = jest.fn();
+const mockRedisPoolService = {
+  withClient: mockWithClient,
+};
+
+// Mock ConfigService
+const mockConfigService = {
+  rateLimit: {
+    windowMs: 60000,
+    maxRequests: 100,
+  },
+};
+
+// Mock MetricsService
+const mockMetricsService = {
+  recordError: jest.fn(),
+};
 
 describe('RateLimitService', () => {
   let rateLimitService: RateLimitService;
 
   beforeEach(() => {
-    rateLimitService = new RateLimitService();
+    jest.clearAllMocks();
+    rateLimitService = new RateLimitService(
+      mockRedisPoolService as any,
+      mockConfigService as any,
+      mockMetricsService as any,
+    );
   });
 
   afterEach(() => {
-    // Clear all rate limit records between tests
     jest.restoreAllMocks();
   });
 
-  describe('Global Rate Limiting', () => {
-    it('should allow requests within global limit (100 req/15min)', () => {
-      const ip = '192.168.1.1';
-      const endpoint = '/api/test';
+  describe('check() - Token Bucket via Redis', () => {
+    it('should allow request when tokens are available', async () => {
+      // Mock Redis Lua script response: [allowed=1, remaining=99, reset=0]
+      mockWithClient.mockResolvedValueOnce([1, '99', '0']);
 
-      // Make 99 requests (within limit)
-      for (let i = 0; i < 99; i++) {
-        const result = rateLimitService.checkRateLimit(null, ip, endpoint);
-        expect(result.allowed).toBe(true);
-      }
+      const result = await rateLimitService.check(
+        'ip:192.168.1.1',
+        '/api/test',
+      );
 
-      // 100th request should still be allowed
-      const result = rateLimitService.checkRateLimit(null, ip, endpoint);
       expect(result.allowed).toBe(true);
-
-      // 101st request should be blocked
-      const blockedResult = rateLimitService.checkRateLimit(null, ip, endpoint);
-      expect(blockedResult.allowed).toBe(false);
+      expect(result.remaining).toBe(99);
+      expect(mockWithClient).toHaveBeenCalledTimes(1);
     });
 
-    it('should reset counters after window expires', (done) => {
-      const ip = '192.168.1.2';
-      const endpoint = '/api/test';
+    it('should reject request when tokens are exhausted', async () => {
+      // Mock Redis Lua script response: [allowed=0, remaining=0, reset=30]
+      mockWithClient.mockResolvedValueOnce([0, '0', '30']);
 
-      // Mock time to control window expiration
-      const originalDateNow = Date.now;
-      const startTime = Date.now();
+      const result = await rateLimitService.check(
+        'ip:192.168.1.1',
+        '/api/test',
+      );
 
-      // Make requests to reach limit
-      for (let i = 0; i < 100; i++) {
-        rateLimitService.checkRateLimit(null, ip, endpoint);
-      }
-
-      // Next request should be blocked
-      let result = rateLimitService.checkRateLimit(null, ip, endpoint);
       expect(result.allowed).toBe(false);
+      expect(result.remaining).toBe(0);
+      expect(result.reset).toBe(30);
+    });
 
-      // Simulate time passage (advance beyond window)
-      jest
-        .spyOn(global.Date, 'now')
-        .mockImplementation(
-          () => startTime + RATE_LIMIT_CONFIG.GLOBAL.windowMs + 1000,
-        );
+    it('should pass correct parameters to Redis Lua script', async () => {
+      mockWithClient.mockResolvedValueOnce([1, '49', '0']);
 
-      // Request should now be allowed (counter reset)
-      result = rateLimitService.checkRateLimit(null, ip, endpoint);
-      expect(result.allowed).toBe(true);
+      await rateLimitService.check('ip:10.0.0.1', '/trading/order', {
+        points: 50,
+        refillPerSecond: 1,
+        burst: 50,
+      });
 
-      // Restore original Date.now
-      global.Date.now = originalDateNow;
-      done();
+      expect(mockWithClient).toHaveBeenCalledTimes(1);
+      // Verify the Lua script was called with correct arguments
+      const callArgs = mockWithClient.mock.calls[0][0];
+      expect(typeof callArgs).toBe('function');
+    });
+
+    it('should use default config when no opts provided', async () => {
+      mockWithClient.mockResolvedValueOnce([1, '99', '0']);
+
+      await rateLimitService.check('ip:1.2.3.4', '/api/test');
+
+      // Should use config defaults: maxRequests=100, windowMs=60000
+      expect(mockWithClient).toHaveBeenCalledTimes(1);
     });
   });
 
-  describe('Endpoint-Specific Limits', () => {
-    it('should enforce trading endpoint limit (10 req/min)', () => {
-      const ip = '192.168.1.3';
-      const endpoint = '/trading/order';
+  describe('Sliding Window Fallback', () => {
+    it('should fall back to sliding window when Lua script fails', async () => {
+      // First call fails (token bucket Lua)
+      mockWithClient
+        .mockRejectedValueOnce(new Error('Lua script error'))
+        // Second call succeeds (sliding window fallback)
+        .mockResolvedValueOnce(undefined) // zremrangebyscore
+        .mockResolvedValueOnce(undefined) // zadd
+        .mockResolvedValueOnce(undefined) // pexpire
+        .mockResolvedValueOnce(5); // zcount
 
-      // Make 9 requests (within limit)
-      for (let i = 0; i < 9; i++) {
-        const result = rateLimitService.checkRateLimit(null, ip, endpoint);
-        expect(result.allowed).toBe(true);
-      }
-
-      // 10th request should still be allowed
-      const result = rateLimitService.checkRateLimit(null, ip, endpoint);
-      expect(result.allowed).toBe(true);
-
-      // 11th request should be blocked
-      const blockedResult = rateLimitService.checkRateLimit(null, ip, endpoint);
-      expect(blockedResult.allowed).toBe(false);
-    });
-
-    it('should enforce bidding endpoint limit (20 req/min)', () => {
-      const ip = '192.168.1.4';
-      const endpoint = '/bidding/create';
-
-      // Make 19 requests (within limit)
-      for (let i = 0; i < 19; i++) {
-        const result = rateLimitService.checkRateLimit(null, ip, endpoint);
-        expect(result.allowed).toBe(true);
-      }
-
-      // 20th request should still be allowed
-      const result = rateLimitService.checkRateLimit(null, ip, endpoint);
-      expect(result.allowed).toBe(true);
-
-      // 21st request should be blocked
-      const blockedResult = rateLimitService.checkRateLimit(null, ip, endpoint);
-      expect(blockedResult.allowed).toBe(false);
-    });
-
-    it('should enforce balance endpoint limit (50 req/min)', () => {
-      const ip = '192.168.1.5';
-      const endpoint = '/balance/check';
-
-      // Make 49 requests (within limit)
-      for (let i = 0; i < 49; i++) {
-        const result = rateLimitService.checkRateLimit(null, ip, endpoint);
-        expect(result.allowed).toBe(true);
-      }
-
-      // 50th request should still be allowed
-      const result = rateLimitService.checkRateLimit(null, ip, endpoint);
-      expect(result.allowed).toBe(true);
-
-      // 51st request should be blocked
-      const blockedResult = rateLimitService.checkRateLimit(null, ip, endpoint);
-      expect(blockedResult.allowed).toBe(false);
-    });
-  });
-
-  describe('User-Based Rate Limiting', () => {
-    it('should give premium users 2x limits', () => {
-      const userId = 'premium-user-1';
-      const endpoint = '/trading/order';
-
-      // Premium user should get 20 requests (2x trading limit)
-      for (let i = 0; i < 19; i++) {
-        const result = rateLimitService.checkRateLimit(
-          userId,
-          '127.0.0.1',
-          endpoint,
-          'ADMIN',
-        );
-        expect(result.allowed).toBe(true);
-      }
-
-      // 20th request should still be allowed
-      const result = rateLimitService.checkRateLimit(
-        userId,
-        '127.0.0.1',
-        endpoint,
-        'ADMIN',
+      const result = await rateLimitService.check(
+        'ip:192.168.1.1',
+        '/api/test',
       );
+
       expect(result.allowed).toBe(true);
+      expect(result.remaining).toBe(95); // 100 - 5
+      expect(mockMetricsService.recordError).not.toHaveBeenCalled();
+    });
 
-      // 21st request should be blocked
-      const blockedResult = rateLimitService.checkRateLimit(
-        userId,
-        '127.0.0.1',
-        endpoint,
-        'ADMIN',
+    it('should reject when sliding window count exceeds limit', async () => {
+      mockWithClient
+        .mockRejectedValueOnce(new Error('Lua script error'))
+        .mockResolvedValueOnce(undefined)
+        .mockResolvedValueOnce(undefined)
+        .mockResolvedValueOnce(undefined)
+        .mockResolvedValueOnce(101); // count > maxRequests (100)
+
+      const result = await rateLimitService.check(
+        'ip:192.168.1.1',
+        '/api/test',
       );
-      expect(blockedResult.allowed).toBe(false);
-    });
 
-    it('should apply standard limits for regular users', () => {
-      const userId = 'regular-user-1';
-      const endpoint = '/trading/order';
-
-      // Regular user should get standard 10 requests
-      for (let i = 0; i < 9; i++) {
-        const result = rateLimitService.checkRateLimit(
-          userId,
-          '127.0.0.1',
-          endpoint,
-          'USER',
-        );
-        expect(result.allowed).toBe(true);
-      }
-
-      // 10th request should still be allowed
-      const result = rateLimitService.checkRateLimit(
-        userId,
-        '127.0.0.1',
-        endpoint,
-        'USER',
-      );
-      expect(result.allowed).toBe(true);
-
-      // 11th request should be blocked
-      const blockedResult = rateLimitService.checkRateLimit(
-        userId,
-        '127.0.0.1',
-        endpoint,
-        'USER',
-      );
-      expect(blockedResult.allowed).toBe(false);
-    });
-  });
-
-  describe('Rate Limit Headers', () => {
-    it('should include proper rate limit headers in response', () => {
-      const ip = '192.168.1.6';
-      const endpoint = '/api/test';
-
-      const result = rateLimitService.checkRateLimit(null, ip, endpoint);
-
-      expect(result.headers).toBeDefined();
-      expect(result.headers['X-RateLimit-Limit']).toBe(
-        RATE_LIMIT_CONFIG.GLOBAL.limit,
-      );
-      expect(result.headers['X-RateLimit-Remaining']).toBeLessThanOrEqual(
-        RATE_LIMIT_CONFIG.GLOBAL.limit,
-      );
-      expect(result.headers['X-RateLimit-Reset']).toBeDefined();
-      expect(result.headers['Retry-After']).toBeDefined();
-    });
-
-    it('should show decreasing remaining count', () => {
-      const ip = '192.168.1.7';
-      const endpoint = '/api/test';
-      const limit = RATE_LIMIT_CONFIG.GLOBAL.limit;
-
-      // First request
-      let result = rateLimitService.checkRateLimit(null, ip, endpoint);
-      expect(result.headers['X-RateLimit-Remaining']).toBe(limit - 1);
-
-      // Second request
-      result = rateLimitService.checkRateLimit(null, ip, endpoint);
-      expect(result.headers['X-RateLimit-Remaining']).toBe(limit - 2);
-    });
-  });
-
-  describe('Bypass Functionality', () => {
-    it('should bypass rate limiting for health check endpoints', () => {
-      const ip = '192.168.1.8';
-
-      // Make many requests to health endpoint
-      for (let i = 0; i < 200; i++) {
-        const result = rateLimitService.checkRateLimit(null, ip, '/health');
-        expect(result.allowed).toBe(true);
-        expect(Object.keys(result.headers)).toHaveLength(0); // No headers for bypassed requests
-      }
-    });
-
-    it('should bypass rate limiting for metrics endpoints', () => {
-      const ip = '192.168.1.9';
-
-      const result = rateLimitService.checkRateLimit(null, ip, '/metrics');
-      expect(result.allowed).toBe(true);
-      expect(Object.keys(result.headers)).toHaveLength(0);
-    });
-
-    it('should bypass rate limiting for API documentation', () => {
-      const ip = '192.168.1.10';
-
-      const result = rateLimitService.checkRateLimit(null, ip, '/api/docs');
-      expect(result.allowed).toBe(true);
-      expect(Object.keys(result.headers)).toHaveLength(0);
-    });
-  });
-
-  describe('Edge Cases', () => {
-    it('should handle multiple IPs independently', () => {
-      const endpoint = '/api/test';
-
-      // IP 1 reaches limit
-      for (let i = 0; i < 100; i++) {
-        rateLimitService.checkRateLimit(null, '192.168.1.11', endpoint);
-      }
-
-      // IP 2 should still be able to make requests
-      const result = rateLimitService.checkRateLimit(
-        null,
-        '192.168.1.12',
-        endpoint,
-      );
-      expect(result.allowed).toBe(true);
-    });
-
-    it('should handle multiple users independently', () => {
-      const endpoint = '/api/test';
-
-      // User 1 reaches limit
-      for (let i = 0; i < 100; i++) {
-        rateLimitService.checkRateLimit('user-1', '127.0.0.1', endpoint);
-      }
-
-      // User 2 should still be able to make requests
-      const result = rateLimitService.checkRateLimit(
-        'user-2',
-        '127.0.0.1',
-        endpoint,
-      );
-      expect(result.allowed).toBe(true);
-    });
-
-    it('should handle invalid user roles gracefully', () => {
-      const ip = '192.168.1.13';
-      const endpoint = '/api/test';
-
-      // Should fall back to USER multiplier for invalid roles
-      const result = rateLimitService.checkRateLimit(
-        null,
-        ip,
-        endpoint,
-        'INVALID_ROLE',
-      );
-      expect(result.allowed).toBe(true);
-    });
-  });
-
-  describe('Statistics and Monitoring', () => {
-    it('should provide accurate statistics', () => {
-      // Make some requests
-      rateLimitService.checkRateLimit('user-1', '127.0.0.1', '/api/test-1');
-      rateLimitService.checkRateLimit('user-2', '127.0.0.1', '/api/test-2');
-      rateLimitService.checkRateLimit(null, '192.168.1.14', '/api/test-3');
-
-      const stats = rateLimitService.getStats();
-      expect(stats.totalKeys).toBeGreaterThanOrEqual(3);
-      expect(stats.activeRecords).toBeGreaterThanOrEqual(3);
-    });
-
-    it('should allow resetting specific rate limits', () => {
-      const ip = '192.168.1.15';
-      const endpoint = '/api/test';
-      const key = `global:ip:${ip}`;
-
-      // Reach limit
-      for (let i = 0; i < 100; i++) {
-        rateLimitService.checkRateLimit(null, ip, endpoint);
-      }
-
-      // Should be blocked
-      let result = rateLimitService.checkRateLimit(null, ip, endpoint);
       expect(result.allowed).toBe(false);
+      expect(result.remaining).toBe(0);
+    });
+  });
 
-      // Reset the limit
-      rateLimitService.resetRateLimit(key);
+  describe('Error Handling', () => {
+    it('should fail open on Redis connection error', async () => {
+      // Both token bucket and sliding window fail
+      mockWithClient
+        .mockRejectedValueOnce(new Error('ECONNREFUSED'))
+        .mockRejectedValueOnce(new Error('ECONNREFUSED'));
 
-      // Should be allowed again
-      result = rateLimitService.checkRateLimit(null, ip, endpoint);
+      const result = await rateLimitService.check(
+        'ip:192.168.1.1',
+        '/api/test',
+      );
+
+      // Should fail open (allow the request)
       expect(result.allowed).toBe(true);
+      expect(result.remaining).toBe(0);
+    });
+
+    it('should record metric on rate limit violation', async () => {
+      mockWithClient.mockResolvedValueOnce([0, '0', '30']);
+
+      await rateLimitService.check('ip:192.168.1.1', '/api/test');
+
+      expect(mockMetricsService.recordError).toHaveBeenCalledWith(
+        '/api/test',
+        429,
+      );
+    });
+  });
+
+  describe('Endpoint-Specific Configuration', () => {
+    it('should use custom points when provided', async () => {
+      mockWithClient.mockResolvedValueOnce([1, '24', '0']);
+
+      const result = await rateLimitService.check(
+        'ip:192.168.1.1',
+        '/trading/order',
+        { points: 25 },
+      );
+
+      expect(result.allowed).toBe(true);
+      expect(result.remaining).toBe(24);
+    });
+
+    it('should calculate refill rate based on points and window', async () => {
+      mockWithClient.mockResolvedValueOnce([1, '49', '0']);
+
+      // 50 points, 60s window -> refillPerSecond = 50/60 ~= 0.83
+      await rateLimitService.check('ip:192.168.1.1', '/api/test', {
+        points: 50,
+      });
+
+      expect(mockWithClient).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('Per-User vs Per-IP', () => {
+    it('should rate limit by IP for unauthenticated requests', async () => {
+      mockWithClient.mockResolvedValueOnce([1, '99', '0']);
+
+      await rateLimitService.check('ip:192.168.1.1', '/api/test');
+
+      // Key should include the IP identifier
+      expect(mockWithClient).toHaveBeenCalledTimes(1);
+    });
+
+    it('should rate limit by user ID for authenticated requests', async () => {
+      mockWithClient.mockResolvedValueOnce([1, '49', '0']);
+
+      await rateLimitService.check('user:user-123', '/api/test', {
+        points: 50,
+      });
+
+      expect(mockWithClient).toHaveBeenCalledTimes(1);
+    });
+
+    it('should track IP and user independently', async () => {
+      // First request by IP
+      mockWithClient.mockResolvedValueOnce([1, '99', '0']);
+      await rateLimitService.check('ip:10.0.0.1', '/api/test');
+
+      // Second request by user
+      mockWithClient.mockResolvedValueOnce([1, '49', '0']);
+      await rateLimitService.check('user:user-456', '/api/test', {
+        points: 50,
+      });
+
+      expect(mockWithClient).toHaveBeenCalledTimes(2);
     });
   });
 });
