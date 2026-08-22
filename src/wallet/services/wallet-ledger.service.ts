@@ -80,6 +80,15 @@ export class WalletLedgerService {
     }));
   }
 
+  async hasSufficientBalance(
+    userId: string,
+    asset: string,
+    amount: number,
+  ): Promise<boolean> {
+    const balance = await this.getBalance(userId, asset);
+    return balance.available >= amount;
+  }
+
   /** Ensures a ledger row exists for (userId, asset) and returns it. */
   async getOrCreateLedger(
     userId: string,
@@ -259,6 +268,66 @@ export class WalletLedgerService {
     });
   }
 
+  async reserveBalance(
+    userId: string,
+    asset: string,
+    amount: number,
+    manager: EntityManager,
+  ): Promise<void> {
+    const ledger = await this.lockOrCreate(manager, userId, asset);
+    if (Number(ledger.available) < amount) {
+      throw WalletException.insufficientBalance({
+        asset,
+        available: Number(ledger.available),
+        requested: amount,
+      });
+    }
+    await this.applyEntry(manager, ledger, {
+      entryType: LedgerEntryType.TRADE_RESERVE,
+      amount,
+      availableDelta: round8(-amount),
+      reservedDelta: round8(amount),
+      ref: { referenceType: 'trade', referenceId: 'temp' },
+    });
+  }
+
+  async releaseAndTransfer(
+    fromUserId: string,
+    toUserId: string,
+    fromAsset: string,
+    toAsset: string,
+    fromAmount: number,
+    toAmount: number,
+    manager: EntityManager,
+  ): Promise<void> {
+    const fromLedger = await this.lockOrCreate(manager, fromUserId, fromAsset);
+    const toLedger = await this.lockOrCreate(manager, toUserId, toAsset);
+
+    if (Number(fromLedger.reserved) < fromAmount) {
+      throw WalletException.insufficientBalance({
+        asset: fromAsset,
+        available: Number(fromLedger.available),
+        requested: fromAmount,
+      });
+    }
+
+    await this.applyEntry(manager, fromLedger, {
+      entryType: LedgerEntryType.TRADE_DEBIT,
+      amount: fromAmount,
+      availableDelta: 0,
+      reservedDelta: round8(-fromAmount),
+      ref: { referenceType: 'trade', referenceId: 'temp' },
+    });
+
+    await this.applyEntry(manager, toLedger, {
+      entryType: LedgerEntryType.TRADE_CREDIT,
+      amount: toAmount,
+      availableDelta: round8(toAmount),
+      reservedDelta: 0,
+      ref: { referenceType: 'trade', referenceId: 'temp' },
+    });
+  }
+
   // ─── internals ────────────────────────────────────────────────────────
 
   private assertPositive(amount: number): void {
@@ -325,7 +394,9 @@ export class WalletLedgerService {
       ref: LedgerRef;
     },
   ): Promise<LedgerBalance> {
-    const nextAvailable = round8(Number(ledger.available) + params.availableDelta);
+    const nextAvailable = round8(
+      Number(ledger.available) + params.availableDelta,
+    );
     const nextReserved = round8(Number(ledger.reserved) + params.reservedDelta);
 
     // Defensive guard: the public methods already prevent this, but never

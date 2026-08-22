@@ -17,4 +17,10 @@ export enum LedgerEntryType {
   FIAT_DEBIT = 'fiat_debit',
   /** Manual/administrative correction. */
   ADJUSTMENT = 'adjustment',
+  /** Funds moved `available → reserved` when a trade is initiated. */
+  TRADE_RESERVE = 'trade_reserve',
+  /** Reserved funds debited when a trade is executed. */
+  TRADE_DEBIT = 'trade_debit',
+  /** Funds credited to `available` when a trade is executed. */
+  TRADE_CREDIT = 'trade_credit',
 }
