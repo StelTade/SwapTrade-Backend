@@ -30,6 +30,9 @@ import { ErrorModule } from './error/error.module';
 
 // ── Identity Domain Entities (Phase 2) ──
 import { User } from './user/entities/user.entity';
+import { UserProfile } from './user/entities/user-profile.entity';
+import { LinkedWallet } from './user/entities/linked-wallet.entity';
+import { KycDocument } from './user/entities/kyc-document.entity';
 import { Auth } from './auth/entities/auth.entity';
 import { Session } from './auth/entities/session.entity';
 import { KycRecord } from './kyc/entities/kyc-records.entity';
@@ -165,7 +168,10 @@ import { TradingModule } from './trading/trading.module';
           Session,
           // Identity — User
           User,
+          UserProfile,
+          LinkedWallet,
           // Identity — KYC
+          KycDocument,
           KycRecord,
           // Identity — DID
           DidDocument,
