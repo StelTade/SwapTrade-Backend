@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import {
@@ -121,6 +121,10 @@ import { LedgerEntry } from './wallet/entities/ledger-entry.entity';
 import { WithdrawalRequest } from './wallet/entities/withdrawal-request.entity';
 import { FiatPaymentIntent } from './wallet/entities/fiat-payment-intent.entity';
 import { TradingModule } from './trading/trading.module';
+
+// Rate Limiting & Throttling
+import { RateLimitModule } from './ratelimit/ratelimit.module';
+import { RateLimitMiddleware } from './ratelimit/ratelimit.middleware';
 
 @Module({
   imports: [
@@ -285,10 +289,19 @@ import { TradingModule } from './trading/trading.module';
     WalletModule,
     TradingModule,
 
+    // ── Rate Limiting & Throttling ──
+    RateLimitModule,
+
     // ── Error Handling ──
     ErrorModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(RateLimitMiddleware)
+      .forRoutes('*');
+  }
+}

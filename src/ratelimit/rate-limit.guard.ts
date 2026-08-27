@@ -5,6 +5,7 @@ import { RATE_LIMIT_KEY, RateLimitOptions } from './rate-limit.decorator';
 import { RateLimitService } from './rate-limit.service';
 import { ConfigService } from '../config/config.service';
 import { USER_ROLE_MULTIPLIERS } from './ratelimit.config';
+import { AbuseDetectionService } from './abuse-detection.service';
 
 @Injectable()
 export class RateLimitGuard implements CanActivate {
@@ -12,6 +13,7 @@ export class RateLimitGuard implements CanActivate {
     private readonly reflector: Reflector,
     private readonly rl: RateLimitService,
     private readonly config: ConfigService,
+    private readonly abuseDetection: AbuseDetectionService,
   ) {}
 
   /**
@@ -71,7 +73,21 @@ export class RateLimitGuard implements CanActivate {
       res.setHeader('X-RateLimit-Remaining', String(Math.floor(remaining)));
       res.setHeader('X-RateLimit-Reset', String(reset));
       res.setHeader('X-RateLimit-Tier', String(multiplier));
+
+      if (!allowed) {
+        const retryAfter = Math.max(reset, 1);
+        res.setHeader('Retry-After', String(retryAfter));
+      }
     } catch (_e) {}
+
+    // Track for abuse detection (non-blocking)
+    if (!allowed) {
+      this.abuseDetection
+        .trackRequest(identifier, endpoint, {
+          method: req.method,
+        })
+        .catch(() => {});
+    }
 
     return allowed;
   }
