@@ -73,4 +73,46 @@ export class AuditLogController {
   exportAuditLog(@Body() dateRange: { from: Date; to: Date }) {
     return this.auditLogService.exportAuditLog(dateRange);
   }
+
+  @Post('export/json')
+  @ApiResponse({
+    status: 200,
+    description: 'JSON export with checksum validation',
+  })
+  exportAuditLogJson(@Body() dateRange: { from: Date; to: Date }) {
+    return this.auditLogService.exportAuditLogJson(dateRange);
+  }
+
+  @Post('export/link')
+  @ApiResponse({
+    status: 200,
+    description: 'Time-limited signed download link for a CSV/JSON export',
+  })
+  async createSignedExportLink(
+    @Body()
+    body: {
+      from: string | Date;
+      to: string | Date;
+      format?: 'csv' | 'json';
+      ttlSeconds?: number;
+    },
+  ) {
+    const range = { from: new Date(body.from), to: new Date(body.to) };
+    return this.auditLogService.createSignedExportLink(
+      range,
+      body.format ?? 'csv',
+      body.ttlSeconds ?? 300,
+    );
+  }
+
+  @Get('export/download')
+  @ApiResponse({ status: 200, description: 'Redeems a signed export token' })
+  @ApiQuery({ name: 'token', required: true })
+  async downloadSignedExport(@Query('token') token: string) {
+    const doc = await this.auditLogService.downloadSignedExport(token);
+    if (!doc) {
+      return { statusCode: 403, message: 'Invalid or expired export link' };
+    }
+    return doc;
+  }
 }

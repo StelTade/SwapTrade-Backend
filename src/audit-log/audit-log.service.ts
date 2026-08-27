@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, FindManyOptions } from 'typeorm';
-import { createHash } from 'crypto';
+import { Repository, Between } from 'typeorm';
+import { createHash, createHmac, timingSafeEqual } from 'crypto';
 import {
   AuditEventType,
   AuditLog,
@@ -23,6 +23,39 @@ export interface CreateAuditLogDto {
   requestId?: string;
 }
 
+export const AUDIT_WORM_SINK = 'AUDIT_WORM_SINK';
+
+/**
+ * Append-only sink for critical audit records (issue #423). Implementations
+ * must never rewrite or delete previously appended lines — e.g. S3 Object
+ * Lock / WORM storage in production.
+ */
+export interface WormSink {
+  append(entry: {
+    id: string;
+    checksum: string;
+    previousChecksum: string | null;
+    eventType: string;
+    createdAt: Date;
+    payload: string;
+  }): Promise<void>;
+}
+
+export type ExportFormat = 'csv' | 'json';
+
+export interface SignedExportLink {
+  url: string;
+  expiresAt: Date;
+  format: ExportFormat;
+}
+
+interface ExportTokenPayload {
+  from: string;
+  to: string;
+  format: ExportFormat;
+  exp: number; // unix seconds
+}
+
 @Injectable()
 export class AuditLogService {
   private readonly logger = new Logger(AuditLogService.name);
@@ -30,18 +63,19 @@ export class AuditLogService {
   constructor(
     @InjectRepository(AuditLog)
     private readonly auditLogRepo: Repository<AuditLog>,
+    @Optional()
+    @Inject(AUDIT_WORM_SINK)
+    private readonly wormSink?: WormSink,
   ) {}
 
-  async log(dto: CreateAuditLogDto): Promise<AuditLog> {
-    const lastEntry = await this.auditLogRepo.findOne({
-      where: {},
-      order: { createdAt: 'DESC' },
-    });
+  // ─── Checksums ──────────────────────────────────────────────────────
 
-    const previousChecksum = lastEntry?.checksum ?? 'GENESIS';
-    const timestamp = new Date().toISOString();
-
-    // Build checksum BEFORE saving
+  /** Deterministic checksum over the immutable fields of one entry. */
+  computeChecksum(
+    dto: CreateAuditLogDto,
+    timestamp: string,
+    previousChecksum: string,
+  ): string {
     const rawData = JSON.stringify({
       userId: dto.userId,
       eventType: dto.eventType,
@@ -52,8 +86,18 @@ export class AuditLogService {
       timestamp,
       previousChecksum,
     });
+    return createHash('sha256').update(rawData).digest('hex');
+  }
 
-    const checksum = createHash('sha256').update(rawData).digest('hex');
+  async log(dto: CreateAuditLogDto): Promise<AuditLog> {
+    const lastEntry = await this.auditLogRepo.findOne({
+      where: {},
+      order: { createdAt: 'DESC' },
+    });
+
+    const previousChecksum = lastEntry?.checksum ?? 'GENESIS';
+    const timestamp = new Date().toISOString();
+    const checksum = this.computeChecksum(dto, timestamp, previousChecksum);
 
     const entry = this.auditLogRepo.create({
       ...dto,
@@ -63,6 +107,24 @@ export class AuditLogService {
     });
 
     const saved = await this.auditLogRepo.save(entry);
+
+    if (this.wormSink && saved?.id) {
+      try {
+        await this.wormSink.append({
+          id: saved.id,
+          checksum: saved.checksum,
+          previousChecksum: saved.previousChecksum,
+          eventType: saved.eventType,
+          createdAt: saved.createdAt,
+          payload: JSON.stringify(saved),
+        });
+      } catch (err) {
+        // WORM failures must not lose the DB record but must be loud.
+        this.logger.error(
+          `WORM sink append failed for audit entry ${saved.id}: ${err}`,
+        );
+      }
+    }
 
     return saved;
   }
@@ -93,24 +155,55 @@ export class AuditLogService {
   }
 
   /**
-   * Verifies the integrity of the entire audit log chain.
-   * Returns entries where the chain is broken.
+   * Verifies the integrity of the entire audit log chain:
+   *  1. hash linkage — every `previousChecksum` matches the prior
+   *     entry's `checksum`;
+   *  2. per-entry tamper evidence — each stored `checksum` still equals
+   *     the recomputed hash of the entry's immutable fields, so mutating
+   *     a row (even while keeping links intact) is detected.
    */
   async verifyChainIntegrity(): Promise<{
-    broken: AuditLog[];
     valid: boolean;
+    brokenLinks: AuditLog[];
+    tamperedEntries: AuditLog[];
   }> {
     const logs = await this.auditLogRepo.find({ order: { createdAt: 'ASC' } });
-    const broken: AuditLog[] = [];
+    const brokenLinks: AuditLog[] = [];
+    const tamperedEntries: AuditLog[] = [];
 
-    for (let i = 1; i < logs.length; i++) {
-      if (logs[i].previousChecksum !== logs[i - 1].checksum) {
-        broken.push(logs[i]);
+    for (let i = 0; i < logs.length; i++) {
+      if (
+        i > 0 &&
+        logs[i].previousChecksum !== null &&
+        logs[i].previousChecksum !== logs[i - 1].checksum
+      ) {
+        brokenLinks.push(logs[i]);
         this.logger.warn(`Chain broken at log ID: ${logs[i].id}`);
+      }
+
+      const recomputed = this.computeChecksum(
+        {
+          userId: logs[i].userId,
+          eventType: logs[i].eventType,
+          entityType: logs[i].entityType,
+          entityId: logs[i].entityId,
+          beforeState: logs[i].beforeState,
+          afterState: logs[i].afterState,
+        },
+        new Date(logs[i].createdAt).toISOString(),
+        logs[i].previousChecksum ?? '',
+      );
+      if (recomputed !== logs[i].checksum) {
+        tamperedEntries.push(logs[i]);
+        this.logger.warn(`Tampered entry detected at log ID: ${logs[i].id}`);
       }
     }
 
-    return { broken, valid: broken.length === 0 };
+    return {
+      valid: brokenLinks.length === 0 && tamperedEntries.length === 0,
+      brokenLinks,
+      tamperedEntries,
+    };
   }
 
   /**
@@ -186,16 +279,20 @@ export class AuditLogService {
     };
   }
 
+  // ─── Export (issue #423) ────────────────────────────────────────────
+
+  async findInRange(from: Date, to: Date): Promise<AuditLog[]> {
+    return this.auditLogRepo.find({
+      where: { createdAt: Between(from, to) },
+      order: { createdAt: 'ASC' },
+    });
+  }
+
   /**
    * Export audit log to CSV format
    */
   async exportAuditLog(dateRange: { from: Date; to: Date }): Promise<string> {
-    const logs = await this.auditLogRepo.find({
-      where: {
-        createdAt: Between(dateRange.from, dateRange.to),
-      },
-      order: { createdAt: 'ASC' },
-    });
+    const logs = await this.findInRange(dateRange.from, dateRange.to);
 
     const headers = [
       'ID',
@@ -239,6 +336,146 @@ export class AuditLogService {
     }
 
     return csvRows.join('\n');
+  }
+
+  /**
+   * Export audit log as structured JSON for compliance tooling.
+   */
+  async exportAuditLogJson(dateRange: {
+    from: Date;
+    to: Date;
+  }): Promise<{
+    count: number;
+    range: { from: Date; to: Date };
+    entries: AuditLog[];
+  }> {
+    const logs = await this.findInRange(dateRange.from, dateRange.to);
+    return {
+      count: logs.length,
+      range: { from: dateRange.from, to: dateRange.to },
+      entries: logs.map((log) => ({
+        ...log,
+        checksumValid:
+          this.computeChecksum(
+            {
+              userId: log.userId,
+              eventType: log.eventType,
+              entityType: log.entityType,
+              entityId: log.entityId,
+              beforeState: log.beforeState,
+              afterState: log.afterState,
+            },
+            new Date(log.createdAt).toISOString(),
+            log.previousChecksum ?? '',
+          ) === log.checksum,
+      })),
+    };
+  }
+
+  // ─── Signed download links ─────────────────────────────────────────
+
+  private exportSecret(): string {
+    return (
+      process.env.AUDIT_EXPORT_SECRET || 'swaptrade-audit-export-dev-secret'
+    );
+  }
+
+  private signPayload(payload: string): string {
+    return createHmac('sha256', this.exportSecret())
+      .update(payload)
+      .digest('base64url');
+  }
+
+  /**
+   * Issues a time-limited HMAC-signed link for downloading an export.
+   * The token embeds range + format + expiry and is verified on download,
+   * so no session state is required to redeem it.
+   */
+  async createSignedExportLink(
+    dateRange: { from: Date; to: Date },
+    format: ExportFormat,
+    ttlSeconds = 300,
+  ): Promise<SignedExportLink> {
+    if (!(dateRange.from <= dateRange.to)) {
+      throw new Error('Invalid export range: "from" must be before "to"');
+    }
+    const payload: ExportTokenPayload = {
+      from: dateRange.from.toISOString(),
+      to: dateRange.to.toISOString(),
+      format,
+      exp: Math.floor(Date.now() / 1000) + ttlSeconds,
+    };
+    const encoded = Buffer.from(JSON.stringify(payload)).toString('base64url');
+    const signature = this.signPayload(encoded);
+    await this.log({
+      eventType: AuditEventType.AUDIT_EXPORTED,
+      severity: AuditSeverity.WARNING,
+      metadata: {
+        from: payload.from,
+        to: payload.to,
+        format,
+        expiresAt: payload.exp,
+      },
+    });
+    return {
+      url: `/admin/audit/export/download?token=${encoded}.${signature}`,
+      expiresAt: new Date(payload.exp * 1000),
+      format,
+    };
+  }
+
+  /**
+   * Validates a signed export token and produces the download document.
+   * Returns null when the signature, format or expiry fails validation.
+   */
+  async downloadSignedExport(
+    token: string,
+  ): Promise<{
+    filename: string;
+    contentType: string;
+    content: string;
+  } | null> {
+    const dot = token.lastIndexOf('.');
+    if (dot === -1) return null;
+    const encoded = token.slice(0, dot);
+    const signature = token.slice(dot + 1);
+
+    const expected = Buffer.from(this.signPayload(encoded));
+    const given = Buffer.from(signature);
+    if (expected.length !== given.length || !timingSafeEqual(expected, given)) {
+      return null;
+    }
+
+    let payload: ExportTokenPayload;
+    try {
+      payload = JSON.parse(Buffer.from(encoded, 'base64url').toString('utf8'));
+    } catch {
+      return null;
+    }
+    if (payload.format !== 'csv' && payload.format !== 'json') return null;
+    if (Math.floor(Date.now() / 1000) >= payload.exp) return null;
+
+    const range = { from: new Date(payload.from), to: new Date(payload.to) };
+    if (
+      Number.isNaN(range.from.getTime()) ||
+      Number.isNaN(range.to.getTime())
+    ) {
+      return null;
+    }
+
+    if (payload.format === 'csv') {
+      return {
+        filename: `audit-log-${payload.from}-${payload.to}.csv`,
+        contentType: 'text/csv; charset=utf-8',
+        content: await this.exportAuditLog(range),
+      };
+    }
+    const json = await this.exportAuditLogJson(range);
+    return {
+      filename: `audit-log-${payload.from}-${payload.to}.json`,
+      contentType: 'application/json; charset=utf-8',
+      content: JSON.stringify(json, null, 2),
+    };
   }
 
   private escapeCSV(value: string): string {

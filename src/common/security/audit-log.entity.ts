@@ -49,6 +49,11 @@ export enum AuditEventType {
   USER_SUSPENDED = 'USER_SUSPENDED',
   USER_ACTIVATED = 'USER_ACTIVATED',
   ADMIN_ACTION = 'ADMIN_ACTION',
+  // ─── Compliance (issue #423) ─────────────────────────────────────────────
+  KYC_UPDATED = 'KYC_UPDATED',
+  KYC_LEVEL_CHANGED = 'KYC_LEVEL_CHANGED',
+  SETTLEMENT_EXECUTED = 'SETTLEMENT_EXECUTED',
+  AUDIT_EXPORTED = 'AUDIT_EXPORTED',
 }
 
 export enum AuditSeverity {
