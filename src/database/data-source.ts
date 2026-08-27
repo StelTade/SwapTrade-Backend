@@ -2,6 +2,9 @@ import { DataSource } from 'typeorm';
 import { VirtualAsset } from './entities/virtual-asset.entity';
 import { UserBalance } from './entities/user-balance.entity';
 import { User } from '../user/entities/user.entity';
+import { UserProfile } from '../user/entities/user-profile.entity';
+import { LinkedWallet } from '../user/entities/linked-wallet.entity';
+import { KycDocument } from '../user/entities/kyc-document.entity';
 import { Trade } from './entities/trade.entity';
 
 const dbType = (process.env.DB_TYPE || 'postgres') as 'postgres' | 'sqlite';
@@ -19,7 +22,7 @@ const dataSourceConfig = {
     : {
         database: process.env.DATABASE_FILE || 'swaptrade.db',
       }),
-  entities: [VirtualAsset, UserBalance, User, Trade],
+  entities: [VirtualAsset, UserBalance, User, UserProfile, LinkedWallet, KycDocument, Trade],
   migrations: ['src/database/migrations/*.ts'],
   migrationsTableName: 'migrations',
   synchronize: false,
